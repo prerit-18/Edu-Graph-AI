@@ -1,0 +1,37 @@
+[
+  {
+    "id": "eval_01",
+    "query": "What is Belady's Anomaly and which page replacement algorithm causes it?",
+    "expected_topic": "os_virtual_mem",
+    "expected_subject": "Operating Systems",
+    "should_be_grounded": true
+  },
+  {
+    "id": "eval_02",
+    "query": "Calculate time complexity of Breadth-First Search using adjacency list",
+    "expected_topic": "algo_graphs",
+    "expected_subject": "Algorithms",
+    "should_be_grounded": true
+  },
+  {
+    "id": "eval_03",
+    "query": "Strict 2PL concurrency control cascadelessness and conflict serializability",
+    "expected_topic": "dbms_transactions",
+    "expected_subject": "Database Management Systems",
+    "should_be_grounded": true
+  },
+  {
+    "id": "eval_04",
+    "query": "How to make a delicious cup of espresso coffee at home",
+    "expected_topic": null,
+    "expected_subject": null,
+    "should_be_grounded": false
+  },
+  {
+    "id": "eval_05",
+    "query": "Stock market trading strategy using moving averages and bitcoin",
+    "expected_topic": null,
+    "expected_subject": null,
+    "should_be_grounded": false
+  }
+]

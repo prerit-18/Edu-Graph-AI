@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EduGraph AI — GATE CSE Diagnostic Mock Examination</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .palette-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-subtle);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-secondary);
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .palette-btn.active {
+      border-color: var(--accent-emerald);
+      background: rgba(16, 185, 129, 0.2);
+      color: var(--text-primary);
+    }
+    .palette-btn.answered {
+      background: rgba(16, 185, 129, 0.25);
+      color: var(--accent-emerald);
+      border-color: var(--accent-emerald);
+    }
+  </style>
+</head>
+<body>
+  <div id="main-header"></div>
+
+  <main class="container">
+    <!-- Start Screen -->
+    <div id="mock-start-screen" class="glass-card" style="max-width: 680px; margin: 2rem auto; text-align: center; padding: 3rem 2rem;">
+      <div class="logo-badge" style="margin: 0 auto 1rem; width: 48px; height: 48px; font-size: 1.5rem;">📝</div>
+      <h2>GATE CSE Diagnostic Examination</h2>
+      <p style="color: var(--text-secondary); margin: 1rem 0 2rem; line-height: 1.6;">
+        Real curated 2021–2025 GATE questions across Operating Systems, Algorithms, and DBMS. Includes realistic GATE marking (+1.0 / -0.33) and automatically updates topic mastery in BKT.
+      </p>
+
+      <div style="display: flex; gap: 1rem; justify-content: center; margin-bottom: 2rem; flex-wrap: wrap;">
+        <select id="mock-subject-select" class="input-field" style="width: auto; min-width: 200px;">
+          <option value="All">All Subjects (Balanced)</option>
+          <option value="Operating Systems">Operating Systems</option>
+          <option value="Algorithms">Algorithms</option>
+          <option value="Database Management Systems">DBMS</option>
+        </select>
+        <button class="btn btn-primary" onclick="startMockExam()">Begin Exam Now →</button>
+      </div>
+    </div>
+
+    <!-- Exam Screen -->
+    <div id="mock-exam-screen" style="display: none;">
+      <div class="exam-header">
+        <div>
+          <h3 id="exam-title" style="margin: 0;">GATE CSE Diagnostic Exam</h3>
+          <span style="font-size: 0.85rem; color: var(--text-secondary);" id="exam-subtitle">Question 1 of 10</span>
+        </div>
+        <div class="exam-timer" id="exam-timer">⏱️ 15:00</div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 280px; gap: 1.5rem;">
+        <!-- Question Workspace -->
+        <div class="glass-card" style="padding: 2rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+            <span class="topic-badge" id="q-subject-badge">Subject</span>
+            <span class="topic-badge" id="q-type-badge">Type</span>
+          </div>
+
+          <p id="q-text" style="font-size: 1.05rem; line-height: 1.6; margin-bottom: 1.5rem; color: var(--text-primary);">
+            Question text
+          </p>
+
+          <div id="q-options-container">
+            <!-- Injected options or text field -->
+          </div>
+
+          <div style="display: flex; justify-content: space-between; margin-top: 2rem; border-top: 1px solid var(--border-subtle); padding-top: 1.25rem;">
+            <button class="btn btn-secondary btn-sm" onclick="prevQuestion()" id="btn-prev">← Previous</button>
+            <button class="btn btn-secondary btn-sm" onclick="nextQuestion()" id="btn-next">Next →</button>
+          </div>
+        </div>
+
+        <!-- Palette & Controls -->
+        <div class="glass-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <h4 style="margin-bottom: 1rem;">Question Palette</h4>
+            <div id="question-palette" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; margin-bottom: 1.5rem;">
+              <!-- Injected palette numbers -->
+            </div>
+          </div>
+
+          <button class="btn btn-primary" style="width: 100%; background: var(--accent-emerald);" onclick="finishExam()">
+            Finish & Submit Exam ✓
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Diagnostic Report Screen -->
+    <div id="mock-report-screen" class="glass-card" style="display: none; max-width: 860px; margin: 2rem auto; padding: 2.5rem;">
+      <div style="text-align: center; margin-bottom: 2rem;">
+        <span style="font-size: 3rem;">📊</span>
+        <h2>Diagnostic Performance Report</h2>
+        <p style="color: var(--text-secondary);">Your attempts have been mathematically incorporated into BKT mastery!</p>
+      </div>
+
+      <div class="grid-3" style="text-align: center; margin-bottom: 2rem;">
+        <div class="glass-card" style="padding: 1.25rem;">
+          <div class="metric-value" id="rep-score" style="color: var(--accent-emerald);">--</div>
+          <div class="metric-label">Estimated Marks</div>
+        </div>
+        <div class="glass-card" style="padding: 1.25rem;">
+          <div class="metric-value" id="rep-accuracy" style="color: var(--accent-gold);">--%</div>
+          <div class="metric-label">Accuracy Rate</div>
+        </div>
+        <div class="glass-card" style="padding: 1.25rem;">
+          <div class="metric-value" id="rep-correct" style="color: var(--accent-mint);">--</div>
+          <div class="metric-label">Correct / Attempted</div>
+        </div>
+      </div>
+
+      <h3 style="margin-bottom: 1rem;">Topic Weakness & Diagnostic Breakdown</h3>
+      <div id="topic-breakdown-list" style="margin-bottom: 2rem;">
+        <!-- Injected topic breakdown -->
+      </div>
+
+      <div style="display: flex; gap: 1rem; justify-content: center;">
+        <a href="dashboard.html" class="btn btn-primary">View Updated Dashboard →</a>
+        <button class="btn btn-secondary" onclick="location.reload()">Take Another Mock</button>
+      </div>
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+  <script>
+    renderHeader('mock');
+
+    let examData = null;
+    let currentIndex = 0;
+    let answers = {};
+    let timerInterval = null;
+    let remainingSeconds = 900;
+
+    async function startMockExam() {
+      const subj = document.getElementById('mock-subject-select').value;
+      try {
+        const data = await apiCall(`/mock/start?subject=${encodeURIComponent(subj)}&count=6`);
+        examData = data;
+        currentIndex = 0;
+        answers = {};
+        remainingSeconds = data.durationMinutes * 60;
+
+        document.getElementById('mock-start-screen').style.display = 'none';
+        document.getElementById('mock-exam-screen').style.display = 'block';
+
+        buildPalette();
+        showQuestion(0);
+        startTimer();
+      } catch (err) {
+        alert('Could not start mock: ' + err.message);
+      }
+    }
+
+    function startTimer() {
+      timerInterval = setInterval(() => {
+        remainingSeconds--;
+        const mins = Math.floor(remainingSeconds / 60);
+        const secs = remainingSeconds % 60;
+        document.getElementById('exam-timer').textContent = `⏱️ ${mins}:${secs < 10 ? '0' : ''}${secs}`;
+
+        if (remainingSeconds <= 0) {
+          clearInterval(timerInterval);
+          finishExam();
+        }
+      }, 1000);
+    }
+
+    function buildPalette() {
+      const pal = document.getElementById('question-palette');
+      pal.innerHTML = examData.questions.map((q, idx) => `
+        <button class="palette-btn ${idx === 0 ? 'active' : ''}" id="pal-${idx}" onclick="showQuestion(${idx})">
+          ${idx + 1}
+        </button>
+      `).join('');
+    }
+
+    function showQuestion(idx) {
+      currentIndex = idx;
+      const q = examData.questions[idx];
+
+      document.getElementById('exam-subtitle').textContent = `Question ${idx + 1} of ${examData.questions.length}`;
+      document.getElementById('q-subject-badge').textContent = q.subject;
+      document.getElementById('q-type-badge').textContent = `${q.type} (${q.year})`;
+      document.getElementById('q-text').textContent = q.question;
+
+      // Update palette active states
+      document.querySelectorAll('.palette-btn').forEach((b, i) => {
+        b.classList.remove('active');
+        if (i === idx) b.classList.add('active');
+      });
+
+      // Render options or input
+      const optContainer = document.getElementById('q-options-container');
+      if (q.type === 'MCQ' && q.options && q.options.length > 0) {
+        optContainer.innerHTML = q.options.map(opt => {
+          const optLetter = opt.charAt(0);
+          const isSelected = answers[q.id] === optLetter;
+          return `
+            <div class="question-option ${isSelected ? 'selected' : ''}" onclick="selectMCQ('${q.id}', '${optLetter}', this)">
+              ${opt}
+            </div>
+          `;
+        }).join('');
+      } else {
+        const currentAns = answers[q.id] || '';
+        optContainer.innerHTML = `
+          <input type="text" class="input-field" placeholder="Enter numerical answer" value="${currentAns}" oninput="recordAnswer('${q.id}', this.value)">
+        `;
+      }
+    }
+
+    function selectMCQ(qId, letter, el) {
+      answers[qId] = letter;
+      document.querySelectorAll('.question-option').forEach(o => o.classList.remove('selected'));
+      el.classList.add('selected');
+
+      const palBtn = document.getElementById(`pal-${currentIndex}`);
+      if (palBtn) palBtn.classList.add('answered');
+    }
+
+    function recordAnswer(qId, val) {
+      answers[qId] = val.trim();
+      const palBtn = document.getElementById(`pal-${currentIndex}`);
+      if (palBtn) {
+        if (val.trim()) palBtn.classList.add('answered');
+        else palBtn.classList.remove('answered');
+      }
+    }
+
+    function prevQuestion() {
+      if (currentIndex > 0) showQuestion(currentIndex - 1);
+    }
+
+    function nextQuestion() {
+      if (currentIndex < examData.questions.length - 1) showQuestion(currentIndex + 1);
+    }
+
+    async function finishExam() {
+      clearInterval(timerInterval);
+
+      const submissions = examData.questions.map(q => ({
+        questionId: q.id,
+        answer: answers[q.id] || ''
+      }));
+
+      try {
+        const report = await apiCall('/mock/submit', 'POST', {
+          testId: examData.testId,
+          submissions
+        });
+
+        document.getElementById('mock-exam-screen').style.display = 'none';
+        document.getElementById('mock-report-screen').style.display = 'block';
+
+        document.getElementById('rep-score').textContent = `${report.estimatedMarks} Marks`;
+        document.getElementById('rep-accuracy').textContent = `${report.percentageScore}%`;
+        document.getElementById('rep-correct').textContent = `${report.correctCount} / ${report.totalQuestions}`;
+
+        const tbList = document.getElementById('topic-breakdown-list');
+        tbList.innerHTML = Object.entries(report.topicBreakdown).map(([tId, st]) => `
+          <div class="glass-card" style="margin-bottom: 0.75rem; padding: 1rem; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <strong>${tId}</strong> (${st.subject})
+              <div style="font-size: 0.8rem; color: var(--text-muted);">
+                Correct: ${st.correct}, Wrong: ${st.wrong}, Unattempted: ${st.unattempted}
+              </div>
+            </div>
+            <span class="mastery-score-badge ${st.wrong > 0 ? 'low' : ''}">
+              ${st.correct}/${st.total} Correct
+            </span>
+          </div>
+        `).join('');
+
+      } catch (err) {
+        alert('Failed to evaluate exam: ' + err.message);
+      }
+    }
+  </script>
+</body>
+</html>

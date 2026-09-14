@@ -1,0 +1,7 @@
+crewai>=0.100.0
+crewai-tools>=0.30.0
+python-dotenv>=1.0.0
+fastapi>=0.110.0
+uvicorn>=0.28.0
+pydantic>=2.5.0
+litellm>=1.50.0

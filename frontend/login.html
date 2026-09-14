@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EduGraph AI — Aspirant Portal</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .auth-wrapper {
+      max-width: 440px;
+      margin: 4rem auto;
+    }
+    .auth-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border-subtle);
+      margin-bottom: 1.5rem;
+    }
+    .auth-tab {
+      flex: 1;
+      padding: 0.75rem;
+      text-align: center;
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-weight: 600;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: var(--transition);
+    }
+    .auth-tab.active {
+      color: var(--text-primary);
+      border-bottom-color: var(--accent-cyan);
+    }
+    .form-group {
+      margin-bottom: 1.2rem;
+    }
+    .form-group label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 0.4rem;
+    }
+  </style>
+</head>
+<body>
+  <div id="main-header"></div>
+
+  <div class="container">
+    <div class="auth-wrapper glass-card">
+      <div style="text-align: center; margin-bottom: 1.5rem;">
+        <div class="logo-badge" style="margin: 0 auto 0.75rem;">⚡</div>
+        <h2 id="auth-title">Welcome Back</h2>
+        <p style="color: var(--text-secondary); font-size: 0.9rem;" id="auth-desc">Sign in to track your GATE CSE knowledge graph</p>
+      </div>
+
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tab-login" onclick="setMode('login')">Sign In</button>
+        <button class="auth-tab" id="tab-signup" onclick="setMode('signup')">Create Account</button>
+      </div>
+
+      <div id="auth-alert" style="display: none; padding: 0.75rem; border-radius: var(--radius-sm); margin-bottom: 1rem; font-size: 0.85rem;"></div>
+
+      <form id="auth-form" onsubmit="handleAuthSubmit(event)">
+        <div class="form-group" id="group-name" style="display: none;">
+          <label for="name">Full Name</label>
+          <input type="text" id="name" class="input-field" placeholder="e.g. Prerit Mehta">
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <input type="email" id="email" class="input-field" placeholder="aspirant@gatecse.edu" required>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" class="input-field" placeholder="••••••••" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;" id="btn-submit">
+          Sign In →
+        </button>
+      </form>
+
+      <div style="margin-top: 1.5rem; text-align: center; border-top: 1px solid var(--border-subtle); padding-top: 1.25rem;">
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.75rem;">Want to test immediately without typing?</p>
+        <button class="btn btn-secondary btn-sm" style="width: 100%;" onclick="quickDemoLogin()">
+          ⚡ Quick 1-Click Demo Login
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    renderHeader('login');
+    let currentMode = 'login';
+
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('mode') === 'signup') {
+      setMode('signup');
+    }
+
+    function setMode(mode) {
+      currentMode = mode;
+      const tabLogin = document.getElementById('tab-login');
+      const tabSignup = document.getElementById('tab-signup');
+      const groupName = document.getElementById('group-name');
+      const btnSubmit = document.getElementById('btn-submit');
+      const title = document.getElementById('auth-title');
+      const desc = document.getElementById('auth-desc');
+
+      if (mode === 'signup') {
+        tabSignup.classList.add('active');
+        tabLogin.classList.remove('active');
+        groupName.style.display = 'block';
+        btnSubmit.textContent = 'Create Free Account →';
+        title.textContent = 'Join EduGraph AI';
+        desc.textContent = 'Start your adaptive GATE CSE preparation today';
+      } else {
+        tabLogin.classList.add('active');
+        tabSignup.classList.remove('active');
+        groupName.style.display = 'none';
+        btnSubmit.textContent = 'Sign In →';
+        title.textContent = 'Welcome Back';
+        desc.textContent = 'Sign in to track your GATE CSE knowledge graph';
+      }
+    }
+
+    async function handleAuthSubmit(e) {
+      e.preventDefault();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const name = document.getElementById('name').value.trim();
+      const alertBox = document.getElementById('auth-alert');
+
+      alertBox.style.display = 'none';
+
+      try {
+        let res;
+        if (currentMode === 'signup') {
+          res = await apiCall('/auth/signup', 'POST', { name, email, password });
+        } else {
+          res = await apiCall('/auth/login', 'POST', { email, password });
+        }
+
+        Auth.setAuth(res.token, res.user);
+        window.location.href = 'dashboard.html';
+      } catch (err) {
+        alertBox.style.display = 'block';
+        alertBox.style.background = 'rgba(244, 63, 94, 0.15)';
+        alertBox.style.border = '1px solid rgba(244, 63, 94, 0.4)';
+        alertBox.style.color = 'var(--accent-rose)';
+        alertBox.textContent = err.message || 'Authentication failed';
+      }
+    }
+  </script>
+</body>
+</html>

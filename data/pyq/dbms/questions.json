@@ -1,0 +1,79 @@
+[
+  {
+    "id": "dbms_2025_001",
+    "year": 2025,
+    "subject": "Database Management Systems",
+    "topic_id": "dbms_normalization",
+    "type": "MCQ",
+    "question": "Given a relation R(A, B, C, D, E) with functional dependencies F = { AB -> C, C -> D, D -> B, D -> E }. What is the highest normal form satisfied by relation R?",
+    "options": [
+      "A. 1NF",
+      "B. 2NF",
+      "C. 3NF",
+      "D. BCNF"
+    ],
+    "answer": "C",
+    "explanation": "Candidate keys are AB, AD, AC. Prime attributes: A, B, C, D. Non-prime attribute: E. For D -> E: LHS D is not a superkey, so not BCNF. But in 3NF, every non-trivial FD X -> Y must have X as superkey OR Y is prime. In D -> E, D is not superkey and E is not prime, so it violates 3NF! Wait, is D a superkey? Let's check closure D+ = D, B, E. But from D, can we get A? No, A does not appear on any RHS. So every candidate key must include A. Thus D cannot be a superkey! So D -> E has non-superkey D and non-prime E. Therefore relation is in 2NF, not 3NF! Wait: for 2NF, no non-prime attribute should be partially dependent on a candidate key. Is E partially dependent on AD? In D -> E, D is a proper subset of candidate key AD! Hence E is partially dependent on candidate key AD, violating 2NF! So R is only in 1NF! Let's verify: D+ = {D, B, E}. AD+ = {A, D, B, C, E} = R. So AD is indeed a candidate key! Since D is a proper subset of candidate key AD, D -> E is a partial dependency of non-prime attribute E on candidate key AD. Therefore, relation is in 1NF.",
+    "correct_normal_form": "1NF"
+  },
+  {
+    "id": "dbms_2024_001",
+    "year": 2024,
+    "subject": "Database Management Systems",
+    "topic_id": "dbms_transactions",
+    "type": "MCQ",
+    "question": "Which of the following concurrency control protocols guarantees conflict serializability and ensures freedom from cascading rollbacks (cascadelessness)?",
+    "options": [
+      "A. Basic Two-Phase Locking (2PL)",
+      "B. Strict Two-Phase Locking (Strict 2PL)",
+      "C. Conservative Two-Phase Locking",
+      "D. Time-stamp Ordering without buffering"
+    ],
+    "answer": "B",
+    "explanation": "Strict 2PL requires that all exclusive (write) locks held by a transaction must be retained until the transaction commits or aborts. This guarantees both conflict serializability and prevents cascading aborts (cascadeless)."
+  },
+  {
+    "id": "dbms_2023_001",
+    "year": 2023,
+    "subject": "Database Management Systems",
+    "topic_id": "dbms_indexing",
+    "type": "NAT",
+    "question": "In a B+ tree with block size 4096 bytes, search key size 12 bytes, and block pointer size 8 bytes, what is the maximum order (fanout) of an internal non-leaf node?",
+    "options": [],
+    "answer": "205",
+    "numeric_answer": 205,
+    "explanation": "Let order be p. An internal node has at most p block pointers and (p - 1) search keys. Condition: p * (pointer_size) + (p - 1) * (key_size) <= block_size => p * 8 + (p - 1) * 12 <= 4096 => 20p - 12 <= 4096 => 20p <= 4108 => p <= 205.4. Thus maximum order p = 205."
+  },
+  {
+    "id": "dbms_2022_001",
+    "year": 2022,
+    "subject": "Database Management Systems",
+    "topic_id": "dbms_sql",
+    "type": "MCQ",
+    "question": "In SQL, what is the result of evaluating the boolean expression (NULL = NULL) and (NULL IS NULL)?",
+    "options": [
+      "A. TRUE and TRUE",
+      "B. UNKNOWN and TRUE",
+      "C. FALSE and TRUE",
+      "D. UNKNOWN and UNKNOWN"
+    ],
+    "answer": "B",
+    "explanation": "In SQL three-valued logic, any comparison using '=' with NULL evaluates to UNKNOWN (not TRUE or FALSE). However, the specific predicate 'IS NULL' checks for nullity and evaluates to TRUE."
+  },
+  {
+    "id": "dbms_2021_001",
+    "year": 2021,
+    "subject": "Database Management Systems",
+    "topic_id": "dbms_rel_algebra",
+    "type": "MCQ",
+    "question": "Which of the following relational algebra operators is NOT commutative?",
+    "options": [
+      "A. Natural Join",
+      "B. Cartesian Product",
+      "C. Set Difference",
+      "D. Union"
+    ],
+    "answer": "C",
+    "explanation": "Set difference (R - S) is not commutative because (R - S) is not equal to (S - R). Natural join, cartesian product, and union are all commutative."
+  }
+]

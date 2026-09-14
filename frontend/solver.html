@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Redirecting to Study Studio...</title>
+  <script>
+    const p = window.location.search || '';
+    window.location.replace('study.html?view=solver' + (p ? '&' + p.replace('?', '') : ''));
+  </script>
+</head>
+<body>
+  <p>Redirecting to Study Studio... <a href="study.html?view=solver">Click here if not redirected</a>.</p>
+</body>
+</html>

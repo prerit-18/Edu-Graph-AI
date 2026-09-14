@@ -1,0 +1,74 @@
+[
+  {
+    "id": "algo_2025_001",
+    "year": 2025,
+    "subject": "Algorithms",
+    "topic_id": "algo_asymptotic",
+    "type": "MCQ",
+    "question": "What is the asymptotic time complexity of the recurrence relation T(n) = 2T(n/2) + n*log(n)?",
+    "options": [
+      "A. O(n log n)",
+      "B. O(n log^2 n)",
+      "C. O(n^2)",
+      "D. O(n)"
+    ],
+    "answer": "B",
+    "explanation": "Here a = 2, b = 2, f(n) = n*log(n). n^(log_b a) = n^(log_2 2) = n^1 = n. Since f(n) = n * log^k(n) where k = 1, by Extended Master Theorem Case 2, T(n) = Theta(n * log^(k+1) n) = Theta(n * log^2 n)."
+  },
+  {
+    "id": "algo_2024_001",
+    "year": 2024,
+    "subject": "Algorithms",
+    "topic_id": "algo_dp",
+    "type": "NAT",
+    "question": "What is the length of the Longest Common Subsequence (LCS) between strings X = 'AGGTAB' and Y = 'GXTXAYB'?",
+    "options": [],
+    "answer": "4",
+    "numeric_answer": 4,
+    "explanation": "The longest common subsequence is 'GTAB'. Its length is 4 ('G', 'T', 'A', 'B')."
+  },
+  {
+    "id": "algo_2023_001",
+    "year": 2023,
+    "subject": "Algorithms",
+    "topic_id": "algo_graphs",
+    "type": "MCQ",
+    "question": "In a connected undirected graph G with V vertices and E edges, what is the time complexity of Breadth-First Search (BFS) using an adjacency list representation?",
+    "options": [
+      "A. O(V^2)",
+      "B. O(V + E)",
+      "C. O(E log V)",
+      "D. O(V * E)"
+    ],
+    "answer": "B",
+    "explanation": "BFS visits each vertex once and inspects each edge incident to vertices. With an adjacency list, total time complexity is Theta(V + E)."
+  },
+  {
+    "id": "algo_2022_001",
+    "year": 2022,
+    "subject": "Algorithms",
+    "topic_id": "algo_shortest_paths",
+    "type": "MCQ",
+    "question": "Which of the following statements is FALSE regarding Dijkstra's single-source shortest path algorithm?",
+    "options": [
+      "A. It can correctly find shortest paths in graphs with negative weight edges.",
+      "B. It uses a greedy strategy.",
+      "C. It can be implemented with a Min-Heap in O((V + E) log V) time.",
+      "D. It fails or produces incorrect results if negative weight cycles are reachable."
+    ],
+    "answer": "A",
+    "explanation": "Dijkstra's algorithm assumes all edge weights are non-negative. Once a vertex is finalized, its distance cannot decrease, which fails if negative edge weights are present. Bellman-Ford should be used instead."
+  },
+  {
+    "id": "algo_2021_001",
+    "year": 2021,
+    "subject": "Algorithms",
+    "topic_id": "algo_divide_conquer",
+    "type": "NAT",
+    "question": "What is the worst-case number of comparisons needed by Quick Sort to sort an already sorted array of 5 elements when the first element is always chosen as the pivot?",
+    "options": [],
+    "answer": "10",
+    "numeric_answer": 10,
+    "explanation": "When already sorted and first element is pivot, partitions are extremely unbalanced (0 and n-1 elements). Number of comparisons = (n*(n-1))/2 = 5*4/2 = 10 comparisons."
+  }
+]

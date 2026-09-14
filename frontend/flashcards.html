@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EduGraph AI — Daily Smart Flashcards</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="main-header"></div>
+
+  <main class="container">
+    <div style="text-align: center; max-width: 680px; margin: 0 auto 2rem;">
+      <div class="hero-pill" style="margin-bottom: 0.5rem;">⚡ 10–15 Daily High-Yield Concepts</div>
+      <h1>GATE CSE Smart Flashcards</h1>
+      <p style="color: var(--text-secondary);">Focus on high-probability definitions, tricky formulas, and common exam traps. Click any card to flip!</p>
+    </div>
+
+    <!-- Flashcard Display Box -->
+    <div style="max-width: 640px; margin: 0 auto;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <span class="topic-badge" id="fc-subject">Operating Systems</span>
+        <span style="font-size: 0.85rem; color: var(--text-muted);" id="fc-counter">Card 1 of 7</span>
+        <span class="topic-badge" id="fc-type" style="background: rgba(16, 185, 129, 0.2); color: var(--accent-mint);">Formula</span>
+      </div>
+
+      <div class="flashcard-wrapper" id="flashcard-card" onclick="flipCard()">
+        <div class="flashcard-inner">
+          <!-- Front -->
+          <div class="flashcard-front">
+            <span style="font-size: 2.2rem; margin-bottom: 1rem;">💡</span>
+            <h3 id="fc-front-text" style="font-size: 1.3rem; color: var(--text-primary); max-width: 90%;">
+              Loading card...
+            </h3>
+            <div style="margin-top: 1.5rem; font-size: 0.8rem; color: var(--text-muted);">
+              (Click to flip and inspect explanation)
+            </div>
+          </div>
+
+          <!-- Back -->
+          <div class="flashcard-back">
+            <div style="font-size: 0.8rem; font-weight: 700; color: var(--accent-emerald); text-transform: uppercase; margin-bottom: 0.6rem;">
+              Verified Concept Breakdown:
+            </div>
+            <div id="fc-back-text" style="font-size: 0.95rem; line-height: 1.6; color: var(--text-primary); white-space: pre-line;">
+              Explanation text
+            </div>
+            <div style="margin-top: auto; font-size: 0.8rem; color: var(--text-muted);">
+              (Click anywhere to flip back)
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem;">
+        <button class="btn btn-secondary" onclick="prevCard()" id="btn-fc-prev">← Previous</button>
+        <button class="btn btn-secondary btn-sm" onclick="flipCard()">🔄 Flip Card</button>
+        <button class="btn btn-primary" onclick="nextCard()" id="btn-fc-next">Next Card →</button>
+      </div>
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+  <script>
+    renderHeader('flashcards');
+
+    let cards = [];
+    let currentIndex = 0;
+
+    async function loadFlashcards() {
+      try {
+        const data = await apiCall('/flashcards');
+        cards = data.flashcards;
+        currentIndex = 0;
+        showCard(0);
+      } catch (err) {
+        document.getElementById('fc-front-text').textContent = 'Failed to load flashcards: ' + err.message;
+      }
+    }
+
+    function showCard(idx) {
+      if (cards.length === 0) return;
+      currentIndex = idx;
+      const c = cards[idx];
+
+      const wrapper = document.getElementById('flashcard-card');
+      wrapper.classList.remove('flipped');
+
+      document.getElementById('fc-counter').textContent = `Card ${idx + 1} of ${cards.length}`;
+      document.getElementById('fc-subject').textContent = c.subject;
+      document.getElementById('fc-type').textContent = (c.type || 'Concept').toUpperCase();
+      document.getElementById('fc-front-text').textContent = c.front;
+      document.getElementById('fc-back-text').textContent = c.back;
+
+      document.getElementById('btn-fc-prev').disabled = idx === 0;
+      document.getElementById('btn-fc-next').disabled = idx === cards.length - 1;
+    }
+
+    function flipCard() {
+      document.getElementById('flashcard-card').classList.toggle('flipped');
+    }
+
+    function prevCard() {
+      if (currentIndex > 0) showCard(currentIndex - 1);
+    }
+
+    function nextCard() {
+      if (currentIndex < cards.length - 1) showCard(currentIndex + 1);
+    }
+
+    loadFlashcards();
+  </script>
+</body>
+</html>

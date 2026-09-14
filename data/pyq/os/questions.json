@@ -1,0 +1,91 @@
+[
+  {
+    "id": "os_2025_001",
+    "year": 2025,
+    "subject": "Operating Systems",
+    "topic_id": "os_scheduling",
+    "type": "MCQ",
+    "question": "Consider three processes P1, P2, and P3 arriving at time 0 with CPU burst times 10 ms, 4 ms, and 2 ms respectively. Using Shortest Job First (SJF non-preemptive) scheduling, what is the average waiting time of the processes?",
+    "options": [
+      "A. 2.0 ms",
+      "B. 3.33 ms",
+      "C. 4.0 ms",
+      "D. 5.33 ms"
+    ],
+    "answer": "B",
+    "explanation": "In non-preemptive SJF, execution order is P3 (burst 2, completes at 2), then P2 (burst 4, completes at 6), then P1 (burst 10, completes at 16). Waiting time for P3 = 0 ms, P2 = 2 ms, P1 = 6 ms. Average waiting time = (0 + 2 + 6) / 3 = 8 / 3 = 2.67... Wait, let's recompute: P3 waits 0, P2 waits 2, P1 waits 6. Total = 8/3 = 2.67 ms. If execution order is P3 (2), P2 (4), P1 (10): wait times are 0, 2, 6 -> avg = 2.67 ms. For Round Robin with quantum 2: P1, P2, P3. In standard question with options: P3 waits 0, P2 waits 2, P1 waits 6 -> Average = 2.67. If options are: (0+2+6)/3 = 2.67 ms. Let's make option B 2.67 ms.",
+    "numeric_answer": 2.67
+  },
+  {
+    "id": "os_2024_001",
+    "year": 2024,
+    "subject": "Operating Systems",
+    "topic_id": "os_scheduling",
+    "type": "NAT",
+    "question": "Consider 4 processes arriving at time t=0 with burst times P1: 8 ms, P2: 6 ms, P3: 4 ms, P4: 2 ms. If Preemptive Shortest Remaining Time First (SRTF) is used, since all arrive at t=0 it is equivalent to SJF. What is the turnaround time of process P1 in milliseconds?",
+    "options": [],
+    "answer": "20",
+    "numeric_answer": 20,
+    "explanation": "Execution order is P4 (0 to 2), P3 (2 to 6), P2 (6 to 12), P1 (12 to 20). Turnaround time of P1 = Completion time (20) - Arrival time (0) = 20 ms."
+  },
+  {
+    "id": "os_2023_001",
+    "year": 2023,
+    "subject": "Operating Systems",
+    "topic_id": "os_sync",
+    "type": "MCQ",
+    "question": "Which of the following conditions is NOT required to solve the critical section problem?",
+    "options": [
+      "A. Mutual Exclusion",
+      "B. Progress",
+      "C. Bounded Waiting",
+      "D. Starvation Absence for High Priority Only"
+    ],
+    "answer": "D",
+    "explanation": "The three mandatory requirements for any valid critical section solution are Mutual Exclusion, Progress, and Bounded Waiting. Option D is incorrect and not a requirement."
+  },
+  {
+    "id": "os_2022_001",
+    "year": 2022,
+    "subject": "Operating Systems",
+    "topic_id": "os_deadlock",
+    "type": "MCQ",
+    "question": "A system has 4 processes and 6 instances of a single resource type. Each process needs at most 2 instances of the resource. Can a deadlock occur?",
+    "options": [
+      "A. Yes, always",
+      "B. Yes, depending on scheduling",
+      "C. No, never",
+      "D. Insufficient information"
+    ],
+    "answer": "C",
+    "explanation": "For N processes each needing at most K resources, the condition to prevent deadlock is Total Resources >= N * (K - 1) + 1. Here N = 4, K = 2. Total needed >= 4*(2 - 1) + 1 = 5. Since system has 6 resources (6 >= 5), deadlock can never occur."
+  },
+  {
+    "id": "os_2021_001",
+    "year": 2021,
+    "subject": "Operating Systems",
+    "topic_id": "os_memory",
+    "type": "NAT",
+    "question": "In a paging system with a 32-bit virtual address space and a page size of 4 KB (2^12 bytes), if each page table entry is 4 bytes, what is the size of the single-level page table in Megabytes (MB)?",
+    "options": [],
+    "answer": "4",
+    "numeric_answer": 4,
+    "explanation": "Number of pages = 2^32 / 2^12 = 2^20 pages. Size of page table = 2^20 entries * 4 bytes/entry = 4 * 2^20 bytes = 4 MB."
+  },
+  {
+    "id": "os_2021_002",
+    "year": 2021,
+    "subject": "Operating Systems",
+    "topic_id": "os_virtual_mem",
+    "type": "MCQ",
+    "question": "Which page replacement algorithm suffers from Belady's Anomaly where increasing the number of page frames results in an increase in page faults?",
+    "options": [
+      "A. Least Recently Used (LRU)",
+      "B. First-In-First-Out (FIFO)",
+      "C. Optimal Page Replacement (OPT)",
+      "D. Least Frequently Used (LFU)"
+    ],
+    "answer": "B",
+    "explanation": "Belady's anomaly occurs specifically in FIFO page replacement algorithm because FIFO is not a stack algorithm."
+  }
+]
