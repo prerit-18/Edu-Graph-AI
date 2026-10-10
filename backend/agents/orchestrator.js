@@ -100,17 +100,19 @@ class OrchestrationInterface {
   /**
    * Active Recall Workflow
    */
-  async generateActiveRecall({ topicId, userId }) {
-    return await agents.activeRecallAgent.runner.generatePrompt({ topicId, userId });
+  async generateActiveRecall({ topicId, subject, type, userId }) {
+    return await agents.activeRecallAgent.runner.generatePrompt({ topicId, subject, type, userId });
   }
 
-  async gradeActiveRecall({ topicId, question, studentAnswer, referenceAnswer, keyConcepts, userId }) {
+  async gradeActiveRecall({ promptId, topicId, question, studentAnswer, referenceAnswer, keyConcepts, idempotencyKey, userId }) {
     return await agents.activeRecallAgent.runner.gradeResponse({
+      promptId,
       topicId,
       question,
       studentAnswer,
       referenceAnswer,
       keyConcepts,
+      idempotencyKey,
       userId
     });
   }

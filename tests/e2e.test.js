@@ -144,20 +144,21 @@ async function runE2EDemo() {
   const recallPrompt = await get(`/api/recall/prompt?topicId=os_scheduling`, authToken);
   assert.strictEqual(recallPrompt.status, 200);
   assert(recallPrompt.data.question, 'Recall question must exist');
+  assert(recallPrompt.data.promptId, 'Prompt ID must exist');
+  assert.strictEqual(recallPrompt.data.referenceAnswer, undefined, 'Pre-submission answer key must not be leaked');
   console.log(`✓ Step 13 Passed: Active Recall prompt created: "${recallPrompt.data.question.slice(0, 60)}..."`);
 
   // Step 14 & 15: Student answers and response is graded
   console.log('Step 14-15: Student answers recall prompt and receives AI grading...');
-  const studentAnswer = `The answer relates to: ${recallPrompt.data.keyConcepts.join(', ')} in CPU scheduling.`;
+  const studentAnswer = 'SJF suffers from starvation of longer processes. Aging solves this by increasing priority over time.';
   const gradeRes = await post('/api/recall/grade', {
+    promptId: recallPrompt.data.promptId,
     topicId: 'os_scheduling',
-    question: recallPrompt.data.question,
-    studentAnswer,
-    referenceAnswer: recallPrompt.data.referenceAnswer,
-    keyConcepts: recallPrompt.data.keyConcepts
+    studentAnswer
   }, authToken);
   assert.strictEqual(gradeRes.status, 200);
   assert.strictEqual(gradeRes.data.isCorrect, true);
+  assert(gradeRes.data.referenceAnswer, 'Reference answer should now be returned post-evaluation');
 
   // Step 16: BKT updates again
   console.log('Step 16: Verifying second BKT update from active recall...');

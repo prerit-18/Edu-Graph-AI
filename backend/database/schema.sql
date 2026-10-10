@@ -55,3 +55,17 @@ CREATE TABLE IF NOT EXISTS agent_logs (
   detail TEXT,
   created_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS recall_prompts (
+  id TEXT PRIMARY KEY,
+  topic_id TEXT,
+  prompt_type TEXT,
+  question TEXT,
+  reference_answer TEXT,
+  key_concepts TEXT,
+  rubric TEXT,
+  difficulty TEXT DEFAULT 'medium',
+  source_references TEXT,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (topic_id) REFERENCES topics(id) ON DELETE CASCADE
+);

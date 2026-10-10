@@ -150,7 +150,8 @@ const agents = {
     goal: 'Active cognitive retrieval prompt generation and answer grading',
     backstory: activeRecallAgent.backstory,
     tools: activeRecallAgent.tools,
-    runner: activeRecallAgent
+    runner: activeRecallAgent,
+    taskType: 'recall_grade'
   }),
   mockTestAgent: new Agent({
     role: 'Mock Test Agent',

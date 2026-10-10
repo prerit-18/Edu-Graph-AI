@@ -69,15 +69,12 @@ async function runAgentTests() {
     userId: testUserId
   });
   assert(recallPrompt.question.length > 10, 'Prompt should have question text');
+  assert(recallPrompt.promptId, 'Prompt should have promptId');
   
-  // Construct student answer dynamically using the returned key concepts for this prompt
-  const answerText = `Addressing the prompt: ${recallPrompt.keyConcepts.join(', ')} explains the behavior and trade-offs.`;
   const gradeResult = await orchestrator.gradeActiveRecall({
+    promptId: recallPrompt.promptId,
     topicId: 'os_scheduling',
-    question: recallPrompt.question,
-    studentAnswer: answerText,
-    referenceAnswer: recallPrompt.referenceAnswer,
-    keyConcepts: recallPrompt.keyConcepts,
+    studentAnswer: 'SJF causes starvation for longer jobs. Aging increases process priority over time to prevent starvation.',
     userId: testUserId
   });
   assert.strictEqual(gradeResult.isCorrect, true, 'Recall with key concepts should be correct');

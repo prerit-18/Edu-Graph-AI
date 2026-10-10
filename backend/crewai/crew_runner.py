@@ -451,6 +451,116 @@ Requirements:
         print(f"Solver Crew fallback due to: {e}", file=sys.stderr)
         return base_res
 
+def run_recall_generate_crew(topic_id: Optional[str] = None, subject: Optional[str] = None, prompt_type: Optional[str] = None, user_id: Optional[str] = None) -> Dict[str, Any]:
+    target_topic = topic_id or 'os_scheduling'
+    rag_context = rag_tool._run(query=f"{target_topic} core definitions, formulas, and conditions", subject=subject)
+    
+    llm = get_configured_llm()
+    if not HAS_CREWAI or not llm or Crew is None:
+        return {
+            "topicId": target_topic,
+            "promptType": prompt_type or "concept_recall",
+            "ragContext": rag_context
+        }
+
+    try:
+        agent = create_active_recall_agent(llm=llm)
+        task_desc = f"""Formulate a high-yield GATE CSE active recall question for topic: {target_topic} ({subject or 'CS'}).
+Recall Type: {prompt_type or 'concept_recall'}
+Context: {rag_context}
+
+Output format in strict JSON:
+{{
+  "question": "Clear, direct question testing recall from memory (no multiple choice)",
+  "referenceAnswer": "Complete authoritative reference solution",
+  "keyConcepts": ["key term 1", "key term 2", "key term 3"],
+  "rubric": "Evaluation criteria for full, partial, and zero marks",
+  "difficulty": "medium"
+}}"""
+
+        task = Task(description=task_desc, expected_output="Valid JSON object with question, referenceAnswer, keyConcepts, rubric.", agent=agent)
+        crew = Crew(agents=[agent], tasks=[task], verbose=False)
+        result = crew.kickoff()
+        output_str = str(result)
+        
+        raw_clean = output_str.strip()
+        if "```json" in raw_clean:
+            raw_clean = raw_clean.split("```json")[1].split("```")[0].strip()
+        elif "```" in raw_clean:
+            raw_clean = raw_clean.split("```")[1].split("```")[0].strip()
+        
+        parsed = json.loads(raw_clean)
+        return {
+            "agent": agent.role,
+            "topicId": target_topic,
+            "promptType": prompt_type or "concept_recall",
+            "question": parsed.get("question"),
+            "referenceAnswer": parsed.get("referenceAnswer"),
+            "keyConcepts": parsed.get("keyConcepts", []),
+            "rubric": parsed.get("rubric", ""),
+            "difficulty": parsed.get("difficulty", "medium")
+        }
+    except Exception as e:
+        print(f"Recall Generate Crew fallback: {e}", file=sys.stderr)
+        return {
+            "topicId": target_topic,
+            "promptType": prompt_type or "concept_recall",
+            "ragContext": rag_context
+        }
+
+def run_recall_grade_crew(topic_id: str, question: str, student_answer: str, reference_answer: str, key_concepts: list, rubric: Optional[str] = None, user_id: Optional[str] = None) -> Dict[str, Any]:
+    llm = get_configured_llm()
+    if not HAS_CREWAI or not llm or Crew is None:
+        return {
+            "evaluatedBy": "local_engine"
+        }
+
+    try:
+        agent = create_active_recall_agent(llm=llm)
+        task_desc = f"""Evaluate this GATE CSE student active recall answer against the official reference solution.
+Question: {question}
+Official Reference Answer: {reference_answer}
+Key Concepts Expected: {json.dumps(key_concepts)}
+Rubric: {rubric or 'Check conceptual accuracy, invariant completeness, and correct terminology.'}
+Student Answer: {student_answer}
+
+Evaluate strictly and return JSON:
+{{
+  "score": integer between 0 and 100,
+  "correctness": "correct" (if score >= 70) | "partial" (if 40-69) | "incorrect" (if < 40),
+  "feedback": "Specific, constructive 2-3 sentence feedback explaining what was good and what was missed",
+  "correctPoints": ["point 1 recalled correctly", ...],
+  "missingPoints": ["omitted concept or rule", ...],
+  "misconceptions": ["any wrong assumption", ...]
+}}"""
+
+        task = Task(description=task_desc, expected_output="Valid JSON evaluation object.", agent=agent)
+        crew = Crew(agents=[agent], tasks=[task], verbose=False)
+        result = crew.kickoff()
+        output_str = str(result)
+        
+        raw_clean = output_str.strip()
+        if "```json" in raw_clean:
+            raw_clean = raw_clean.split("```json")[1].split("```")[0].strip()
+        elif "```" in raw_clean:
+            raw_clean = raw_clean.split("```")[1].split("```")[0].strip()
+
+        parsed = json.loads(raw_clean)
+        return {
+            "agent": agent.role,
+            "score": parsed.get("score", 50),
+            "correctness": parsed.get("correctness", "partial"),
+            "feedback": parsed.get("feedback", ""),
+            "correctPoints": parsed.get("correctPoints", []),
+            "missingPoints": parsed.get("missingPoints", []),
+            "misconceptions": parsed.get("misconceptions", [])
+        }
+    except Exception as e:
+        print(f"Recall Grade Crew fallback: {e}", file=sys.stderr)
+        return {
+            "evaluatedBy": "local_engine"
+        }
+
 def main():
     parser = argparse.ArgumentParser(description="EduGraph CrewAI Multi-Agent Runner")
     parser.add_argument("--task", required=True, choices=["concept", "pyq", "solve", "recall_generate", "recall_grade"])
@@ -490,6 +600,23 @@ def main():
             user_id=user_id,
             topic_id=topic_id
         )
+    elif args.task == "recall_generate":
+        prompt_type = payload.get('promptType') or payload.get('type')
+        res = run_recall_generate_crew(topic_id=topic_id, subject=subject, prompt_type=prompt_type, user_id=user_id)
+    elif args.task == "recall_grade":
+        question = payload.get('question') or query
+        ref_ans = payload.get('referenceAnswer') or payload.get('reference_answer') or ''
+        key_concepts = payload.get('keyConcepts') or payload.get('key_concepts') or []
+        rubric = payload.get('rubric') or ''
+        res = run_recall_grade_crew(
+            topic_id=topic_id or 'os_scheduling',
+            question=question,
+            student_answer=student_answer or '',
+            reference_answer=ref_ans,
+            key_concepts=key_concepts,
+            rubric=rubric,
+            user_id=user_id
+        )
     else:
         res = {"error": f"Task {args.task} not supported"}
 
@@ -497,3 +624,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

@@ -5,71 +5,213 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>EduGraph AI — Active Recall Studio</title>
   <link rel="stylesheet" href="styles.css">
+  <style>
+    .recall-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+      background: #FFFFFF;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 0.85rem 1.25rem;
+      box-shadow: var(--shadow-xs);
+    }
+    .recall-toolbar select {
+      font-size: 0.85rem;
+      padding: 0.4rem 0.8rem;
+    }
+    .point-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.25rem 0.65rem;
+      border-radius: var(--radius-xs);
+      font-size: 0.82rem;
+      margin: 0.2rem 0.3rem 0.2rem 0;
+    }
+    .point-tag.success {
+      background: var(--accent-subtle);
+      color: var(--accent-primary);
+      border: 1px solid rgba(36, 91, 69, 0.25);
+    }
+    .point-tag.warning {
+      background: var(--accent-rose-subtle);
+      color: var(--accent-rose);
+      border: 1px solid rgba(168, 40, 40, 0.25);
+    }
+    .history-card {
+      background: #FFFFFF;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 0.85rem 1.15rem;
+      margin-bottom: 0.65rem;
+    }
+  </style>
 </head>
 <body>
   <div id="main-header"></div>
 
-  <main class="container">
-    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+  <main class="container" style="max-width: 900px; margin: 0 auto; padding: 1.5rem 1.5rem 4rem;">
+    <!-- Header -->
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
       <div>
-        <div class="hero-pill" style="margin-bottom: 0.5rem;">Retrieval Practice</div>
-        <h1>Active Recall Studio</h1>
-        <p style="color: var(--text-secondary);">Test conceptual recall directly from memory to reinforce retention.</p>
+        <div class="hero-pill" style="margin-bottom: 0.35rem;">Cognitive Retrieval Practice</div>
+        <h1 style="font-size: 1.65rem; margin-bottom: 0.25rem;">Active Recall Studio</h1>
+        <p style="color: var(--text-secondary); font-size: 0.92rem; margin: 0;">
+          Test your conceptual understanding directly from memory without multiple-choice cues.
+        </p>
       </div>
-      <button class="btn btn-secondary btn-sm" onclick="loadNextPrompt()">Next Prompt</button>
+      <button class="btn btn-secondary btn-sm" onclick="loadNextPrompt()" id="btn-next-prompt">
+        Next Challenge →
+      </button>
     </div>
 
-    <!-- Active Recall Challenge Card -->
-    <div class="glass-card" style="max-width: 800px; margin: 0 auto; padding: 2rem;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
-        <div>
-          <span class="topic-badge" id="topic-badge">Operating Systems</span>
-          <h3 id="topic-title" style="margin-top: 0.35rem;">CPU Scheduling</h3>
-        </div>
-        <span class="topic-badge" id="probe-type-badge">Short Answer Probe</span>
+    <!-- Personalization & Topic Controls -->
+    <div class="recall-toolbar">
+      <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+        <label for="select-subject" style="font-size: 0.82rem; color: var(--text-secondary); font-weight: 600;">Subject:</label>
+        <select id="select-subject" class="input-field" style="width: auto; max-width: 180px;" onchange="handleSubjectChange(this.value)">
+          <option value="All">All 5 Subjects</option>
+          <option value="Algorithms">Algorithms</option>
+          <option value="Compiler Design">Compiler Design</option>
+          <option value="Operating Systems">Operating Systems</option>
+          <option value="Databases">Databases</option>
+          <option value="Computer Networks">Computer Networks</option>
+        </select>
+
+        <label for="select-topic" style="font-size: 0.82rem; color: var(--text-secondary); font-weight: 600;">Topic:</label>
+        <select id="select-topic" class="input-field" style="width: auto; max-width: 220px;" onchange="handleTopicChange(this.value)">
+          <option value="">Auto: Personalized</option>
+        </select>
+
+        <label for="select-type" style="font-size: 0.82rem; color: var(--text-secondary); font-weight: 600;">Mode:</label>
+        <select id="select-type" class="input-field" style="width: auto; max-width: 170px;" onchange="loadNextPrompt()">
+          <option value="all">All Recall Modes</option>
+          <option value="concept_recall">Concept Recall</option>
+          <option value="formula_recall">Formula Recall</option>
+          <option value="short_answer">Short Answer</option>
+          <option value="compare_contrast">Compare & Contrast</option>
+          <option value="trace_predict">Trace & Predict</option>
+        </select>
       </div>
 
-      <!-- Question Probe -->
-      <div style="background: var(--bg-surface-secondary); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 1.25rem; margin-bottom: 1.25rem;">
-        <p id="prompt-question" style="font-size: 1.05rem; line-height: 1.6; color: var(--text-primary); margin: 0;">
-          Generating recall prompt...
+      <button class="btn btn-primary btn-sm" onclick="loadNextPrompt()">
+        Load Prompt
+      </button>
+    </div>
+
+    <!-- Active Challenge Card -->
+    <div class="glass-card" style="padding: 2rem; margin-bottom: 2rem;">
+      <!-- Topic & Metadata Badges -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+        <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+          <span class="topic-badge" id="topic-badge">Operating Systems</span>
+          <span class="badge-pill mcq" id="probe-type-badge">Concept Recall</span>
+          <span class="topic-badge" id="difficulty-badge">Medium</span>
+        </div>
+        <span style="font-size: 0.8rem; color: var(--text-muted);" id="prompt-reason">Personalized Selection</span>
+      </div>
+
+      <h3 id="topic-title" style="margin: 0 0 1rem; font-size: 1.2rem;">CPU Scheduling & Invariants</h3>
+
+      <!-- Question Probe Box -->
+      <div style="background: var(--bg-surface-secondary); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 1.25rem; margin-bottom: 1.5rem;">
+        <p id="prompt-question" style="font-size: 1.02rem; line-height: 1.65; color: var(--text-primary); margin: 0;">
+          Generating tailored recall challenge...
         </p>
       </div>
 
-      <!-- Student Input Area -->
+      <!-- Student Input Form -->
       <form onsubmit="submitRecallAnswer(event)" id="recall-form">
         <div style="margin-bottom: 1.25rem;">
-          <label for="student-response" style="display: block; font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 0.4rem; font-weight: 500;">
-            Your Explanation / Answer:
-          </label>
-          <textarea id="student-response" class="input-field" rows="4" placeholder="Type your response in your own words. Include key mechanisms, trade-offs, or formulas..." style="resize: vertical; font-family: inherit;" required></textarea>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+            <label for="student-response" style="font-size: 0.88rem; color: var(--text-secondary); font-weight: 500;">
+              Your Explanation / Derivation:
+            </label>
+            <span style="font-size: 0.78rem; color: var(--text-muted);" id="char-count">0 words</span>
+          </div>
+          <textarea id="student-response" class="input-field" rows="5" placeholder="Explain the concept in your own words. Focus on key mechanisms, conditions, formulas, or trade-offs..." style="resize: vertical; font-family: inherit; font-size: 0.92rem; line-height: 1.55;" oninput="updateWordCount(this.value)" required></textarea>
         </div>
 
-        <button type="submit" class="btn btn-primary" id="btn-submit-recall" style="width: 100%;">
-          Submit Response
-        </button>
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+          <div style="font-size: 0.8rem; color: var(--text-muted);">
+            Evaluated against standard GATE CSE reference rubrics.
+          </div>
+          <button type="submit" class="btn btn-primary" id="btn-submit-recall" style="min-width: 180px;">
+            Submit Response
+          </button>
+        </div>
       </form>
 
-      <!-- Grader Feedback -->
-      <div id="feedback-section" style="display: none; margin-top: 1.5rem; border-top: 1px solid var(--border-subtle); padding-top: 1.25rem;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-          <h4 style="margin: 0;">Evaluation Feedback</h4>
-          <span class="mastery-score-badge" id="score-badge">Score: --%</span>
-        </div>
-
-        <div id="feedback-msg" style="padding: 0.85rem 1rem; border-radius: var(--radius-sm); margin-bottom: 1rem; font-size: 0.92rem; line-height: 1.5;"></div>
-
-        <div style="background: var(--bg-surface-secondary); padding: 1rem 1.15rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); margin-bottom: 1rem;">
-          <div style="font-size: 0.78rem; color: var(--accent-primary); font-weight: 700; text-transform: uppercase; margin-bottom: 0.25rem;">
-            Reference Solution:
+      <!-- Feedback Section (Revealed after evaluation) -->
+      <div id="feedback-section" style="display: none; margin-top: 2rem; border-top: 1px solid var(--border-subtle); padding-top: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+          <h4 style="margin: 0; font-size: 1.1rem;">Evaluation Feedback</h4>
+          <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <span class="badge-pill" id="correctness-badge">Correct</span>
+            <span class="mastery-score-badge" id="score-badge">Score: --%</span>
           </div>
-          <div id="reference-solution" style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.55;"></div>
         </div>
 
-        <div id="bkt-outcome-banner" style="background: var(--accent-subtle); border: 1px solid rgba(36, 91, 69, 0.25); color: var(--accent-primary); padding: 0.75rem 1rem; border-radius: var(--radius-sm); font-size: 0.88rem; text-align: center;">
+        <!-- Feedback Summary Message -->
+        <div id="feedback-msg" style="padding: 1rem 1.25rem; border-radius: var(--radius-sm); margin-bottom: 1.25rem; font-size: 0.92rem; line-height: 1.55;"></div>
+
+        <!-- Concept Points Breakdown -->
+        <div id="points-breakdown" style="margin-bottom: 1.25rem; display: none;">
+          <div style="font-size: 0.82rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">
+            Concepts Recalled:
+          </div>
+          <div id="correct-points-list" style="margin-bottom: 0.5rem;"></div>
+
+          <div id="missing-points-container" style="display: none;">
+            <div style="font-size: 0.82rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">
+              Missing / Misunderstood Concepts:
+            </div>
+            <div id="missing-points-list"></div>
+          </div>
+        </div>
+
+        <!-- Reference Solution Box -->
+        <div style="background: var(--bg-surface-secondary); padding: 1.15rem 1.25rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); margin-bottom: 1.25rem;">
+          <div style="font-size: 0.78rem; color: var(--accent-primary); font-weight: 700; text-transform: uppercase; margin-bottom: 0.35rem; display: flex; justify-content: space-between;">
+            <span>Official Reference Solution</span>
+            <span id="citation-tag" style="color: var(--text-muted); font-weight: 500;">GATE Reference</span>
+          </div>
+          <div id="reference-solution" style="font-size: 0.92rem; color: var(--text-primary); line-height: 1.6; white-space: pre-line;"></div>
+        </div>
+
+        <!-- BKT Update Gauge -->
+        <div id="bkt-outcome-banner" style="background: var(--accent-subtle); border: 1px solid rgba(36, 91, 69, 0.25); color: var(--text-primary); padding: 1rem 1.25rem; border-radius: var(--radius-sm); font-size: 0.88rem; margin-bottom: 1.5rem;">
+        </div>
+
+        <!-- Adaptive Follow-Up Action Box -->
+        <div id="adaptive-action-box" class="glass-card" style="padding: 1.15rem 1.25rem; background: #FFFFFF; border-color: var(--border-strong);">
+          <div style="font-size: 0.78rem; color: var(--accent-primary); font-weight: 700; text-transform: uppercase; margin-bottom: 0.35rem;">
+            Recommended Next Step
+          </div>
+          <div id="adaptive-reason" style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 0.85rem;"></div>
+          <div style="display: flex; gap: 0.6rem; flex-wrap: wrap;" id="adaptive-buttons">
+            <!-- Injected buttons -->
+          </div>
         </div>
       </div>
     </div>
+
+    <!-- Student Recall History -->
+    <section id="history-section" style="margin-top: 2rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h3 style="font-size: 1.1rem; margin: 0;">Recent Recall Attempts</h3>
+        <button class="btn btn-secondary btn-sm" onclick="loadRecallHistory()">Refresh Logs</button>
+      </div>
+      <div id="history-list">
+        <div style="color: var(--text-muted); font-size: 0.88rem; padding: 1rem; text-align: center;">
+          Loading previous attempts...
+        </div>
+      </div>
+    </section>
   </main>
 
   <script src="app.js"></script>
@@ -77,24 +219,76 @@
     renderHeader('recall');
 
     let currentPrompt = null;
+    let allTopics = [];
     const urlParams = new URLSearchParams(window.location.search);
     const initialTopic = urlParams.get('topic');
 
-    async function loadNextPrompt(topicId = initialTopic) {
+    // Load available topics into dropdown
+    async function initTopicDropdown() {
+      try {
+        const data = await apiCall('/learner/mastery');
+        allTopics = data.mastery || [];
+        populateTopicSelect('All');
+        if (initialTopic) {
+          const select = document.getElementById('select-topic');
+          select.value = initialTopic;
+        }
+      } catch (err) {
+        console.warn('Could not load topics:', err);
+      }
+    }
+
+    function populateTopicSelect(subject) {
+      const select = document.getElementById('select-topic');
+      const filtered = subject === 'All' ? allTopics : allTopics.filter(t => t.subject === subject);
+
+      select.innerHTML = '<option value="">Auto: Personalized</option>' +
+        filtered.map(t => `<option value="${t.topic_id}">${t.topic_name} (${t.subject})</option>`).join('');
+    }
+
+    function handleSubjectChange(subj) {
+      populateTopicSelect(subj);
+      loadNextPrompt();
+    }
+
+    function handleTopicChange(topicId) {
+      loadNextPrompt(topicId);
+    }
+
+    function updateWordCount(text) {
+      const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+      document.getElementById('char-count').textContent = `${words} word${words === 1 ? '' : 's'}`;
+    }
+
+    async function loadNextPrompt(explicitTopicId = null) {
       document.getElementById('feedback-section').style.display = 'none';
       document.getElementById('student-response').value = '';
+      document.getElementById('char-count').textContent = '0 words';
       document.getElementById('btn-submit-recall').disabled = false;
-      document.getElementById('prompt-question').textContent = 'Loading recall challenge...';
+      document.getElementById('prompt-question').textContent = 'Loading active recall challenge from knowledge base...';
+
+      const subject = document.getElementById('select-subject').value;
+      const topicId = explicitTopicId || document.getElementById('select-topic').value;
+      const type = document.getElementById('select-type').value;
 
       try {
-        const query = topicId ? `?topicId=${topicId}` : '';
-        const data = await apiCall(`/recall/prompt${query}`);
+        const params = new URLSearchParams();
+        if (topicId) params.set('topicId', topicId);
+        if (subject && subject !== 'All') params.set('subject', subject);
+        if (type && type !== 'all') params.set('type', type);
+
+        const data = await apiCall(`/recall/prompt?${params.toString()}`);
         currentPrompt = data;
 
         document.getElementById('topic-badge').textContent = data.subject;
         document.getElementById('topic-title').textContent = data.topicName;
-        document.getElementById('probe-type-badge').textContent = data.promptType.replace('_', ' ').toUpperCase();
+        document.getElementById('probe-type-badge').textContent = data.promptType.replace(/_/g, ' ').toUpperCase();
+        document.getElementById('difficulty-badge').textContent = (data.difficulty || 'Medium').toUpperCase();
+        document.getElementById('prompt-reason').textContent = data.recommendationReason || 'Personalized Challenge';
         document.getElementById('prompt-question').textContent = data.question;
+
+        // Scroll to question
+        document.getElementById('student-response').focus();
       } catch (err) {
         document.getElementById('prompt-question').textContent = `Failed to load prompt: ${err.message}`;
       }
@@ -107,53 +301,158 @@
       const studentAns = document.getElementById('student-response').value.trim();
       if (!studentAns) return;
 
-      document.getElementById('btn-submit-recall').disabled = true;
+      const submitBtn = document.getElementById('btn-submit-recall');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Evaluating Response...';
 
       try {
         const evalResult = await apiCall('/recall/grade', 'POST', {
+          promptId: currentPrompt.promptId,
           topicId: currentPrompt.topicId,
-          question: currentPrompt.question,
           studentAnswer: studentAns,
-          referenceAnswer: currentPrompt.referenceAnswer,
-          keyConcepts: currentPrompt.keyConcepts
+          idempotencyKey: `attempt_${currentPrompt.promptId}_${Date.now()}`
         });
 
+        // Display results
         const fbSection = document.getElementById('feedback-section');
         const fbMsg = document.getElementById('feedback-msg');
         const scoreBadge = document.getElementById('score-badge');
+        const correctnessBadge = document.getElementById('correctness-badge');
         const refSol = document.getElementById('reference-solution');
         const bktBanner = document.getElementById('bkt-outcome-banner');
 
         fbSection.style.display = 'block';
         scoreBadge.textContent = `Accuracy: ${evalResult.score}%`;
-        refSol.textContent = evalResult.referenceAnswer;
 
-        if (evalResult.isCorrect) {
+        // Correctness badge & feedback styling
+        if (evalResult.correctness === 'correct') {
+          correctnessBadge.className = 'badge-pill mcq';
+          correctnessBadge.textContent = 'Correct';
           fbMsg.style.background = 'var(--accent-subtle)';
           fbMsg.style.border = '1px solid rgba(36, 91, 69, 0.3)';
           fbMsg.style.color = 'var(--accent-primary)';
-          fbMsg.innerHTML = `<strong>Accurate Retrieval:</strong> ${evalResult.feedback}`;
+        } else if (evalResult.correctness === 'partial') {
+          correctnessBadge.className = 'badge-pill nat';
+          correctnessBadge.textContent = 'Partially Correct';
+          fbMsg.style.background = 'var(--accent-amber-subtle)';
+          fbMsg.style.border = '1px solid rgba(154, 91, 0, 0.3)';
+          fbMsg.style.color = 'var(--accent-amber)';
         } else {
+          correctnessBadge.className = 'badge-pill nat';
+          correctnessBadge.textContent = 'Needs Practice';
           fbMsg.style.background = 'var(--accent-rose-subtle)';
           fbMsg.style.border = '1px solid rgba(168, 40, 40, 0.3)';
           fbMsg.style.color = 'var(--accent-rose)';
-          fbMsg.innerHTML = `<strong>Needs Reinforcement:</strong> ${evalResult.feedback}`;
         }
 
+        fbMsg.innerHTML = `<strong>${evalResult.correctness.toUpperCase()}:</strong> ${evalResult.feedback}`;
+        refSol.textContent = evalResult.referenceAnswer || 'Standard GATE solution.';
+
+        // Points breakdown
+        const pointsBox = document.getElementById('points-breakdown');
+        const correctList = document.getElementById('correct-points-list');
+        const missingContainer = document.getElementById('missing-points-container');
+        const missingList = document.getElementById('missing-points-list');
+
+        if (evalResult.correctPoints && evalResult.correctPoints.length > 0) {
+          pointsBox.style.display = 'block';
+          correctList.innerHTML = evalResult.correctPoints.map(p => `<span class="point-tag success">✓ ${p}</span>`).join('');
+        } else {
+          correctList.innerHTML = '<span style="font-size: 0.82rem; color: var(--text-muted);">None identified</span>';
+        }
+
+        if (evalResult.missingPoints && evalResult.missingPoints.length > 0) {
+          missingContainer.style.display = 'block';
+          missingList.innerHTML = evalResult.missingPoints.map(p => `<span class="point-tag warning">⚠ ${p}</span>`).join('');
+        } else {
+          missingContainer.style.display = 'none';
+        }
+
+        // Citations
+        if (evalResult.sourceReferences && evalResult.sourceReferences.length > 0) {
+          document.getElementById('citation-tag').textContent = evalResult.sourceReferences.map(c => c.source || c.topic).join(' • ');
+        }
+
+        // BKT outcome banner
         if (evalResult.bktUpdate) {
           const prev = (evalResult.bktUpdate.previousPKnow * 100).toFixed(1);
           const next = (evalResult.bktUpdate.newPKnow * 100).toFixed(1);
-          bktBanner.innerHTML = `<strong>Knowledge State Updated:</strong> P(Know) changed from <strong>${prev}%</strong> → <strong style="color: var(--accent-primary);">${next}%</strong>.`;
+          bktBanner.innerHTML = `<strong>Bayesian Knowledge Tracing (BKT) Updated:</strong> Topic mastery shifted from <strong>${prev}%</strong> → <strong style="color: var(--accent-primary); font-size: 1rem;">${next}% P(Know)</strong>. Spaced repetition priority recalculated.`;
         } else {
-          bktBanner.innerHTML = 'Sign in to persist your knowledge state records.';
+          bktBanner.innerHTML = 'Sign in to persist your BKT mastery and attempt logs to SQLite.';
         }
+
+        // Adaptive Follow-up Buttons
+        if (evalResult.nextAction) {
+          document.getElementById('adaptive-reason').textContent = evalResult.nextAction.reason;
+          const btnBox = document.getElementById('adaptive-buttons');
+          btnBox.innerHTML = `
+            <a href="${evalResult.nextAction.url}" class="btn btn-primary btn-sm">
+              ${evalResult.nextAction.label} →
+            </a>
+            <button class="btn btn-secondary btn-sm" onclick="loadNextPrompt('${currentPrompt.topicId}')">
+              Another Question on ${currentPrompt.topicName}
+            </button>
+            <button class="btn btn-secondary btn-sm" onclick="loadNextPrompt()">
+              Next Due Topic
+            </button>
+          `;
+        }
+
+        // Refresh attempt history
+        loadRecallHistory();
+
+        // Scroll to feedback
+        fbSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
       } catch (err) {
-        alert('Grading failed: ' + err.message);
-        document.getElementById('btn-submit-recall').disabled = false;
+        alert('Evaluation failed: ' + err.message);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit Response';
       }
     }
 
-    loadNextPrompt();
+    async function loadRecallHistory() {
+      const historyList = document.getElementById('history-list');
+      if (!Auth.isAuthenticated()) {
+        historyList.innerHTML = '<div style="color: var(--text-muted); font-size: 0.85rem; padding: 1rem; text-align: center;">Sign in to view your persistent attempt history.</div>';
+        return;
+      }
+
+      try {
+        const res = await apiCall('/recall/history?limit=5');
+        const attempts = res.history || [];
+        if (attempts.length === 0) {
+          historyList.innerHTML = '<div style="color: var(--text-muted); font-size: 0.85rem; padding: 1rem; text-align: center;">No recall attempts recorded yet. Submit your first challenge above!</div>';
+          return;
+        }
+
+        historyList.innerHTML = attempts.map(a => `
+          <div class="history-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+              <span class="topic-badge">${a.subject} • ${a.topic_name}</span>
+              <span style="font-size: 0.82rem; font-weight: 600; color: ${a.correct ? 'var(--accent-primary)' : 'var(--accent-rose)'};">
+                ${a.correct ? '✓ Correct' : '✗ Incorrect'}
+              </span>
+            </div>
+            <p style="font-size: 0.88rem; color: var(--text-primary); margin: 0 0 0.35rem; line-height: 1.45;">
+              ${a.question}
+            </p>
+            <div style="font-size: 0.78rem; color: var(--text-muted);">
+              Submitted: "${a.answer.slice(0, 45)}${a.answer.length > 45 ? '...' : ''}" • ${new Date(a.created_at).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+            </div>
+          </div>
+        `).join('');
+      } catch (err) {
+        historyList.innerHTML = `<div style="color: var(--accent-rose); font-size: 0.85rem;">Could not load history: ${err.message}</div>`;
+      }
+    }
+
+    // Initialize
+    initTopicDropdown().then(() => {
+      loadNextPrompt(initialTopic);
+      loadRecallHistory();
+    });
   </script>
 </body>
 </html>
