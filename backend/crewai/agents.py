@@ -83,7 +83,7 @@ def get_configured_llm() -> Optional[Any]:
             return LLM(model=model_name, base_url=ollama_url, temperature=0.3)
 
     except Exception as e:
-        print(f"Warning: Could not initialize CrewAI LLM: {e}")
+        print(f"Warning: Could not initialize CrewAI LLM: {e}", file=sys.stderr)
         return None
 
     return None

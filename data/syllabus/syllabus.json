@@ -1,149 +1,215 @@
 [
   {
-    "subject": "Operating Systems",
-    "topics": [
-      {
-        "id": "os_process",
-        "name": "Processes and Threads",
-        "prerequisite": null,
-        "pyq_weight": 0.75,
-        "description": "Process control block (PCB), process states, thread models (user vs kernel), context switching overhead."
-      },
-      {
-        "id": "os_scheduling",
-        "name": "CPU Scheduling",
-        "prerequisite": "os_process",
-        "pyq_weight": 0.90,
-        "description": "FCFS, SJF, SRTF, Round Robin, Priority scheduling algorithms, turnaround time, waiting time, and Gantt charts."
-      },
-      {
-        "id": "os_sync",
-        "name": "Process Synchronization",
-        "prerequisite": "os_process",
-        "pyq_weight": 0.95,
-        "description": "Critical section problem, Peterson's solution, semaphores, mutex locks, classical synchronization problems (Producer-Consumer, Dining Philosophers)."
-      },
-      {
-        "id": "os_deadlock",
-        "name": "Deadlocks",
-        "prerequisite": "os_sync",
-        "pyq_weight": 0.85,
-        "description": "Four Coffman conditions, Resource Allocation Graphs (RAG), Banker's algorithm for avoidance, detection and recovery."
-      },
-      {
-        "id": "os_memory",
-        "name": "Main Memory and Paging",
-        "prerequisite": "os_process",
-        "pyq_weight": 0.90,
-        "description": "Contiguous memory allocation, paging, Translation Lookaside Buffer (TLB), effective memory access time, multilevel paging, inverted page tables."
-      },
-      {
-        "id": "os_virtual_mem",
-        "name": "Virtual Memory and Page Replacement",
-        "prerequisite": "os_memory",
-        "pyq_weight": 0.85,
-        "description": "Demand paging, page fault handling, Belady's anomaly, FIFO, Optimal (MIN), LRU page replacement algorithms, thrashing and working set model."
-      },
-      {
-        "id": "os_storage",
-        "name": "File Systems and Disk Scheduling",
-        "prerequisite": "os_process",
-        "pyq_weight": 0.70,
-        "description": "File allocation methods (contiguous, linked, indexed), UNIX inode structure, disk scheduling algorithms (FCFS, SSTF, SCAN, C-SCAN, LOOK, C-LOOK)."
-      }
-    ]
-  },
-  {
     "subject": "Algorithms",
     "topics": [
       {
         "id": "algo_asymptotic",
         "name": "Asymptotic Analysis and Recurrences",
         "prerequisite": null,
-        "pyq_weight": 0.85,
+        "pyq_weight": 0.90,
         "description": "Big-O, Omega, Theta notations, Master Theorem for divide-and-conquer recurrences, recursion tree method, substitution method."
       },
       {
+        "id": "algo_searching_sorting_hashing",
+        "name": "Searching, Sorting and Hashing",
+        "prerequisite": "algo_asymptotic",
+        "pyq_weight": 0.90,
+        "description": "Linear and binary search, comparison sort bounds, Quick Sort, Merge Sort, Heap Sort, Counting Sort, open addressing and chaining hashing collision resolution."
+      },
+      {
         "id": "algo_divide_conquer",
-        "name": "Divide and Conquer",
+        "name": "Divide and Conquer Technique",
         "prerequisite": "algo_asymptotic",
         "pyq_weight": 0.80,
-        "description": "Binary search, Merge Sort, Quick Sort (best, worst, average case analysis), counting inversions, median finding."
+        "description": "Merge sort, quick sort partitioning, counting inversions, Strassen matrix multiplication, finding median and order statistics."
       },
       {
         "id": "algo_greedy",
-        "name": "Greedy Algorithms",
+        "name": "Greedy Algorithm Design",
         "prerequisite": "algo_asymptotic",
-        "pyq_weight": 0.75,
-        "description": "Greedy-choice property, Fractional Knapsack, Activity Selection / Interval Scheduling, Huffman Coding, optimal merge patterns."
+        "pyq_weight": 0.85,
+        "description": "Greedy-choice property, optimal substructure, Fractional Knapsack, Activity Selection, Huffman Coding prefix codes, optimal merge patterns."
       },
       {
         "id": "algo_dp",
         "name": "Dynamic Programming",
         "prerequisite": "algo_asymptotic",
         "pyq_weight": 0.95,
-        "description": "Optimal substructure, overlapping subproblems, 0/1 Knapsack, Longest Common Subsequence (LCS), Matrix Chain Multiplication (MCM), Subset Sum."
+        "description": "Overlapping subproblems, 0/1 Knapsack, Longest Common Subsequence (LCS), Matrix Chain Multiplication, Subset Sum, Bellman equation."
       },
       {
-        "id": "algo_graphs",
-        "name": "Graph Traversals and Connectivity",
+        "id": "algo_graphs_mst_shortest_paths",
+        "name": "Graph Algorithms: MST and Shortest Paths",
         "prerequisite": "algo_asymptotic",
-        "pyq_weight": 0.85,
-        "description": "Breadth-First Search (BFS), Depth-First Search (DFS), topological sort in DAGs, strongly connected components (Kosaraju, Tarjan)."
-      },
-      {
-        "id": "algo_shortest_paths",
-        "name": "Shortest Paths and MST",
-        "prerequisite": "algo_graphs",
-        "pyq_weight": 0.90,
-        "description": "Dijkstra's single-source shortest path, Bellman-Ford algorithm, Floyd-Warshall all-pairs, Prim's and Kruskal's algorithms for Minimum Spanning Tree (MST)."
+        "pyq_weight": 0.95,
+        "description": "Dijkstra's single-source shortest path, Bellman-Ford, Floyd-Warshall all-pairs, Prim's and Kruskal's Minimum Spanning Tree algorithms, topological sorting."
       }
     ]
   },
   {
-    "subject": "Database Management Systems",
+    "subject": "Compiler Design",
+    "topics": [
+      {
+        "id": "compiler_lexical",
+        "name": "Lexical Analysis",
+        "prerequisite": null,
+        "pyq_weight": 0.80,
+        "description": "Role of lexical analyzer, tokens, patterns, lexemes, regular definitions, transition diagrams, recognition of tokens, lookahead buffer."
+      },
+      {
+        "id": "compiler_parsing",
+        "name": "Parsing: LL(1), LR(0), SLR, LALR and CLR",
+        "prerequisite": "compiler_lexical",
+        "pyq_weight": 0.98,
+        "description": "Top-down parsing (LL(1), FIRST and FOLLOW sets), bottom-up parsing (shift-reduce, LR(0), SLR(1), LALR(1), CLR(1) item sets and parsing tables), operator precedence."
+      },
+      {
+        "id": "compiler_sdt_codegen",
+        "name": "Syntax-Directed Translation and Intermediate Code",
+        "prerequisite": "compiler_parsing",
+        "pyq_weight": 0.90,
+        "description": "Syntax-Directed Definitions (SDD), synthesized and inherited attributes, S-attributed and L-attributed definitions, three-address code (quadruples, triples), runtime storage organization and activation records."
+      },
+      {
+        "id": "compiler_optimization_dataflow",
+        "name": "Code Optimization and Data Flow Analysis",
+        "prerequisite": "compiler_sdt_codegen",
+        "pyq_weight": 0.90,
+        "description": "Basic blocks and flow graphs, local optimization (DAG representation, common subexpression elimination, dead code elimination), data flow analyses (constant propagation, liveness analysis, reaching definitions)."
+      }
+    ]
+  },
+  {
+    "subject": "Operating Systems",
+    "topics": [
+      {
+        "id": "os_process_ipc",
+        "name": "System Calls, Processes, Threads and IPC",
+        "prerequisite": null,
+        "pyq_weight": 0.85,
+        "description": "System calls, process states, fork() execution trees, user vs kernel threads, Inter-Process Communication (shared memory, message passing, pipes)."
+      },
+      {
+        "id": "os_scheduling",
+        "name": "CPU and I/O Scheduling",
+        "prerequisite": "os_process_ipc",
+        "pyq_weight": 0.95,
+        "description": "Preemptive and non-preemptive scheduling, FCFS, SJF, SRTF, Round Robin, Priority, Multi-level queue scheduling, turnaround time, waiting time, Gantt charts."
+      },
+      {
+        "id": "os_sync",
+        "name": "Concurrency and Process Synchronization",
+        "prerequisite": "os_process_ipc",
+        "pyq_weight": 0.98,
+        "description": "Critical section problem, Peterson's algorithm, TestAndSet atomic hardware instructions, Counting and Binary Semaphores, Mutex locks, classical problems (Producer-Consumer, Readers-Writers)."
+      },
+      {
+        "id": "os_deadlock",
+        "name": "Deadlock Characterization and Banker's Algorithm",
+        "prerequisite": "os_sync",
+        "pyq_weight": 0.90,
+        "description": "Coffman four conditions, Resource Allocation Graphs, Banker's Safety Algorithm for avoidance, prevention vs avoidance vs detection and recovery."
+      },
+      {
+        "id": "os_virtual_mem",
+        "name": "Memory Management and Virtual Memory",
+        "prerequisite": "os_process_ipc",
+        "pyq_weight": 0.95,
+        "description": "Paging, segmentation, Translation Lookaside Buffer (TLB), effective memory access time, demand paging, page fault handling, Belady's anomaly in FIFO, Optimal and LRU page replacement."
+      },
+      {
+        "id": "os_storage",
+        "name": "File Systems and Disk Scheduling",
+        "prerequisite": "os_process_ipc",
+        "pyq_weight": 0.80,
+        "description": "File allocation methods, UNIX inode indexing, disk seek time, disk scheduling algorithms (FCFS, SSTF, SCAN, C-SCAN, LOOK, C-LOOK)."
+      }
+    ]
+  },
+  {
+    "subject": "Databases",
     "topics": [
       {
         "id": "dbms_er_relational",
-        "name": "ER Model and Relational Model",
+        "name": "ER Model, Relational Model and Constraints",
         "prerequisite": null,
-        "pyq_weight": 0.70,
-        "description": "Entity-Relationship (ER) diagrams, weak entities, mapping ER to relational schemas, primary, candidate, super, and foreign keys, integrity constraints."
+        "pyq_weight": 0.80,
+        "description": "Entity-Relationship diagrams, weak entities, mapping ER to relational schemas, super, candidate, primary and foreign keys, integrity constraints."
       },
       {
-        "id": "dbms_rel_algebra",
-        "name": "Relational Algebra and Calculus",
+        "id": "dbms_rel_algebra_sql",
+        "name": "Relational Algebra, Tuple Calculus and SQL",
         "prerequisite": "dbms_er_relational",
-        "pyq_weight": 0.85,
-        "description": "Fundamental relational algebra operations (Select, Project, Cartesian product, Union, Set Difference, Rename), Join variants (Natural, Outer, Theta), Tuple and Domain Relational Calculus."
-      },
-      {
-        "id": "dbms_sql",
-        "name": "SQL Queries and Constraints",
-        "prerequisite": "dbms_rel_algebra",
-        "pyq_weight": 0.90,
-        "description": "Complex nested subqueries, GROUP BY, HAVING, aggregate functions, NULL handling, correlated subqueries, set operations, view definitions."
+        "pyq_weight": 0.95,
+        "description": "Relational algebra operators (Select, Project, Join variants, Set operations), Tuple Relational Calculus, complex SQL queries, nested subqueries, aggregations, GROUP BY and HAVING."
       },
       {
         "id": "dbms_normalization",
-        "name": "Functional Dependencies and Normalization",
+        "name": "Functional Dependencies and Normal Forms",
         "prerequisite": "dbms_er_relational",
-        "pyq_weight": 0.95,
-        "description": "Functional dependencies, closure of attributes, minimal covers, 1NF, 2NF, 3NF, BCNF, lossless join decomposition, dependency preservation."
+        "pyq_weight": 0.98,
+        "description": "Closure of attributes, minimal covers, 1NF, 2NF, 3NF, BCNF, lossless join decomposition condition, dependency preservation."
+      },
+      {
+        "id": "dbms_indexing",
+        "name": "File Organization and B/B+ Tree Indexing",
+        "prerequisite": "dbms_er_relational",
+        "pyq_weight": 0.88,
+        "description": "Primary, secondary, clustering indexing, dense vs sparse indexes, B-Trees and B+ Trees node capacity, insertion, deletion, height and block access calculations."
       },
       {
         "id": "dbms_transactions",
         "name": "Transactions and Concurrency Control",
-        "prerequisite": "dbms_sql",
-        "pyq_weight": 0.95,
-        "description": "ACID properties, serializability (conflict and view serializability), precedence graphs, Two-Phase Locking (2PL, Strict 2PL, Rigorous 2PL), deadlock prevention and timestamp ordering."
+        "prerequisite": "dbms_rel_algebra_sql",
+        "pyq_weight": 0.98,
+        "description": "ACID properties, conflict and view serializability, precedence graphs, Two-Phase Locking (2PL, Strict 2PL, Rigorous 2PL), timestamp ordering, recoverability and cascading rollbacks."
+      }
+    ]
+  },
+  {
+    "subject": "Computer Networks",
+    "topics": [
+      {
+        "id": "cn_layering_switching",
+        "name": "Principles of Layering, Switching and Metrics",
+        "prerequisite": null,
+        "pyq_weight": 0.85,
+        "description": "OSI and TCP/IP protocol stack, circuit switching vs packet switching vs virtual circuit, propagation delay, transmission delay, bandwidth-delay product."
       },
       {
-        "id": "dbms_indexing",
-        "name": "Indexing and B/B+ Trees",
-        "prerequisite": "dbms_er_relational",
+        "id": "cn_datalink_mac",
+        "name": "Data Link Layer, MAC and Ethernet",
+        "prerequisite": "cn_layering_switching",
+        "pyq_weight": 0.95,
+        "description": "Framing, error detection (CRC, checksum, parity), flow control (Stop-and-Wait, Go-Back-N, Selective Repeat efficiency), CSMA/CD, minimum frame size in Ethernet."
+      },
+      {
+        "id": "cn_routing",
+        "name": "Routing Algorithms: Distance Vector and Link State",
+        "prerequisite": "cn_layering_switching",
+        "pyq_weight": 0.90,
+        "description": "Distance Vector Routing (Bellman-Ford, Count-to-Infinity problem), Link State Routing (Dijkstra's algorithm), RIP, OSPF, BGP concepts."
+      },
+      {
+        "id": "cn_network_ipv4",
+        "name": "IPv4 Header, Fragmentation, CIDR and NAT",
+        "prerequisite": "cn_routing",
+        "pyq_weight": 0.98,
+        "description": "IPv4 datagram header fields, packet fragmentation offset calculations, classless addressing (CIDR subnetting, supernetting, longest prefix match), Network Address Translation (NAT)."
+      },
+      {
+        "id": "cn_transport_tcp",
+        "name": "TCP Flow Control, Congestion Control and Sockets",
+        "prerequisite": "cn_network_ipv4",
+        "pyq_weight": 0.98,
+        "description": "TCP segment structure, 3-way handshake, sliding window flow control, congestion control (Slow Start, Congestion Avoidance, Fast Retransmit, Fast Recovery, AIMD, timeout calculations), socket API."
+      },
+      {
+        "id": "cn_application_dns_http",
+        "name": "Application Layer Protocols: DNS and HTTP",
+        "prerequisite": "cn_transport_tcp",
         "pyq_weight": 0.85,
-        "description": "Primary, secondary, clustering indexes, sparse vs dense indexing, B-Trees and B+ Trees node capacity, insertion, deletion, height and block access calculations."
+        "description": "Domain Name System (DNS iterative vs recursive resolution, record types), HTTP (persistent vs non-persistent connections, HTTP methods, response codes, caching)."
       }
     ]
   }

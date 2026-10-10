@@ -1,0 +1,93 @@
+{
+  "2026-10-10_All_daily_10": {
+    "date": "2026-10-10",
+    "source": "Syllabus Knowledge Base (PRNG Rotation)",
+    "aiGenerated": false,
+    "seed": "2026-10-10_gate_cse_deck",
+    "subject": "All",
+    "total": 10,
+    "availablePool": 17,
+    "flashcards": [
+      {
+        "id": "fc_dbms_01",
+        "subject": "Databases",
+        "topic_id": "dbms_normalization",
+        "type": "hierarchy",
+        "front": "Relational Normal Forms (1NF → BCNF) & Lossless Decompositions",
+        "back": "For functional dependency X → Y in relation R:\n• 1NF: Atomic attribute values.\n• 2NF: 1NF + No partial dependency (non-prime depends on subset of candidate key).\n• 3NF: 2NF + For every X → Y, X is Superkey OR Y is Prime attribute.\n• BCNF: For every non-trivial X → Y, X MUST be a Superkey.\n• Lossless Join Condition: (R1 ∩ R2) → R1 OR (R1 ∩ R2) → R2 (Common attribute is a superkey of R1 or R2)."
+      },
+      {
+        "id": "fc_os_02",
+        "subject": "Operating Systems",
+        "topic_id": "os_sync",
+        "type": "condition",
+        "front": "Critical Section 3 Gold Invariants & Peterson's Solution",
+        "back": "1. Mutual Exclusion (Mandatory): Only 1 process inside CS at a time.\n2. Progress (Mandatory): Selection of who enters next is decided only by processes not in remainder.\n3. Bounded Waiting (Fairness): Finite bound on entries allowed to others after request.\n• Peterson's uses flag[i]=true and turn=j (courtesy variable) to satisfy all 3 for 2 processes."
+      },
+      {
+        "id": "fc_algo_04",
+        "subject": "Algorithms",
+        "topic_id": "algo_searching_sorting_hashing",
+        "type": "complexity",
+        "front": "Comparison-Based Sorting Theoretical Bounds & Hashing Collisions",
+        "back": "• Any comparison sort requires Ω(n log n) comparisons in the worst case (decision tree height log2(n!) ≈ n log2(n)).\n• QuickSort: Best/Avg O(n log n), Worst O(n²) (already sorted with extremal pivot).\n• Open Addressing with Linear Probing suffers from Primary Clustering."
+      },
+      {
+        "id": "fc_algo_03",
+        "subject": "Algorithms",
+        "topic_id": "algo_dp",
+        "type": "definition",
+        "front": "0/1 Knapsack vs Fractional Knapsack Algorithmic Paradigms",
+        "back": "• Fractional Knapsack: Solved via GREEDY strategy (sort by Value/Weight ratio). Time: O(n log n).\n• 0/1 Knapsack: Items cannot be split. Solved via DYNAMIC PROGRAMMING. Time: O(n · W) (Pseudo-polynomial; NP-Complete in general).\n• Longest Common Subsequence (LCS): DP time O(m · n), space O(min(m, n))."
+      },
+      {
+        "id": "fc_cn_01",
+        "subject": "Computer Networks",
+        "topic_id": "cn_datalink_mac",
+        "type": "formula",
+        "front": "CSMA/CD Minimum Frame Size & Sliding Window Efficiency",
+        "back": "• CSMA/CD Minimum Frame Length: L ≥ 2 · T_prop · Bandwidth = 2 · (Distance / v) · B\n• Stop-and-Wait Efficiency: η = 1 / (1 + 2a) where a = T_prop / T_trans\n• Go-Back-N Efficiency: η = N / (1 + 2a) (Sender Window = N, Receiver Window = 1)\n• Selective Repeat Efficiency: η = N / (1 + 2a) (Sender Window = N, Receiver Window = N; Max N = 2^(k-1) for k sequence bits)."
+      },
+      {
+        "id": "fc_os_03",
+        "subject": "Operating Systems",
+        "topic_id": "os_deadlock",
+        "type": "formula",
+        "front": "Banker's Algorithm & Deadlock Freedom Condition",
+        "back": "• 4 Coffman Conditions: Mutual Exclusion, Hold & Wait, No Preemption, Circular Wait.\n• Deadlock-Free Guarantee: For n processes each needing at most k resource instances from m total resources, system is deadlock-free if:\n  m ≥ n · (k - 1) + 1\n• Safe State ⟹ No Deadlock. Unsafe State ⇏ Deadlock (only potential deadlock)."
+      },
+      {
+        "id": "fc_compiler_03",
+        "subject": "Compiler Design",
+        "topic_id": "compiler_optimization_dataflow",
+        "type": "definition",
+        "front": "Data Flow Analysis: Constant Propagation & Liveness Analysis",
+        "back": "• Constant Propagation: Forward data-flow analysis finding variables with constant values at compile time.\n• Liveness Analysis: Backward data-flow analysis checking if variable x is used before being redefined along some execution path (used in register allocation).\n• Common Subexpression Elimination: Removes duplicate evaluations of identical expressions using DAGs."
+      },
+      {
+        "id": "fc_compiler_02",
+        "subject": "Compiler Design",
+        "topic_id": "compiler_sdt_codegen",
+        "type": "definition",
+        "front": "S-Attributed vs L-Attributed Syntax-Directed Definitions (SDDs)",
+        "back": "• S-Attributed Definition:\n  - Uses ONLY Synthesized attributes (computed from children in parse tree).\n  - Evaluated Bottom-Up during LR parsing.\n• L-Attributed Definition:\n  - Allows Synthesized AND restricted Inherited attributes.\n  - An inherited attribute of node X_j can depend ONLY on: Parent attribute, or left siblings (X_1, ..., X_{j-1}).\n  - Evaluated in a single Top-Down Depth-First left-to-right pass."
+      },
+      {
+        "id": "fc_cn_02",
+        "subject": "Computer Networks",
+        "topic_id": "cn_network_ipv4",
+        "type": "formula",
+        "front": "IPv4 Subnetting, CIDR & Fragmentation Offset Rules",
+        "back": "• CIDR /n notation: Subnet Mask has n leading 1s. Usable host IPs = 2^(32 - n) - 2 (subtract Network ID and Broadcast ID).\n• IPv4 Fragmentation Offset: Measured in 8-byte units! Offset = (Original Byte Position) / 8.\n• More Fragments (MF) flag = 1 for all fragments except the last one (MF = 0)."
+      },
+      {
+        "id": "fc_algo_02",
+        "subject": "Algorithms",
+        "topic_id": "algo_graphs_mst_shortest_paths",
+        "type": "complexity",
+        "front": "Dijkstra vs Bellman-Ford vs Floyd-Warshall Comparison",
+        "back": "• Dijkstra: Single source, non-negative weights only. Min-Heap time: O((V + E) log V).\n• Bellman-Ford: Single source, handles negative weights & detects negative cycles. Time: O(V · E).\n• Floyd-Warshall: All-pairs shortest path, DP dynamic matrix. Time: Θ(V³).\n• DAG Shortest Path: Topological Sort + Edge relaxation. Time: O(V + E) (handles negative weights!)."
+      }
+    ]
+  }
+}

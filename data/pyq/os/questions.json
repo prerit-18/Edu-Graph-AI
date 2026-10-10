@@ -17,6 +17,18 @@
     "numeric_answer": 2.67
   },
   {
+    "id": "os_2024_002",
+    "year": 2024,
+    "subject": "Operating Systems",
+    "topic_id": "os_virtual_mem",
+    "type": "NAT",
+    "question": "A system uses a 32-bit virtual address and a 4 KB page size. The page table entry size is 4 bytes. If multi-level paging is used where each page table page fits exactly in one frame, what is the number of levels of page table required?",
+    "options": [],
+    "answer": "2",
+    "numeric_answer": 2,
+    "explanation": "Page size = 4 KB = 2^12 bytes -> Offset is 12 bits. Virtual address bits for page number = 32 - 12 = 20 bits. Each page table frame holds (4096 / 4) = 1024 = 2^10 entries (10 bits per level). Thus 20 bits / 10 bits per level = 2 levels of page tables."
+  },
+  {
     "id": "os_2024_001",
     "year": 2024,
     "subject": "Operating Systems",
@@ -61,18 +73,6 @@
     "explanation": "For N processes each needing at most K resources, the condition to prevent deadlock is Total Resources >= N * (K - 1) + 1. Here N = 4, K = 2. Total needed >= 4*(2 - 1) + 1 = 5. Since system has 6 resources (6 >= 5), deadlock can never occur."
   },
   {
-    "id": "os_2021_001",
-    "year": 2021,
-    "subject": "Operating Systems",
-    "topic_id": "os_memory",
-    "type": "NAT",
-    "question": "In a paging system with a 32-bit virtual address space and a page size of 4 KB (2^12 bytes), if each page table entry is 4 bytes, what is the size of the single-level page table in Megabytes (MB)?",
-    "options": [],
-    "answer": "4",
-    "numeric_answer": 4,
-    "explanation": "Number of pages = 2^32 / 2^12 = 2^20 pages. Size of page table = 2^20 entries * 4 bytes/entry = 4 * 2^20 bytes = 4 MB."
-  },
-  {
     "id": "os_2021_002",
     "year": 2021,
     "subject": "Operating Systems",
@@ -87,5 +87,17 @@
     ],
     "answer": "B",
     "explanation": "Belady's anomaly occurs specifically in FIFO page replacement algorithm because FIFO is not a stack algorithm."
+  },
+  {
+    "id": "os_2021_001",
+    "year": 2021,
+    "subject": "Operating Systems",
+    "topic_id": "os_memory",
+    "type": "NAT",
+    "question": "In a paging system with a 32-bit virtual address space and a page size of 4 KB (2^12 bytes), if each page table entry is 4 bytes, what is the size of the single-level page table in Megabytes (MB)?",
+    "options": [],
+    "answer": "4",
+    "numeric_answer": 4,
+    "explanation": "Number of pages = 2^32 / 2^12 = 2^20 pages. Size of page table = 2^20 entries * 4 bytes/entry = 4 * 2^20 bytes = 4 MB."
   }
 ]

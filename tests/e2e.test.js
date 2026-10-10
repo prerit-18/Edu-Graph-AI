@@ -89,8 +89,13 @@ async function runE2EDemo() {
   console.log('Step 2: Dashboard fetches learner state and initial mastery...');
   const dashRes1 = await get('/api/learner/dashboard', authToken);
   assert.strictEqual(dashRes1.status, 200);
-  const initialMastery = dashRes1.data.mastery.find(m => m.topic_id === 'os_scheduling')?.p_know || 0.30;
-  console.log(`✓ Step 2 Passed: Initial P(Know) for os_scheduling = ${initialMastery}`);
+  const initialMastery = dashRes1.data.mastery.find(m => m.topic_id === 'os_scheduling')?.p_know ?? 0.0;
+  assert.strictEqual(initialMastery, 0.0, 'New account should start with 0.0 mastery');
+  assert.strictEqual(dashRes1.data.summary.averageMastery, 0.0, 'New account should have 0% average mastery');
+  dashRes1.data.subjectProgress.forEach(sp => {
+    assert.strictEqual(sp.percentage, 0, `${sp.subject} progress should start at 0% for new accounts`);
+  });
+  console.log(`✓ Step 2 Passed: Initial P(Know) for os_scheduling = ${initialMastery}, all subject stats = 0%`);
 
   // Step 3 & 4 & 5 & 6: Concept Teacher with RAG grounding and citations
   console.log('Step 3-6: Student asks Concept Teacher: "Explain CPU scheduling"...');

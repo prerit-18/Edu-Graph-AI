@@ -1,0 +1,48 @@
+[
+  {
+    "id": "os_2024_002",
+    "year": 2024,
+    "subject": "Operating Systems",
+    "topic_id": "os_virtual_mem",
+    "type": "NAT",
+    "question": "A system uses a 32-bit virtual address and a 4 KB page size. The page table entry size is 4 bytes. If multi-level paging is used where each page table page fits exactly in one frame, what is the number of levels of page table required?",
+    "options": [],
+    "answer": "2",
+    "numeric_answer": 2,
+    "explanation": "Page size = 4 KB = 2^12 bytes -> Offset is 12 bits. Virtual address bits for page number = 32 - 12 = 20 bits. Each page table frame holds (4096 / 4) = 1024 = 2^10 entries (10 bits per level). Thus 20 bits / 10 bits per level = 2 levels of page tables."
+  },
+  {
+    "id": "algo_2023_002",
+    "year": 2023,
+    "subject": "Algorithms",
+    "topic_id": "algo_graphs",
+    "type": "MCQ",
+    "question": "Which of the following shortest path algorithms can handle negative edge weights but cannot detect negative weight cycles?",
+    "options": [
+      "A. Dijkstra's Algorithm",
+      "B. Bellman-Ford Algorithm",
+      "C. Floyd-Warshall Algorithm",
+      "D. Topological Sort Algorithm for DAGs"
+    ],
+    "answer": "D",
+    "numeric_answer": null,
+    "explanation": "Topological Sort finds shortest paths in O(V+E) in Directed Acyclic Graphs even with negative weights because cycles cannot exist in a DAG. Bellman-Ford and Floyd-Warshall detect negative cycles. Dijkstra fails on negative weights."
+  },
+  {
+    "id": "dbms_2022_002",
+    "year": 2022,
+    "subject": "Database Management Systems",
+    "topic_id": "dbms_transactions",
+    "type": "MCQ",
+    "question": "Which concurrency control locking protocol guarantees serializability and freedom from cascading aborts without deadlocks?",
+    "options": [
+      "A. Basic Two-Phase Locking (2PL)",
+      "B. Strict Two-Phase Locking (Strict 2PL)",
+      "C. Conservative Strict Two-Phase Locking",
+      "D. Timestamp Ordering Protocol"
+    ],
+    "answer": "C",
+    "numeric_answer": null,
+    "explanation": "Conservative 2PL acquires all locks beforehand, preventing deadlocks. Strict 2PL holds exclusive locks until commit, preventing cascading aborts (ACA) and ensuring serializability."
+  }
+]

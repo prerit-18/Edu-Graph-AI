@@ -3,60 +3,157 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EduGraph AI — Daily Smart Flashcards</title>
+  <title>EduGraph AI — Daily Flashcards</title>
   <link rel="stylesheet" href="styles.css">
+  <style>
+    .deck-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+      background: #FFFFFF;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 0.75rem 1.25rem;
+      box-shadow: var(--shadow-xs);
+    }
+    .deck-progress-bar {
+      width: 100%;
+      height: 4px;
+      background: var(--bg-surface-secondary);
+      border-radius: 2px;
+      margin-bottom: 1rem;
+      overflow: hidden;
+    }
+    .deck-progress-fill {
+      height: 100%;
+      background: var(--accent-primary);
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+    .shortcut-hint {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      background: var(--bg-surface-secondary);
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid var(--border-subtle);
+    }
+    .ai-generator-panel {
+      background: #FFFFFF;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      margin-top: 1.5rem;
+      display: none;
+      box-shadow: var(--shadow-sm);
+    }
+  </style>
 </head>
 <body>
   <div id="main-header"></div>
 
   <main class="container">
-    <div style="text-align: center; max-width: 680px; margin: 0 auto 2rem;">
-      <div class="hero-pill" style="margin-bottom: 0.5rem;">⚡ 10–15 Daily High-Yield Concepts</div>
-      <h1>GATE CSE Smart Flashcards</h1>
-      <p style="color: var(--text-secondary);">Focus on high-probability definitions, tricky formulas, and common exam traps. Click any card to flip!</p>
+    <div style="text-align: center; max-width: 720px; margin: 0 auto 1.5rem;">
+      <div class="hero-pill" style="margin-bottom: 0.5rem;" id="daily-pill">Daily Retrieval Deck</div>
+      <h1>GATE CSE Flashcards</h1>
+      <p style="color: var(--text-secondary);">Rotated daily across Algorithms, Compiler Design, Operating Systems, Databases, and Computer Networks.</p>
     </div>
 
-    <!-- Flashcard Display Box -->
-    <div style="max-width: 640px; margin: 0 auto;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-        <span class="topic-badge" id="fc-subject">Operating Systems</span>
-        <span style="font-size: 0.85rem; color: var(--text-muted);" id="fc-counter">Card 1 of 7</span>
-        <span class="topic-badge" id="fc-type" style="background: rgba(16, 185, 129, 0.2); color: var(--accent-mint);">Formula</span>
+    <!-- Deck Workspace -->
+    <div style="max-width: 680px; margin: 0 auto;">
+      <div class="deck-toolbar">
+        <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+          <label for="subject-select" style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 600;">Subject:</label>
+          <select id="subject-select" class="input-field" style="padding: 0.35rem 0.75rem; font-size: 0.85rem; width: auto; max-width: 230px;" onchange="changeSubject(this.value)">
+            <option value="All">All 5 Subjects</option>
+            <option value="Algorithms">Algorithms</option>
+            <option value="Compiler Design">Compiler Design</option>
+            <option value="Operating Systems">Operating Systems</option>
+            <option value="Databases">Databases</option>
+            <option value="Computer Networks">Computer Networks</option>
+          </select>
+        </div>
+
+        <div style="display: flex; gap: 0.5rem; align-items: center;">
+          <button class="btn btn-secondary btn-sm" onclick="shuffleFreshDeck()" title="Rotate and generate a fresh batch">
+            Fresh Deck
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="toggleAIPanel()">
+            Topic Generator
+          </button>
+        </div>
       </div>
 
+      <!-- Progress bar -->
+      <div class="deck-progress-bar">
+        <div class="deck-progress-fill" id="deck-progress-fill"></div>
+      </div>
+
+      <!-- Header Info -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.85rem;">
+        <span class="topic-badge" id="fc-subject">Operating Systems</span>
+        <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;" id="fc-counter">Card 1 of 10</span>
+        <span class="topic-badge" id="fc-type">Concept</span>
+      </div>
+
+      <!-- Flashcard Card Component -->
       <div class="flashcard-wrapper" id="flashcard-card" onclick="flipCard()">
         <div class="flashcard-inner">
           <!-- Front -->
           <div class="flashcard-front">
-            <span style="font-size: 2.2rem; margin-bottom: 1rem;">💡</span>
-            <h3 id="fc-front-text" style="font-size: 1.3rem; color: var(--text-primary); max-width: 90%;">
-              Loading card...
+            <h3 id="fc-front-text" style="font-size: 1.15rem; color: var(--text-primary); max-width: 90%; margin: 0 auto; line-height: 1.55; text-align: center;">
+              Loading flashcard...
             </h3>
-            <div style="margin-top: 1.5rem; font-size: 0.8rem; color: var(--text-muted);">
-              (Click to flip and inspect explanation)
+            <div style="margin-top: 2rem; font-size: 0.8rem; color: var(--text-muted);">
+              Click or press <span class="shortcut-hint">Space</span> to flip
             </div>
           </div>
 
           <!-- Back -->
           <div class="flashcard-back">
-            <div style="font-size: 0.8rem; font-weight: 700; color: var(--accent-emerald); text-transform: uppercase; margin-bottom: 0.6rem;">
-              Verified Concept Breakdown:
+            <div style="font-size: 0.75rem; font-weight: 700; color: var(--accent-primary); text-transform: uppercase; margin-bottom: 0.5rem; display: flex; justify-content: space-between; width: 100%;">
+              <span>Explanation & Key Takeaway:</span>
+              <span id="fc-topic-tag" style="color: var(--text-muted); text-transform: capitalize;">Core Concept</span>
             </div>
-            <div id="fc-back-text" style="font-size: 0.95rem; line-height: 1.6; color: var(--text-primary); white-space: pre-line;">
+            <div id="fc-back-text" style="font-size: 0.92rem; line-height: 1.65; color: var(--text-primary); white-space: pre-line; margin-bottom: 1rem; overflow-y: auto; max-height: 200px; width: 100%;">
               Explanation text
             </div>
-            <div style="margin-top: auto; font-size: 0.8rem; color: var(--text-muted);">
-              (Click anywhere to flip back)
+            <div style="margin-top: auto; font-size: 0.75rem; color: var(--text-muted); width: 100%; text-align: center;">
+              Click to flip back
             </div>
           </div>
         </div>
       </div>
 
       <!-- Controls -->
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem;">
-        <button class="btn btn-secondary" onclick="prevCard()" id="btn-fc-prev">← Previous</button>
-        <button class="btn btn-secondary btn-sm" onclick="flipCard()">🔄 Flip Card</button>
-        <button class="btn btn-primary" onclick="nextCard()" id="btn-fc-next">Next Card →</button>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.25rem;">
+        <button class="btn btn-secondary btn-sm" onclick="prevCard()" id="btn-fc-prev">
+          ← Previous <span class="shortcut-hint">[←]</span>
+        </button>
+        <button class="btn btn-secondary btn-sm" onclick="flipCard()">
+          Flip <span class="shortcut-hint">[Space]</span>
+        </button>
+        <button class="btn btn-primary btn-sm" onclick="nextCard()" id="btn-fc-next">
+          Next Card → <span class="shortcut-hint" style="background: rgba(255,255,255,0.2); color: #fff; border-color: transparent;">[→]</span>
+        </button>
+      </div>
+
+      <!-- Generator Panel -->
+      <div class="ai-generator-panel" id="ai-generator-panel">
+        <h4 style="margin: 0 0 0.35rem 0; font-size: 0.95rem;">Generate Custom Flashcards</h4>
+        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.85rem;">
+          Enter a specific syllabus topic or concept to synthesize new flashcards:
+        </p>
+        <form onsubmit="handleAICardSubmit(event)" style="display: flex; gap: 0.5rem;">
+          <input type="text" id="ai-topic-input" class="input-field" placeholder="e.g. 'Multi-Level Paging' or 'B-Tree Splitting'" style="flex: 1; font-size: 0.88rem;" required>
+          <button type="submit" class="btn btn-primary btn-sm" id="btn-ai-submit">Generate</button>
+        </form>
       </div>
     </div>
   </main>
@@ -67,12 +164,26 @@
 
     let cards = [];
     let currentIndex = 0;
+    let currentSubject = 'All';
+    let currentSeed = null;
 
-    async function loadFlashcards() {
+    async function loadFlashcards(subject = 'All', seed = null) {
+      currentSubject = subject;
+      currentSeed = seed;
       try {
-        const data = await apiCall('/flashcards');
-        cards = data.flashcards;
+        let url = `/flashcards?subject=${encodeURIComponent(subject)}&count=10`;
+        if (seed) url += `&seed=${encodeURIComponent(seed)}`;
+        
+        const data = await apiCall(url);
+        cards = data.flashcards || [];
         currentIndex = 0;
+
+        if (data.date) {
+          const dateObj = new Date(data.date + 'T00:00:00');
+          const dateFormatted = dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+          document.getElementById('daily-pill').textContent = `Daily Deck: ${dateFormatted} • ${cards.length} Cards`;
+        }
+
         showCard(0);
       } catch (err) {
         document.getElementById('fc-front-text').textContent = 'Failed to load flashcards: ' + err.message;
@@ -87,9 +198,14 @@
       const wrapper = document.getElementById('flashcard-card');
       wrapper.classList.remove('flipped');
 
+      const pct = Math.round(((idx + 1) / cards.length) * 100);
+      document.getElementById('deck-progress-fill').style.width = `${pct}%`;
+
       document.getElementById('fc-counter').textContent = `Card ${idx + 1} of ${cards.length}`;
       document.getElementById('fc-subject').textContent = c.subject;
       document.getElementById('fc-type').textContent = (c.type || 'Concept').toUpperCase();
+      document.getElementById('fc-topic-tag').textContent = (c.topic_id || 'GATE CSE').replace(/_/g, ' ');
+
       document.getElementById('fc-front-text').textContent = c.front;
       document.getElementById('fc-back-text').textContent = c.back;
 
@@ -108,6 +224,67 @@
     function nextCard() {
       if (currentIndex < cards.length - 1) showCard(currentIndex + 1);
     }
+
+    function changeSubject(newSubj) {
+      loadFlashcards(newSubj);
+    }
+
+    function shuffleFreshDeck() {
+      const randomSeed = `fresh_${Date.now()}_${Math.random()}`;
+      loadFlashcards(currentSubject, randomSeed);
+    }
+
+    function toggleAIPanel() {
+      const panel = document.getElementById('ai-generator-panel');
+      panel.style.display = panel.style.display === 'none' || !panel.style.display ? 'block' : 'none';
+      if (panel.style.display === 'block') {
+        document.getElementById('ai-topic-input').focus();
+      }
+    }
+
+    async function handleAICardSubmit(e) {
+      e.preventDefault();
+      const input = document.getElementById('ai-topic-input');
+      const query = input.value.trim();
+      if (!query) return;
+
+      const btn = document.getElementById('btn-ai-submit');
+      btn.disabled = true;
+      btn.textContent = 'Generating...';
+
+      try {
+        const res = await apiCall('/flashcards/generate', 'POST', {
+          subject: currentSubject !== 'All' ? currentSubject : 'Operating Systems',
+          query,
+          count: 3
+        });
+        if (res.flashcards && res.flashcards.length > 0) {
+          cards = [...res.flashcards, ...cards];
+          currentIndex = 0;
+          showCard(0);
+          toggleAIPanel();
+          input.value = '';
+        }
+      } catch (err) {
+        alert('Generation error: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Generate';
+      }
+    }
+
+    // Keyboard Shortcuts
+    document.addEventListener('keydown', (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      if (e.code === 'ArrowRight') {
+        nextCard();
+      } else if (e.code === 'ArrowLeft') {
+        prevCard();
+      } else if (e.code === 'Space' || e.code === 'KeyF') {
+        e.preventDefault();
+        flipCard();
+      }
+    });
 
     loadFlashcards();
   </script>

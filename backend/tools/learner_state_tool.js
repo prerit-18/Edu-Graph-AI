@@ -13,7 +13,7 @@ class LearnerStateTool {
   getUserMastery(userId) {
     const query = `
       SELECT t.id AS topic_id, t.name AS topic_name, t.subject, t.pyq_weight,
-             COALESCE(m.p_know, 0.30) AS p_know,
+             COALESCE(m.p_know, 0.0) AS p_know,
              m.last_seen,
              rs.due_at, rs.priority AS revision_priority
       FROM topics t

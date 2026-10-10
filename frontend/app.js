@@ -79,21 +79,21 @@ function renderHeader(activePage = '') {
 
   const authSectionHtml = isLoggedIn ? `
     <div class="user-pill">
-      <span class="streak-badge" id="nav-streak">🔥 1 Day</span>
-      <span>👤 ${user.name}</span>
+      <span class="streak-badge" id="nav-streak">${user.name ? 'Active' : ''}</span>
+      <span>${user.name || 'Student'}</span>
     </div>
-    ${isHomePage ? `<a href="dashboard.html" class="btn btn-primary btn-sm">Go to Dashboard →</a>` : ''}
+    ${isHomePage ? `<a href="dashboard.html" class="btn btn-primary btn-sm">Dashboard</a>` : ''}
     <button class="btn btn-secondary btn-sm" onclick="Auth.logout()">Log Out</button>
   ` : `
-    <button class="btn btn-secondary btn-sm" onclick="quickDemoLogin()">⚡ 1-Click Demo</button>
+    <button class="btn btn-secondary btn-sm" onclick="quickDemoLogin()">Demo Login</button>
     <a href="login.html" class="btn btn-secondary btn-sm">Log In</a>
-    <a href="login.html?mode=signup" class="btn btn-primary btn-sm">Get Started</a>
+    <a href="login.html?mode=signup" class="btn btn-primary btn-sm">Sign Up</a>
   `;
 
   const navHtml = `
     <header class="header-nav">
       <a href="index.html" class="logo-brand">
-        <div class="logo-badge">⚡</div>
+        <div class="logo-badge">E</div>
         <div class="logo-text">EduGraph <span>AI</span></div>
       </a>
 
@@ -111,7 +111,7 @@ function renderHeader(activePage = '') {
     apiCall('/learner/streak').then(data => {
       const el = document.getElementById('nav-streak');
       if (el && data.streak) {
-        el.textContent = `🔥 ${data.streak.currentStreak} Day${data.streak.currentStreak === 1 ? '' : 's'}`;
+        el.textContent = `${data.streak.currentStreak} Day${data.streak.currentStreak === 1 ? '' : 's'} Streak`;
       }
     }).catch(() => {});
   }
@@ -138,14 +138,187 @@ async function quickDemoLogin() {
   }
 }
 
-// Format markdown bold and code blocks simply
-function formatMarkdown(text) {
+// Format markdown headings, lists, tables, callouts, bold, and code blocks
+function formatInlineMarkdown(text) {
   if (!text) return '';
   return text
-    .replace(/^### (.*$)/gim, '<h3 style="margin: 0.8rem 0 0.4rem; color: var(--accent-mint); font-size: 1.15rem;">$1</h3>')
-    .replace(/^## (.*$)/gim, '<h2 style="margin: 1rem 0 0.5rem; color: var(--text-primary); font-size: 1.3rem;">$1</h2>')
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.*?)\*/g, '<em>$1</em>')
-    .replace(/`([^`]+)`/g, '<code style="background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px;">$1</code>')
-    .replace(/\n/g, '<br/>');
+    .replace(/`([^`]+)`/g, '<code class="inline-code">$1</code>')
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="md-link">$1</a>');
+}
+
+function formatMarkdown(text) {
+  if (!text) return '';
+
+  // 1. Extract and preserve code blocks
+  const codeBlocks = [];
+  let processed = text.replace(/```([a-zA-Z0-9_-]*)\n([\s\S]*?)```/g, (match, lang, code) => {
+    const id = `___CODE_BLOCK_${codeBlocks.length}___`;
+    const escapedCode = code
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+    codeBlocks.push(`<pre class="code-block" data-lang="${lang || 'text'}"><code>${escapedCode.trim()}</code></pre>`);
+    return id;
+  });
+
+  // 2. Extract and format tables
+  processed = processed.replace(/((?:\|[^\n]+\|\n?)+)/g, (match) => {
+    const rawLines = match.trim().split('\n').map(l => l.trim()).filter(l => l.startsWith('|'));
+    if (rawLines.length < 2) return match;
+
+    const isDelimiter = /^\|[\s\-:|]+\|$/.test(rawLines[1]);
+    if (!isDelimiter) return match;
+
+    const headers = rawLines[0].split('|').slice(1, -1).map(h => h.trim());
+    const rows = rawLines.slice(2).map(line => line.split('|').slice(1, -1).map(c => c.trim()));
+
+    let tableHtml = '<div class="table-responsive"><table class="markdown-table"><thead><tr>';
+    headers.forEach(h => {
+      tableHtml += `<th>${formatInlineMarkdown(h)}</th>`;
+    });
+    tableHtml += '</tr></thead><tbody>';
+
+    rows.forEach(row => {
+      if (row.length > 0 && row.some(cell => cell.length > 0)) {
+        tableHtml += '<tr>';
+        row.forEach(cell => {
+          tableHtml += `<td>${formatInlineMarkdown(cell || '')}</td>`;
+        });
+        tableHtml += '</tr>';
+      }
+    });
+    tableHtml += '</tbody></table></div>';
+    return tableHtml;
+  });
+
+  // 3. Process line-by-line elements: Headings, Callouts, Lists, Dividers
+  const lines = processed.split('\n');
+  const resultLines = [];
+  let inUl = false;
+  let inOl = false;
+  let inBlockquote = false;
+  let blockquoteContent = [];
+
+  const flushBlockquote = () => {
+    if (inBlockquote) {
+      const bqText = blockquoteContent.join('<br/>');
+      let calloutClass = 'callout-default';
+      if (bqText.includes('⚠️') || bqText.toLowerCase().includes('trap') || bqText.toLowerCase().includes('warning') || bqText.toLowerCase().includes('pitfall')) {
+        calloutClass = 'callout-warning';
+      } else if (bqText.includes('🎯') || bqText.toLowerCase().includes('gate') || bqText.toLowerCase().includes('exam') || bqText.toLowerCase().includes('target')) {
+        calloutClass = 'callout-exam';
+      } else if (bqText.includes('⚡') || bqText.includes('💡') || bqText.toLowerCase().includes('pro-tip') || bqText.toLowerCase().includes('formula') || bqText.toLowerCase().includes('insight')) {
+        calloutClass = 'callout-tip';
+      }
+      resultLines.push(`<div class="markdown-callout ${calloutClass}"><div class="callout-content">${bqText}</div></div>`);
+      blockquoteContent = [];
+      inBlockquote = false;
+    }
+  };
+
+  const flushLists = () => {
+    if (inUl) {
+      resultLines.push('</ul>');
+      inUl = false;
+    }
+    if (inOl) {
+      resultLines.push('</ol>');
+      inOl = false;
+    }
+  };
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const trimmed = line.trim();
+
+    // Check code block placeholder or table
+    if (trimmed.startsWith('___CODE_BLOCK_') || trimmed.startsWith('<div class="table-responsive">')) {
+      flushBlockquote();
+      flushLists();
+      resultLines.push(line);
+      continue;
+    }
+
+    // Horizontal Rule
+    if (/^(\-{3,}|\*{3,}|_{3,})$/.test(trimmed)) {
+      flushBlockquote();
+      flushLists();
+      resultLines.push('<hr class="markdown-divider"/>');
+      continue;
+    }
+
+    // Blockquote / Callout
+    if (trimmed.startsWith('>')) {
+      flushLists();
+      inBlockquote = true;
+      const cleanQuote = trimmed.replace(/^>\s?/, '');
+      blockquoteContent.push(formatInlineMarkdown(cleanQuote));
+      continue;
+    } else {
+      flushBlockquote();
+    }
+
+    // Headings
+    if (trimmed.startsWith('#### ')) {
+      flushLists();
+      resultLines.push(`<h4 class="md-h4">${formatInlineMarkdown(trimmed.substring(5))}</h4>`);
+      continue;
+    }
+    if (trimmed.startsWith('### ')) {
+      flushLists();
+      resultLines.push(`<h3 class="md-h3">${formatInlineMarkdown(trimmed.substring(4))}</h3>`);
+      continue;
+    }
+    if (trimmed.startsWith('## ')) {
+      flushLists();
+      resultLines.push(`<h2 class="md-h2">${formatInlineMarkdown(trimmed.substring(3))}</h2>`);
+      continue;
+    }
+    if (trimmed.startsWith('# ')) {
+      flushLists();
+      resultLines.push(`<h1 class="md-h1">${formatInlineMarkdown(trimmed.substring(2))}</h1>`);
+      continue;
+    }
+
+    // Unordered list: - item or * item
+    if (/^[-*•]\s+(.*)$/.test(trimmed)) {
+      if (inOl) { resultLines.push('</ol>'); inOl = false; }
+      if (!inUl) { resultLines.push('<ul class="markdown-list">'); inUl = true; }
+      const match = trimmed.match(/^[-*•]\s+(.*)$/);
+      resultLines.push(`<li>${formatInlineMarkdown(match[1])}</li>`);
+      continue;
+    }
+
+    // Ordered list: 1. item
+    if (/^\d+\.\s+(.*)$/.test(trimmed)) {
+      if (inUl) { resultLines.push('</ul>'); inUl = false; }
+      if (!inOl) { resultLines.push('<ol class="markdown-list ordered">'); inOl = true; }
+      const match = trimmed.match(/^\d+\.\s+(.*)$/);
+      resultLines.push(`<li>${formatInlineMarkdown(match[1])}</li>`);
+      continue;
+    }
+
+    // End of list if blank line or regular text
+    flushLists();
+
+    if (trimmed === '') {
+      resultLines.push('<div class="md-spacer"></div>');
+    } else {
+      resultLines.push(`<p class="md-paragraph">${formatInlineMarkdown(trimmed)}</p>`);
+    }
+  }
+
+  flushBlockquote();
+  flushLists();
+
+  let finalHtml = resultLines.join('\n');
+
+  // Restore code blocks
+  codeBlocks.forEach((cb, idx) => {
+    finalHtml = finalHtml.replace(`___CODE_BLOCK_${idx}___`, cb);
+  });
+
+  return finalHtml;
 }

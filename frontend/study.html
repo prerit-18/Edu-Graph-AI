@@ -3,10 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EduGraph AI — Study Studio (Concept Teacher, PYQ Analyst, Problem Solver)</title>
+  <title>EduGraph AI — Study Studio</title>
   <link rel="stylesheet" href="styles.css">
   <style>
-    /* In-page styling for the 3-Agent unified studio */
     .studio-hero {
       display: flex;
       justify-content: space-between;
@@ -14,181 +13,166 @@
       margin-bottom: 1.5rem;
       flex-wrap: wrap;
       gap: 1.25rem;
-      background: var(--bg-card);
+      background: #FFFFFF;
       border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-lg);
-      padding: 1.5rem 1.75rem;
-      backdrop-filter: var(--glass-blur);
+      border-radius: var(--radius-md);
+      padding: 1.25rem 1.5rem;
+      box-shadow: var(--shadow-xs);
     }
     .agent-switcher-group {
       display: inline-flex;
-      background: rgba(0, 0, 0, 0.45);
+      background: var(--bg-surface-secondary);
       border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-md);
-      padding: 5px;
-      gap: 6px;
+      border-radius: var(--radius-sm);
+      padding: 3px;
+      gap: 4px;
     }
     .agent-tab-btn {
       display: inline-flex;
       align-items: center;
-      gap: 0.5rem;
-      padding: 0.55rem 1.15rem;
-      border-radius: var(--radius-sm);
-      font-size: 0.9rem;
+      gap: 0.4rem;
+      padding: 0.45rem 0.9rem;
+      border-radius: var(--radius-xs);
+      font-size: 0.85rem;
       font-weight: 600;
       color: var(--text-secondary);
       background: transparent;
-      border: 1px solid transparent;
+      border: none;
       cursor: pointer;
       transition: var(--transition);
       user-select: none;
     }
     .agent-tab-btn:hover {
       color: var(--text-primary);
-      background: rgba(255, 255, 255, 0.06);
+      background: rgba(0, 0, 0, 0.04);
     }
     .agent-tab-btn.active {
-      color: #fff;
-      background: rgba(16, 185, 129, 0.22);
-      border-color: var(--accent-emerald);
-      box-shadow: 0 0 16px rgba(16, 185, 129, 0.25);
-    }
-    .agent-tab-btn.active.tab-pyq {
-      background: rgba(245, 158, 11, 0.22);
-      border-color: var(--accent-gold);
-      box-shadow: 0 0 16px rgba(245, 158, 11, 0.25);
-    }
-    .agent-tab-btn.active.tab-solver {
-      background: rgba(52, 211, 153, 0.22);
-      border-color: var(--accent-mint);
-      box-shadow: 0 0 16px rgba(52, 211, 153, 0.25);
+      color: var(--accent-primary);
+      background: #FFFFFF;
+      box-shadow: var(--shadow-xs);
     }
   </style>
 </head>
 <body>
   <div id="main-header"></div>
 
-  <main class="container" style="max-width: 1240px; margin: 0 auto; padding: 2rem 1.5rem 4rem;">
+  <main class="container" style="max-width: 1200px; margin: 0 auto; padding: 1.5rem 1.5rem 4rem;">
     <!-- Top Unified Studio Controls Banner -->
     <div class="studio-hero">
       <div>
-        <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.5rem; flex-wrap: wrap;">
-          <span class="hero-pill" style="margin: 0;">🤖 CrewAI Multi-Agent Studio</span>
-          <span class="badge-pill mcq" id="agent-active-badge">ACTIVE: 📘 Concept Teacher</span>
+        <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.35rem; flex-wrap: wrap;">
+          <span class="hero-pill" style="margin: 0;">Interactive Study Studio</span>
+          <span class="badge-pill mcq" id="agent-active-badge">Active: Concept Study</span>
         </div>
-        <h1 id="studio-main-title" style="margin-bottom: 0.35rem; font-size: 1.85rem;">📘 Concept Teacher Studio</h1>
-        <p id="studio-main-desc" style="color: var(--text-secondary); font-size: 0.95rem; margin: 0;">
-          Interactive Socratic explanations and syllabus theory grounded in official GATE CSE standards.
+        <h1 id="studio-main-title" style="margin-bottom: 0.25rem; font-size: 1.65rem;">Concept Study Studio</h1>
+        <p id="studio-main-desc" style="color: var(--text-secondary); font-size: 0.92rem; margin: 0;">
+          Syllabus theory and derivations grounded in standard GATE CSE references.
         </p>
       </div>
 
-      <!-- The 3-Agent Switcher Tabs in single page -->
-      <div class="agent-switcher-group" role="tablist" aria-label="Agent Selector">
+      <!-- Mode Switcher Tabs -->
+      <div class="agent-switcher-group" role="tablist" aria-label="Studio Mode Selector">
         <button class="agent-tab-btn active" id="btn-tab-concept" onclick="switchAgentView('concept')" role="tab" aria-selected="true">
-          📘 Concept Teacher
+          Concept Study
         </button>
-        <button class="agent-tab-btn tab-pyq" id="btn-tab-pyq" onclick="switchAgentView('pyq')" role="tab" aria-selected="false">
-          📊 PYQ Analyst
+        <button class="agent-tab-btn" id="btn-tab-pyq" onclick="switchAgentView('pyq')" role="tab" aria-selected="false">
+          Exam Patterns
         </button>
-        <button class="agent-tab-btn tab-solver" id="btn-tab-solver" onclick="switchAgentView('solver')" role="tab" aria-selected="false">
-          🧮 Problem Solver
+        <button class="agent-tab-btn" id="btn-tab-solver" onclick="switchAgentView('solver')" role="tab" aria-selected="false">
+          Problem Solver
         </button>
       </div>
     </div>
 
     <!-- ========================================================================= -->
-    <!-- VIEW 1: CONCEPT TEACHER STUDIO                                            -->
+    <!-- VIEW 1: CONCEPT STUDY STUDIO                                              -->
     <!-- ========================================================================= -->
     <div id="view-concept">
-      <!-- Quick Concept Topic Chips -->
-      <div style="margin-bottom: 1.5rem;">
-        <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.55rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">
-          Explore Core GATE CSE Syllabus Concepts:
+      <!-- Topic Chips -->
+      <div style="margin-bottom: 1.25rem;">
+        <div style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600;">
+          Select a Core Syllabus Concept:
         </div>
-        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
-          <span class="topic-chip" onclick="askQuickConcept('SJF and CPU Scheduling turnaround time', 'os_scheduling')">⚡ CPU Scheduling & SRTF</span>
-          <span class="topic-chip" onclick="askQuickConcept('Critical Section Problem and Peterson\'s Solution', 'os_sync')">🔒 Critical Section & Peterson's</span>
-          <span class="topic-chip" onclick="askQuickConcept('Semaphores and Mutex Locks in process synchronization', 'os_sync')">🚦 Semaphores vs Mutex</span>
-          <span class="topic-chip" onclick="askQuickConcept('Banker\'s Algorithm and Coffman Deadlock Conditions', 'os_deadlock')">🛑 Deadlocks & Banker's</span>
-          <span class="topic-chip" onclick="askQuickConcept('Virtual Memory and Belady\'s Anomaly in FIFO', 'os_virtual_mem')">📄 Paging & Belady's Anomaly</span>
-          <span class="topic-chip" onclick="askQuickConcept('Binary Search Trees and Heap sorting complexities', 'algo_graphs')">🌳 BST & Heaps</span>
-          <span class="topic-chip" onclick="askQuickConcept('Boyce-Codd Normal Form (BCNF) and Functional Dependencies', 'dbms_normalization')">🗄️ BCNF & Normalization</span>
-          <span class="topic-chip" onclick="askQuickConcept('Strict 2-Phase Locking (2PL) and Conflict Serializability', 'dbms_transactions')">🔄 Strict 2PL & Concurrency</span>
-          <span class="topic-chip" onclick="askQuickConcept('Master Theorem for Divide and Conquer Recurrences', 'algo_asymptotic')">📐 Master Theorem</span>
+        <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
+          <span class="topic-chip" onclick="askQuickConcept('SJF and CPU Scheduling turnaround time', 'os_scheduling')">CPU Scheduling & SRTF</span>
+          <span class="topic-chip" onclick="askQuickConcept('Critical Section Problem and Peterson\'s Solution', 'os_sync')">Critical Section & Peterson's</span>
+          <span class="topic-chip" onclick="askQuickConcept('Semaphores and Mutex Locks in process synchronization', 'os_sync')">Semaphores vs Mutex</span>
+          <span class="topic-chip" onclick="askQuickConcept('Banker\'s Algorithm and Coffman Deadlock Conditions', 'os_deadlock')">Deadlocks & Banker's</span>
+          <span class="topic-chip" onclick="askQuickConcept('Virtual Memory and Belady\'s Anomaly in FIFO', 'os_virtual_mem')">Paging & Belady's Anomaly</span>
+          <span class="topic-chip" onclick="askQuickConcept('Binary Search Trees and Heap sorting complexities', 'algo_graphs_mst_shortest_paths')">BST & Heaps</span>
+          <span class="topic-chip" onclick="askQuickConcept('Boyce-Codd Normal Form (BCNF) and Functional Dependencies', 'dbms_normalization')">BCNF & Normalization</span>
+          <span class="topic-chip" onclick="askQuickConcept('Strict 2-Phase Locking (2PL) and Conflict Serializability', 'dbms_transactions')">Strict 2PL & Concurrency</span>
+          <span class="topic-chip" onclick="askQuickConcept('Master Theorem for Divide and Conquer Recurrences', 'algo_asymptotic')">Master Theorem</span>
         </div>
       </div>
 
-      <div style="display: grid; grid-template-columns: 1fr 340px; gap: 1.5rem;">
+      <div style="display: grid; grid-template-columns: 1fr 320px; gap: 1.25rem;">
         <!-- Concept Chat Canvas -->
-        <div class="glass-card" style="min-height: 560px; display: flex; flex-direction: column; padding: 0; overflow: hidden;">
-          <div class="chat-header" style="padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2);">
-            <div style="display: flex; align-items: center; gap: 0.75rem;">
-              <div class="message-avatar">📘</div>
-              <div>
-                <h4 style="margin: 0; font-size: 1rem;">Concept Teacher Agent</h4>
-                <div style="font-size: 0.78rem; color: var(--text-muted);">Socratic explanations grounded in official GATE syllabus</div>
-              </div>
+        <div class="chat-container">
+          <div class="chat-header">
+            <div>
+              <h4 style="margin: 0; font-size: 0.95rem;">Concept Teacher</h4>
+              <div style="font-size: 0.78rem; color: var(--text-muted);">Grounded explanations aligned with GATE syllabus standards</div>
             </div>
-            <button class="btn btn-secondary btn-sm" onclick="clearConceptChat()">Clear Chat</button>
+            <button class="btn btn-secondary btn-sm" onclick="clearConceptChat()">Clear</button>
           </div>
 
-          <div class="chat-messages" id="concept-chat-messages" style="height: 420px; overflow-y: auto; padding: 1.25rem;">
+          <div class="chat-messages" id="concept-chat-messages">
             <div class="chat-message agent">
-              <div class="message-avatar">📘</div>
+              <div class="message-avatar">CT</div>
               <div class="message-body">
-                <strong>Concept Teacher:</strong> Welcome to the Concept Studio! You can ask about any GATE CSE subject (Operating Systems, Algorithms, DBMS). Click any topic chip above or type your question below.
+                Welcome to the Concept Studio. Ask any theoretical or algorithmic question across Algorithms, Compiler Design, Operating Systems, Databases, or Computer Networks. Click any topic chip above or type your question below.
               </div>
             </div>
           </div>
 
           <form class="chat-input-bar" onsubmit="handleConceptSend(event)">
-            <input type="text" id="concept-user-input" class="input-field" placeholder="Ask about any concept, e.g. 'Explain Round Robin vs SJF'..." autocomplete="off">
-            <button type="submit" class="btn btn-primary" id="btn-concept-send">Explain →</button>
+            <input type="text" id="concept-user-input" class="input-field" placeholder="Ask a conceptual question, e.g. 'Explain Peterson's algorithm'..." autocomplete="off">
+            <button type="submit" class="btn btn-primary" id="btn-concept-send">Explain</button>
           </form>
         </div>
 
-        <!-- Concept Right Side: Syllabus Prerequisite Map -->
-        <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+        <!-- Concept Right Side: Syllabus Details -->
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
           <div class="glass-card" style="padding: 1.25rem;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-              <h3 style="font-size: 1.1rem; margin: 0;">Syllabus Pathway</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+              <h3 style="font-size: 1rem; margin: 0;">Curriculum Pathway</h3>
               <span class="topic-badge" id="concept-subject-badge">Operating Systems</span>
             </div>
-            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.2rem;">
-              Verified curriculum alignment ensures strict grounding without hallucinations.
+            <p style="font-size: 0.84rem; color: var(--text-secondary); margin-bottom: 1rem;">
+              Verified subject references ensure grounded explanations without fabrications.
             </p>
 
-            <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1rem;">
-              <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em;">Current Learning Unit</div>
-              <h4 id="curriculum-unit-title" style="color: var(--accent-mint); margin: 0.35rem 0; font-size: 1rem;">CPU Scheduling</h4>
-              <div style="font-size: 0.84rem; color: var(--text-secondary); line-height: 1.45;" id="curriculum-unit-desc">
+            <div style="background: var(--bg-surface-secondary); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 0.85rem; margin-bottom: 0.85rem;">
+              <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em;">Current Topic</div>
+              <h4 id="curriculum-unit-title" style="color: var(--accent-primary); margin: 0.25rem 0; font-size: 0.95rem;">CPU Scheduling</h4>
+              <div style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.45;" id="curriculum-unit-desc">
                 FCFS, SJF, SRTF, Round Robin, Priority scheduling algorithms, turnaround time, waiting time, and Gantt charts.
               </div>
             </div>
 
-            <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1.25rem;">
+            <div style="background: var(--bg-surface-secondary); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 0.85rem; margin-bottom: 1rem;">
               <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em;">Prerequisites</div>
-              <div style="display: flex; gap: 0.4rem; margin-top: 0.5rem; flex-wrap: wrap;" id="curriculum-prereqs">
+              <div style="display: flex; gap: 0.35rem; margin-top: 0.4rem; flex-wrap: wrap;" id="curriculum-prereqs">
                 <span class="topic-badge">Processes & Threads</span>
                 <span class="topic-badge">State Invariants</span>
               </div>
             </div>
 
-            <div style="padding: 0.85rem; border-radius: var(--radius-sm); background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2); font-size: 0.82rem; color: var(--accent-mint); line-height: 1.4;">
-              💡 <strong>Verified Knowledge Base:</strong> 100% syllabus alignment ensures zero fabrication of non-standard definitions.
+            <div style="padding: 0.75rem; border-radius: var(--radius-sm); background: var(--accent-subtle); border: 1px solid rgba(36, 91, 69, 0.2); font-size: 0.8rem; color: var(--accent-primary); line-height: 1.4;">
+              <strong>Grounded Knowledge Base:</strong> Explanations cite authoritative textbook formulations.
             </div>
           </div>
 
-          <!-- Quick Jump Card to other 2 agents in this page -->
           <div class="glass-card" style="padding: 1.25rem;">
-            <h4 style="margin: 0 0 0.75rem; font-size: 0.95rem; color: var(--text-primary);">Switch Studio View:</h4>
-            <div style="display: flex; flex-direction: column; gap: 0.6rem;">
-              <button class="btn btn-secondary btn-sm" onclick="switchAgentView('pyq')" style="display: flex; justify-content: space-between; align-items: center;">
-                <span>📊 View PYQ Exam Patterns for this topic</span>
+            <h4 style="margin: 0 0 0.75rem; font-size: 0.9rem;">Related Actions</h4>
+            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+              <button class="btn btn-secondary btn-sm" onclick="switchAgentView('pyq')" style="justify-content: space-between;">
+                <span>View Exam Pattern Analysis</span>
                 <span>→</span>
               </button>
-              <button class="btn btn-secondary btn-sm" onclick="switchAgentView('solver')" style="display: flex; justify-content: space-between; align-items: center;">
-                <span>🧮 Solve Practice Problems & BKT Tracing</span>
+              <button class="btn btn-secondary btn-sm" onclick="switchAgentView('solver')" style="justify-content: space-between;">
+                <span>Solve Verified Practice Problems</span>
                 <span>→</span>
               </button>
             </div>
@@ -204,199 +188,215 @@
       <!-- PYQ Topic Selector & Filter Bar -->
       <div class="agent-header-banner">
         <div>
-          <h3 style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem; font-size: 1.15rem;">
-            <span>📊</span> Exam Frequency & Pattern Intelligence (2021–2025)
+          <h3 style="margin-bottom: 0.25rem; font-size: 1.1rem;">
+            Exam Pattern & Frequency Analysis (2021–2025)
           </h3>
           <p style="color: var(--text-secondary); font-size: 0.88rem; margin: 0;">
-            Dissect recurrence rates, mark weightages, and tricky distractor traps set by IIT question setters.
+            Review recurrence rates, mark weightages, and key concept traps.
           </p>
         </div>
-        <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
-          <label style="font-size: 0.85rem; color: var(--text-muted); font-weight: 500;">Select Topic:</label>
-          <select id="pyq-topic-select" class="input-field" style="width: auto; padding: 0.5rem 1rem; font-size: 0.88rem;" onchange="loadPYQAnalysis(this.value)">
+        <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+          <label style="font-size: 0.85rem; color: var(--text-muted); font-weight: 500;">Topic:</label>
+          <select id="pyq-topic-select" class="input-field" style="width: auto; padding: 0.45rem 0.85rem; font-size: 0.85rem;" onchange="loadPYQAnalysis(this.value)">
+            <optgroup label="Algorithms">
+              <option value="algo_asymptotic">Asymptotic Recurrences & Master Theorem</option>
+              <option value="algo_searching_sorting_hashing">Searching, Sorting and Hashing</option>
+              <option value="algo_divide_conquer">Divide & Conquer (Quick Sort, Merge Sort)</option>
+              <option value="algo_greedy">Greedy Strategy & Huffman</option>
+              <option value="algo_dp">Dynamic Programming & Subproblems</option>
+              <option value="algo_graphs_mst_shortest_paths">Shortest Paths (Dijkstra, Bellman-Ford) & MST</option>
+            </optgroup>
+            <optgroup label="Compiler Design">
+              <option value="compiler_lexical">Lexical Analysis & Tokens</option>
+              <option value="compiler_parsing">Parsing: LL(1), LR(0), SLR, LALR, CLR</option>
+              <option value="compiler_sdt_codegen">Syntax-Directed Translation & SDDs</option>
+              <option value="compiler_optimization_dataflow">Code Optimization & Data Flow Analysis</option>
+            </optgroup>
             <optgroup label="Operating Systems">
+              <option value="os_process_ipc">Processes, Threads & IPC</option>
               <option value="os_scheduling" selected>CPU Scheduling & Algorithms</option>
               <option value="os_sync">Process Synchronization & Semaphores</option>
               <option value="os_deadlock">Deadlocks & Banker's Avoidance</option>
-              <option value="os_memory">Main Memory & Paging</option>
               <option value="os_virtual_mem">Virtual Memory & Belady's Anomaly</option>
+              <option value="os_storage">File Systems & Disk Scheduling</option>
             </optgroup>
-            <optgroup label="Algorithms & Data Structures">
-              <option value="algo_asymptotic">Asymptotic Recurrences & Master Theorem</option>
-              <option value="algo_dp">Dynamic Programming & Subproblems</option>
-              <option value="algo_graphs">Graph Traversals, BFS/DFS & MST</option>
-              <option value="algo_shortest_paths">Shortest Paths (Dijkstra, Bellman-Ford)</option>
-              <option value="algo_divide_conquer">Divide & Conquer (Quick Sort, Merge Sort)</option>
-            </optgroup>
-            <optgroup label="Database Management Systems">
+            <optgroup label="Databases (DBMS)">
+              <option value="dbms_er_relational">ER & Relational Model</option>
+              <option value="dbms_rel_algebra_sql">Relational Algebra & SQL</option>
               <option value="dbms_normalization">Functional Dependencies & BCNF</option>
-              <option value="dbms_transactions">Transactions, ACID & Concurrency</option>
               <option value="dbms_indexing">Indexing & B/B+ Trees</option>
-              <option value="dbms_sql">SQL Queries & Nested Operators</option>
-              <option value="dbms_rel_algebra">Relational Algebra & Calculus</option>
+              <option value="dbms_transactions">Transactions, ACID & Concurrency</option>
+            </optgroup>
+            <optgroup label="Computer Networks">
+              <option value="cn_layering_switching">OSI & TCP/IP Layering</option>
+              <option value="cn_datalink_mac">Data Link Layer, MAC & Ethernet</option>
+              <option value="cn_routing">Routing: Distance Vector & Link State</option>
+              <option value="cn_network_ipv4">IPv4 Header, Fragmentation & CIDR</option>
+              <option value="cn_transport_tcp">TCP Flow & Congestion Control</option>
+              <option value="cn_application_dns_http">Application Protocols: DNS & HTTP</option>
             </optgroup>
           </select>
-          <button class="btn btn-primary btn-sm" onclick="refreshCurrentPYQ()">Analyze Topic 🚀</button>
+          <button class="btn btn-primary btn-sm" onclick="refreshCurrentPYQ()">Analyze</button>
         </div>
       </div>
 
-      <!-- Live Statistical Cards -->
+      <!-- Statistical Summary Cards -->
       <div class="stats-card-grid">
         <div class="stat-box">
           <div class="stat-lbl">Exam Appearances</div>
           <div class="stat-val" id="pyq-stat-total">2x</div>
-          <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 0.25rem;" id="pyq-stat-years">2024, 2025</div>
+          <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem;" id="pyq-stat-years">2024, 2025</div>
         </div>
         <div class="stat-box">
           <div class="stat-lbl">Recurrence Rate</div>
-          <div class="stat-val" style="color: var(--accent-emerald);" id="pyq-stat-rate">60%</div>
-          <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 0.25rem;">Tested in recent GATE papers</div>
+          <div class="stat-val" style="color: var(--accent-primary);" id="pyq-stat-rate">60%</div>
+          <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem;">Tested in recent papers</div>
         </div>
         <div class="stat-box">
           <div class="stat-lbl">Question Formats</div>
-          <div class="stat-val" style="color: var(--accent-mint);" id="pyq-stat-formats">NAT + MCQ</div>
-          <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 0.25rem;">Numerical & Conceptual</div>
+          <div class="stat-val" style="color: var(--accent-primary);" id="pyq-stat-formats">NAT + MCQ</div>
+          <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem;">Numerical & Conceptual</div>
         </div>
         <div class="stat-box">
           <div class="stat-lbl">Typical Weightage</div>
           <div class="stat-val" style="color: var(--accent-amber);" id="pyq-stat-marks">2 – 4 Marks</div>
-          <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 0.25rem;">High-Yield Section</div>
+          <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem;">Standard distribution</div>
         </div>
       </div>
 
-      <!-- PYQ Main Details Grid -->
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
-        <!-- Left: Strategic Breakdown & Trap Detector -->
+      <!-- Main PYQ Details Grid -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
+        <!-- Left: Strategic Breakdown -->
         <div class="glass-card" style="padding: 1.5rem;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
-            <h3 style="margin: 0; font-size: 1.15rem;">🎯 IIT Distractor Trap Analysis</h3>
-            <span class="badge-pill nat">Exam Strategist</span>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h3 style="margin: 0; font-size: 1.05rem;">Pattern & Distractor Analysis</h3>
+            <span class="badge-pill nat">Exam Strategy</span>
           </div>
-          <div id="pyq-analysis-text" style="font-size: 0.92rem; line-height: 1.65; color: var(--text-secondary); min-height: 220px;">
-            Loading strategic analysis for selected topic...
+          <div id="pyq-analysis-text" style="font-size: 0.92rem; line-height: 1.65; color: var(--text-secondary); min-height: 200px;">
+            Loading strategic analysis...
           </div>
 
-          <div style="margin-top: 2rem; padding-top: 1.25rem; border-top: 1px solid var(--border-subtle);">
-            <h4 style="margin-bottom: 0.5rem; font-size: 0.95rem; color: var(--text-primary);">Ask Custom PYQ Pattern Query</h4>
+          <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-subtle);">
+            <h4 style="margin-bottom: 0.4rem; font-size: 0.9rem;">Custom Pattern Query</h4>
             <div style="display: flex; gap: 0.5rem;">
-              <input type="text" id="pyq-custom-query" class="input-field" placeholder="e.g. 'What are common distractor options in Deadlocks?'" style="font-size: 0.88rem;">
+              <input type="text" id="pyq-custom-query" class="input-field" placeholder="e.g. 'What are common distractor options in Deadlocks?'" style="font-size: 0.85rem;">
               <button class="btn btn-secondary btn-sm" onclick="askCustomPYQ()">Query</button>
             </div>
           </div>
         </div>
 
-        <!-- Right: Curated Recent Exam Questions from Archive -->
+        <!-- Right: Real GATE Archive Questions -->
         <div class="glass-card" style="padding: 1.5rem;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
-            <h3 style="margin: 0; font-size: 1.15rem;">📝 Real GATE Exam Archive Questions</h3>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h3 style="margin: 0; font-size: 1.05rem;">Archived Questions</h3>
             <span class="topic-badge" id="pyq-sample-count">2 Questions</span>
           </div>
-          <div id="pyq-samples-container" style="min-height: 280px;">
-            Loading past exam questions...
+          <div id="pyq-samples-container" style="min-height: 240px;">
+            Loading archived questions...
           </div>
         </div>
       </div>
     </div>
 
     <!-- ========================================================================= -->
-    <!-- VIEW 3: PROBLEM SOLVER & BKT MASTERY WORKBENCH                           -->
+    <!-- VIEW 3: PROBLEM SOLVER & BKT WORKBENCH                                    -->
     <!-- ========================================================================= -->
     <div id="view-solver" style="display: none;">
-      <div style="display: grid; grid-template-columns: 1fr 340px; gap: 1.5rem;">
+      <div style="display: grid; grid-template-columns: 1fr 320px; gap: 1.25rem;">
         <!-- Left: Problem Derivation Workspace -->
         <div class="glass-card" style="padding: 1.5rem;">
-          <!-- Problem Selector / Switcher -->
+          <!-- Selector -->
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
             <div>
-              <h3 style="display: flex; align-items: center; gap: 0.5rem; margin: 0; font-size: 1.15rem;">
-                <span>🧮</span> Step-by-Step Problem Solver
+              <h3 style="margin: 0; font-size: 1.1rem;">
+                Step-by-Step Problem Solver
               </h3>
-              <p style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 0.2rem;">
-                Mathematical derivations, calculator checks, and real-time BKT mastery evaluation.
+              <p style="color: var(--text-secondary); font-size: 0.84rem; margin-top: 0.2rem;">
+                Mathematical derivations and real-time knowledge tracing.
               </p>
             </div>
-            <select id="solver-preset-select" class="input-field" style="width: auto; padding: 0.45rem 0.9rem; font-size: 0.85rem;" onchange="loadSolverPreset(this.value)">
+            <select id="solver-preset-select" class="input-field" style="width: auto; padding: 0.45rem 0.85rem; font-size: 0.85rem;" onchange="loadSolverPreset(this.value)">
               <option value="os_2024_001" selected>GATE 2024 OS: SRTF Turnaround Time (NAT)</option>
               <option value="os_2025_001">GATE 2025 OS: Non-Preemptive SJF Average Wait (MCQ)</option>
               <option value="algo_2021_001">GATE 2021 Algo: Quick Sort Pivot Comparisons (NAT)</option>
               <option value="dbms_2021_001">GATE 2021 DBMS: Relational Operator Commutativity (MCQ)</option>
-              <option value="custom">✍️ Enter Custom Problem Statement</option>
+              <option value="custom">Enter Custom Problem Statement</option>
             </select>
           </div>
 
           <!-- Problem Statement Box -->
-          <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 1.25rem;">
+          <div style="background: var(--bg-surface-secondary); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 1.15rem; margin-bottom: 1.25rem;">
             <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; align-items: center;">
               <span class="topic-badge" id="solver-topic-badge">Operating Systems</span>
               <span class="badge-pill nat" id="solver-type-badge">NAT Problem</span>
             </div>
-            <p id="solver-problem-statement" style="font-size: 0.96rem; line-height: 1.6; color: var(--text-primary); margin: 0;">
+            <p id="solver-problem-statement" style="font-size: 0.95rem; line-height: 1.6; color: var(--text-primary); margin: 0;">
               Consider 4 processes arriving at time t=0 with burst times P1: 8 ms, P2: 6 ms, P3: 4 ms, P4: 2 ms. If Preemptive SRTF (Shortest Remaining Time First) is used, since all arrive at t=0 it is equivalent to SJF. What is the turnaround time of process P1 in milliseconds?
             </p>
           </div>
 
-          <!-- Custom Problem Input Area (Hidden by default, shown if 'custom' selected) -->
+          <!-- Custom Problem Input Area -->
           <div id="solver-custom-input-area" style="display: none; margin-bottom: 1.25rem;">
-            <label style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 0.35rem; font-weight: 500;">Custom Problem Description:</label>
-            <textarea id="solver-custom-text" class="input-field" rows="3" placeholder="Enter full problem statement, CPU bursts, or dependency parameters..."></textarea>
+            <label style="font-size: 0.84rem; color: var(--text-secondary); display: block; margin-bottom: 0.35rem; font-weight: 500;">Custom Problem Statement:</label>
+            <textarea id="solver-custom-text" class="input-field" rows="3" placeholder="Enter problem statement, burst times, or relation schemas..."></textarea>
           </div>
 
-          <!-- Student Answer Submission Bar -->
-          <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 1rem 1.25rem; margin-bottom: 1.5rem; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+          <!-- Submission Bar -->
+          <div style="background: var(--bg-surface-secondary); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 1rem 1.15rem; margin-bottom: 1.5rem; display: flex; gap: 0.85rem; align-items: center; flex-wrap: wrap;">
             <div style="flex: 1; min-width: 200px;">
-              <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem; font-weight: 500;">Your Calculated Answer:</label>
-              <input type="text" id="solver-student-answer" class="input-field" placeholder="Enter integer answer or option (e.g. 20 or B)">
+              <label style="font-size: 0.8rem; color: var(--text-secondary); display: block; margin-bottom: 0.25rem; font-weight: 500;">Your Calculated Answer:</label>
+              <input type="text" id="solver-student-answer" class="input-field" placeholder="e.g. 20 or B">
             </div>
-            <button class="btn btn-primary" onclick="solveAndVerifyProblem()" style="height: 42px; margin-top: auto;">
-              Verify & Trace Solution 🚀
+            <button class="btn btn-primary" onclick="solveAndVerifyProblem()" style="height: 40px; margin-top: auto;">
+              Verify Derivation
             </button>
           </div>
 
-          <!-- Solver Derivation Results Canvas -->
+          <!-- Derivation Results Canvas -->
           <div id="solver-result-container" style="display: none;">
-            <div id="solver-grade-banner" style="padding: 1rem 1.25rem; border-radius: var(--radius-md); margin-bottom: 1.25rem; font-size: 0.95rem; line-height: 1.45;"></div>
-            <h4 style="margin-bottom: 0.75rem; color: var(--accent-mint); font-size: 1rem; display: flex; align-items: center; gap: 0.4rem;">
-              <span>🔬</span> Step-by-Step Verified Solution Derivation
+            <div id="solver-grade-banner" style="padding: 0.85rem 1.15rem; border-radius: var(--radius-sm); margin-bottom: 1rem; font-size: 0.92rem; line-height: 1.45;"></div>
+            <h4 style="margin-bottom: 0.65rem; font-size: 0.95rem;">
+              Step-by-Step Solution Derivation
             </h4>
-            <div id="solver-derivation-steps" style="font-size: 0.92rem; line-height: 1.65; color: var(--text-secondary); background: rgba(0,0,0,0.2); padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);"></div>
+            <div id="solver-derivation-steps" style="font-size: 0.92rem; line-height: 1.65; color: var(--text-primary); background: var(--bg-surface-secondary); padding: 1.15rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);"></div>
           </div>
         </div>
 
-        <!-- Right: BKT Mastery Meter & Quick Formula Calculator -->
-        <div style="display: flex; flex-direction: column; gap: 1.5rem;">
-          <!-- BKT Knowledge Mastery Gauge -->
+        <!-- Right: Mastery Meter & Calculator -->
+        <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+          <!-- Topic Mastery Gauge -->
           <div class="glass-card" style="padding: 1.25rem;">
-            <h3 style="font-size: 1.05rem; margin: 0 0 0.4rem;">🎯 Knowledge Mastery</h3>
-            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem;">Bayesian Knowledge Tracing (BKT) probability P(Know) for this topic:</p>
+            <h3 style="font-size: 1rem; margin: 0 0 0.35rem;">Topic Knowledge State</h3>
+            <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.85rem;">Bayesian probability <code>P(Know)</code> for this topic:</p>
 
             <div class="bkt-meter-container">
-              <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600;">
-                <span id="bkt-topic-label">CPU Scheduling</span>
-                <span style="color: var(--accent-emerald);" id="bkt-score-pct">71.0%</span>
+              <div style="display: flex; justify-content: space-between; font-size: 0.84rem; font-weight: 600;">
+                <span id="bkt-topic-label">Operating Systems</span>
+                <span style="color: var(--accent-primary);" id="bkt-score-pct">0%</span>
               </div>
               <div class="bkt-progress-bar">
-                <div class="bkt-progress-fill" id="bkt-meter-fill" style="width: 71%;"></div>
+                <div class="bkt-progress-fill" id="bkt-meter-fill" style="width: 0%;"></div>
               </div>
               <div style="display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--text-muted);">
-                <span>Novice (0%)</span>
-                <span>Mastered (95%+)</span>
+                <span>Unpracticed (0%)</span>
+                <span>Mastered (75%+)</span>
               </div>
             </div>
 
             <div style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.5;">
-              Each correct problem derivation increases your topic mastery score and optimizes your spaced repetition review schedule.
+              Correct derivations update your topic mastery score and optimize your review schedule.
             </div>
           </div>
 
-          <!-- Interactive Calculator Tool -->
+          <!-- Calculator Tool -->
           <div class="glass-card" style="padding: 1.25rem;">
-            <h3 style="font-size: 1.05rem; margin: 0 0 0.4rem;">🧮 GATE Math Calculator</h3>
-            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem;">Evaluate formulas (e.g. Turnaround Time = Completion - Arrival):</p>
-            <div style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem;">
+            <h3 style="font-size: 1rem; margin: 0 0 0.35rem;">Quick Formula Evaluator</h3>
+            <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.75rem;">Evaluate expressions (e.g. Turnaround Time = Completion - Arrival):</p>
+            <div style="display: flex; gap: 0.5rem; margin-bottom: 0.65rem;">
               <input type="text" id="quick-calc-input" class="input-field" placeholder="e.g. 20 - 0 or 8 / 3" style="font-size: 0.85rem;">
               <button class="btn btn-secondary btn-sm" onclick="evaluateQuickMath()">Eval</button>
             </div>
-            <div id="quick-calc-result" style="font-family: 'JetBrains Mono', monospace; font-size: 0.88rem; color: var(--accent-mint); background: rgba(0,0,0,0.3); padding: 0.5rem 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+            <div id="quick-calc-result" style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--text-primary); background: var(--bg-surface-secondary); padding: 0.45rem 0.75rem; border-radius: var(--radius-xs); border: 1px solid var(--border-subtle);">
               Result: 0
             </div>
           </div>
@@ -409,7 +409,6 @@
   <script>
     renderHeader('study');
 
-    // Preset questions bank for Problem Solver
     const PRESETS = {
       os_2024_001: {
         id: 'os_2024_001',
@@ -438,7 +437,7 @@
       dbms_2021_001: {
         id: 'dbms_2021_001',
         topic_id: 'dbms_rel_algebra',
-        subject: 'Database Management Systems',
+        subject: 'Databases',
         type: 'MCQ',
         question: 'Which of the following relational algebra operators is NOT commutative? Options: A. Natural Join | B. Cartesian Product | C. Set Difference | D. Union.',
         answer: 'C'
@@ -448,7 +447,6 @@
     let activeAgent = 'concept';
     let currentProblem = PRESETS.os_2024_001;
 
-    // Check query params or hash for initial view
     const urlParams = new URLSearchParams(window.location.search);
     const initialView = urlParams.get('view') || urlParams.get('agent') || window.location.hash.replace('#', '');
     const initialTopic = urlParams.get('topic');
@@ -470,20 +468,15 @@
       }
     }
 
-    // -------------------------------------------------------------------------
-    // View Switcher: Seamlessly switches between the 3 agent studios on this single page
-    // -------------------------------------------------------------------------
     function switchAgentView(view, updateUrl = true) {
       activeAgent = view;
 
-      // Update URL search param or history without reloading
       if (updateUrl && window.history && window.history.replaceState) {
         const url = new URL(window.location);
         url.searchParams.set('view', view);
         window.history.replaceState({}, '', url);
       }
 
-      // Update Tab button active classes
       const btnConcept = document.getElementById('btn-tab-concept');
       const btnPyq = document.getElementById('btn-tab-pyq');
       const btnSolver = document.getElementById('btn-tab-solver');
@@ -492,34 +485,31 @@
       btnPyq.classList.toggle('active', view === 'pyq');
       btnSolver.classList.toggle('active', view === 'solver');
 
-      // Update Hero Header dynamically
       const title = document.getElementById('studio-main-title');
       const desc = document.getElementById('studio-main-desc');
       const badge = document.getElementById('agent-active-badge');
 
       if (view === 'concept') {
-        badge.textContent = 'ACTIVE: 📘 Concept Teacher';
+        badge.textContent = 'Active: Concept Study';
         badge.className = 'badge-pill mcq';
-        title.textContent = '📘 Concept Teacher Studio';
-        desc.textContent = 'Interactive Socratic explanations and syllabus theory grounded in official GATE CSE standards.';
+        title.textContent = 'Concept Study Studio';
+        desc.textContent = 'Syllabus theory and derivations grounded in standard GATE CSE references.';
       } else if (view === 'pyq') {
-        badge.textContent = 'ACTIVE: 📊 PYQ Analyst';
+        badge.textContent = 'Active: Exam Patterns';
         badge.className = 'badge-pill nat';
-        title.textContent = '📊 PYQ Pattern Analyst';
-        desc.textContent = 'Exam recurrence metrics (2021–2025), IIT distractor trap intelligence, and verified archive questions.';
+        title.textContent = 'Exam Pattern Analysis';
+        desc.textContent = 'Exam recurrence metrics (2021–2025), weightage analysis, and archive questions.';
       } else {
-        badge.textContent = 'ACTIVE: 🧮 Problem Solver';
+        badge.textContent = 'Active: Problem Solver';
         badge.className = 'badge-pill nat';
-        title.textContent = '🧮 Step-by-Step Problem Solver';
-        desc.textContent = 'Rigorous mathematical derivations, boundary checks, scratchpad calculations, and Bayesian Knowledge Tracing.';
+        title.textContent = 'Step-by-Step Problem Solver';
+        desc.textContent = 'Mathematical derivations, calculation checks, and Bayesian knowledge tracing.';
       }
 
-      // Toggle Panels
       document.getElementById('view-concept').style.display = view === 'concept' ? 'block' : 'none';
       document.getElementById('view-pyq').style.display = view === 'pyq' ? 'block' : 'none';
       document.getElementById('view-solver').style.display = view === 'solver' ? 'block' : 'none';
 
-      // Load PYQ analysis if switching to pyq for the first time
       if (view === 'pyq' && !window.pyqLoaded) {
         const topicVal = document.getElementById('pyq-topic-select').value || 'os_scheduling';
         loadPYQAnalysis(topicVal);
@@ -527,9 +517,7 @@
       }
     }
 
-    // -------------------------------------------------------------------------
-    // 1. CONCEPT TEACHER LOGIC
-    // -------------------------------------------------------------------------
+    // 1. Concept Study Logic
     function askQuickConcept(query, topicId = null) {
       switchAgentView('concept');
       if (topicId) {
@@ -555,14 +543,14 @@
 
         if (res.citations && res.citations.length > 0) {
           const topCit = res.citations[0];
-          document.getElementById('curriculum-unit-title').textContent = topCit.topic || topCit.topic_id || 'GATE Core Topic';
+          document.getElementById('curriculum-unit-title').textContent = topCit.topic || topCit.topic_id || 'Core Topic';
           document.getElementById('concept-subject-badge').textContent = topCit.subject || 'Operating Systems';
           if (topCit.topic_id) {
             updateSidebarForTopic(topCit.topic_id);
           }
         }
       } catch (err) {
-        addConceptMessage('agent', `⚠️ Request failed: ${err.message}`);
+        addConceptMessage('agent', `Request failed: ${err.message}`);
       } finally {
         input.disabled = false;
         input.focus();
@@ -574,11 +562,11 @@
       const msgDiv = document.createElement('div');
       msgDiv.className = `chat-message ${role}`;
 
-      const avatar = role === 'user' ? '👤' : '📘';
+      const avatar = role === 'user' ? 'You' : 'CT';
       let citationsHtml = '';
       if (citations && citations.length > 0) {
-        citationsHtml = '<div style="margin-top: 0.6rem; border-top: 1px solid var(--border-subtle); padding-top: 0.5rem;"><strong>Verified Syllabus Sources:</strong><br/>' +
-          citations.map(c => `<span class="citation-pill">📌 ${c.source || 'GATE Syllabus'} — ${c.topic || c.topic_id}</span>`).join('') +
+        citationsHtml = '<div style="margin-top: 0.6rem; border-top: 1px solid var(--border-subtle); padding-top: 0.5rem; font-size: 0.82rem;"><strong>Reference Sources:</strong><br/>' +
+          citations.map(c => `<span class="citation-pill">${c.source || 'GATE Syllabus'} — ${c.topic || c.topic_id}</span>`).join('') +
           '</div>';
       }
 
@@ -596,7 +584,7 @@
 
     function clearConceptChat() {
       document.getElementById('concept-chat-messages').innerHTML = '';
-      addConceptMessage('agent', 'Chat cleared. Ready for your next GATE CSE conceptual query!');
+      addConceptMessage('agent', 'Chat cleared. Ask any GATE CSE conceptual question to begin.');
     }
 
     function updateSidebarForTopic(topicId) {
@@ -639,13 +627,13 @@
         },
         dbms_normalization: {
           title: 'Functional Dependencies & Normalization',
-          subject: 'DBMS',
+          subject: 'Databases',
           desc: 'Closure of attribute sets, minimal cover, 1NF, 2NF, 3NF, BCNF, lossless join and dependency preservation.',
           prereqs: ['Relational Model', 'Candidate Keys']
         },
         dbms_transactions: {
           title: 'Transactions & Concurrency Control',
-          subject: 'DBMS',
+          subject: 'Databases',
           desc: 'ACID properties, Conflict & View serializability, Precedence graphs, 2-Phase Locking (2PL), deadlocks.',
           prereqs: ['Schedules', 'Serializability']
         }
@@ -663,19 +651,16 @@
       }
     }
 
-    // -------------------------------------------------------------------------
-    // 2. PYQ ANALYST LOGIC
-    // -------------------------------------------------------------------------
+    // 2. PYQ Analyst Logic
     async function loadPYQAnalysis(topicId) {
       const container = document.getElementById('pyq-samples-container');
       const analysisBox = document.getElementById('pyq-analysis-text');
-      analysisBox.innerHTML = '<em>Analyzing previous year question patterns with CrewAI PYQ Analyst...</em>';
-      container.innerHTML = '<em>Loading verified exam questions...</em>';
+      analysisBox.innerHTML = '<em>Loading exam pattern analysis...</em>';
+      container.innerHTML = '<em>Loading archived questions...</em>';
 
       try {
         const res = await apiCall('/agents/pyq-analyst', 'POST', { topicId });
 
-        // Update stats cards
         const stats = res.stats || {};
         document.getElementById('pyq-stat-total').textContent = `${stats.total_questions || 2}x`;
         const years = stats.years_appeared || [2024, 2025];
@@ -687,10 +672,8 @@
           document.getElementById('pyq-stat-formats').textContent = Object.keys(typesObj).join(' + ') || 'NAT + MCQ';
         }
 
-        // Render strategic analysis
         analysisBox.innerHTML = formatMarkdown(res.analysis || res.explanation || 'Analysis complete.');
 
-        // Render questions archive
         const questions = res.sampleQuestions || (stats && stats.sample_questions) || [];
         document.getElementById('pyq-sample-count').textContent = `${questions.length} Question${questions.length === 1 ? '' : 's'}`;
 
@@ -702,18 +685,18 @@
             const qMarks = q.marks || (qType === 'NAT' ? 2 : 1);
             return `
               <div class="pyq-sample-card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
                   <span class="topic-badge">GATE ${q.year || 'CSE'}</span>
                   <span class="badge-pill ${qType === 'NAT' ? 'nat' : 'mcq'}">${qType} (${qMarks} Mark${qMarks === 1 ? '' : 's'})</span>
                 </div>
-                <p style="font-size: 0.92rem; line-height: 1.55; color: var(--text-primary); margin-bottom: 0.75rem;">
+                <p style="font-size: 0.9rem; line-height: 1.5; color: var(--text-primary); margin-bottom: 0.6rem;">
                   ${q.question}
                 </p>
-                ${q.options ? `<div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.6rem; background: rgba(0,0,0,0.2); padding: 0.5rem 0.75rem; border-radius: 6px;">${q.options.join(' &nbsp;|&nbsp; ')}</div>` : ''}
-                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; border-top: 1px solid var(--border-subtle); padding-top: 0.5rem; margin-top: 0.5rem;">
-                  <span style="color: var(--accent-mint);"><strong>Official Key:</strong> ${q.answer}</span>
-                  <button class="btn btn-secondary btn-sm" style="padding: 0.3rem 0.75rem; font-size: 0.78rem;" onclick="loadProblemToSolve('${q.id}')">
-                    Solve in Problem Solver 🧮
+                ${q.options ? `<div style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 0.5rem; background: var(--bg-surface-secondary); padding: 0.4rem 0.65rem; border-radius: 4px;">${q.options.join(' &nbsp;|&nbsp; ')}</div>` : ''}
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; border-top: 1px solid var(--border-subtle); padding-top: 0.4rem; margin-top: 0.4rem;">
+                  <span style="color: var(--accent-primary);"><strong>Answer:</strong> ${q.answer}</span>
+                  <button class="btn btn-secondary btn-sm" style="padding: 0.25rem 0.65rem; font-size: 0.78rem;" onclick="loadProblemToSolve('${q.id}')">
+                    Solve
                   </button>
                 </div>
               </div>
@@ -738,7 +721,7 @@
       if (!query) return;
 
       const analysisBox = document.getElementById('pyq-analysis-text');
-      analysisBox.innerHTML = `<em>Analyzing pattern question: "${query}"...</em>`;
+      analysisBox.innerHTML = `<em>Analyzing pattern query: "${query}"...</em>`;
 
       try {
         const res = await apiCall('/agents/pyq-analyst', 'POST', { topicId, query });
@@ -748,9 +731,7 @@
       }
     }
 
-    // -------------------------------------------------------------------------
-    // 3. PROBLEM SOLVER LOGIC
-    // -------------------------------------------------------------------------
+    // 3. Problem Solver Logic
     function loadSolverPreset(presetId) {
       const customArea = document.getElementById('solver-custom-input-area');
       const statement = document.getElementById('solver-problem-statement');
@@ -764,9 +745,9 @@
 
       if (presetId === 'custom') {
         customArea.style.display = 'block';
-        statement.textContent = 'Type or paste your custom problem statement above.';
+        statement.textContent = 'Enter your problem statement above.';
         topicBadge.textContent = 'Custom Problem';
-        typeBadge.textContent = 'Interactive Solver';
+        typeBadge.textContent = 'Problem Solver';
         currentProblem = { id: null, topic_id: 'custom', type: 'NAT', question: '' };
         return;
       }
@@ -780,6 +761,15 @@
         typeBadge.textContent = `${p.type} Problem`;
         typeBadge.className = `badge-pill ${p.type === 'NAT' ? 'nat' : 'mcq'}`;
         document.getElementById('bkt-topic-label').textContent = p.subject;
+
+        if (p.topic_id && Auth.isAuthenticated()) {
+          apiCall('/learner/mastery').then(res => {
+            const t = (res.mastery || []).find(m => m.topic_id === p.topic_id);
+            const pct = t ? Math.round(t.p_know * 100) : 0;
+            document.getElementById('bkt-score-pct').textContent = `${pct}%`;
+            document.getElementById('bkt-meter-fill').style.width = `${pct}%`;
+          }).catch(() => {});
+        }
       }
     }
 
@@ -804,8 +794,10 @@
       const questionText = currentProblem.id ? currentProblem.question : (customText || 'GATE Problem');
 
       resContainer.style.display = 'block';
-      gradeBanner.style.background = 'rgba(255,255,255,0.05)';
-      gradeBanner.innerHTML = '<em>Running Problem Solver derivation and BKT knowledge tracing...</em>';
+      gradeBanner.style.background = 'var(--bg-surface-secondary)';
+      gradeBanner.style.border = '1px solid var(--border-subtle)';
+      gradeBanner.style.color = 'var(--text-primary)';
+      gradeBanner.innerHTML = '<em>Running derivation and updating knowledge state...</em>';
       stepsBox.innerHTML = '';
 
       try {
@@ -818,28 +810,25 @@
 
         const res = await apiCall('/agents/solve', 'POST', payload);
 
-        // Grade Banner
         if (res.isCorrect === true) {
-          gradeBanner.style.background = 'rgba(16, 185, 129, 0.15)';
-          gradeBanner.style.border = '1px solid rgba(16, 185, 129, 0.4)';
-          gradeBanner.style.color = 'var(--accent-mint)';
-          gradeBanner.innerHTML = `<strong>✓ Correct! Verified answer: ${res.officialAnswer || studentAns}</strong><br/>Mathematical derivation successfully verified.`;
+          gradeBanner.style.background = 'var(--accent-subtle)';
+          gradeBanner.style.border = '1px solid rgba(36, 91, 69, 0.3)';
+          gradeBanner.style.color = 'var(--accent-primary)';
+          gradeBanner.innerHTML = `<strong>Correct. Verified answer: ${res.officialAnswer || studentAns}</strong><br/>Mathematical derivation verified.`;
         } else if (res.isCorrect === false) {
-          gradeBanner.style.background = 'rgba(244, 63, 94, 0.15)';
-          gradeBanner.style.border = '1px solid rgba(244, 63, 94, 0.4)';
+          gradeBanner.style.background = 'var(--accent-rose-subtle)';
+          gradeBanner.style.border = '1px solid rgba(168, 40, 40, 0.3)';
           gradeBanner.style.color = 'var(--accent-rose)';
-          gradeBanner.innerHTML = `<strong>✗ Incorrect. Official answer: ${res.officialAnswer || 'See derivation below'}</strong><br/>Review the verified derivation steps below to identify the mistake.`;
+          gradeBanner.innerHTML = `<strong>Incorrect. Reference answer: ${res.officialAnswer || 'See derivation below'}</strong><br/>Review the derivation steps below.`;
         } else {
-          gradeBanner.style.background = 'rgba(245, 158, 11, 0.15)';
-          gradeBanner.style.border = '1px solid rgba(245, 158, 11, 0.4)';
-          gradeBanner.style.color = 'var(--accent-gold)';
-          gradeBanner.innerHTML = `<strong>Step-by-Step Derivation Generated:</strong> Verified Result: ${res.officialAnswer || 'Derived below'}`;
+          gradeBanner.style.background = 'var(--accent-amber-subtle)';
+          gradeBanner.style.border = '1px solid rgba(154, 91, 0, 0.3)';
+          gradeBanner.style.color = 'var(--accent-amber)';
+          gradeBanner.innerHTML = `<strong>Derivation Generated:</strong> Result: ${res.officialAnswer || 'Derived below'}`;
         }
 
-        // Render Derivation Steps
         stepsBox.innerHTML = formatMarkdown(res.explanation || 'Derivation complete.');
 
-        // Update BKT Progress Gauge
         if (res.bktUpdate && res.bktUpdate.newPKnow) {
           const pct = Math.round(res.bktUpdate.newPKnow * 100);
           document.getElementById('bkt-score-pct').textContent = `${pct}%`;
@@ -858,7 +847,7 @@
         const clean = expr.replace(/[^0-9\+\-\*\/\(\)\.\s\^]/g, '').replace(/\^/g, '**');
         const val = Function(`'use strict'; return (${clean})`)();
         resBox.textContent = `Result: ${typeof val === 'number' ? Number(val.toFixed(4)) : val}`;
-        resBox.style.color = 'var(--accent-mint)';
+        resBox.style.color = 'var(--accent-primary)';
       } catch (e) {
         resBox.textContent = `Error: Invalid expression`;
         resBox.style.color = 'var(--accent-rose)';

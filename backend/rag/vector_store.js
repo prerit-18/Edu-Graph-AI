@@ -67,34 +67,39 @@ class VectorStore {
       }
     }
 
-    // 2. Index PYQ questions
-    const pyqDirs = [
-      { subject: 'Operating Systems', dir: 'os' },
-      { subject: 'Algorithms', dir: 'algorithms' },
-      { subject: 'Database Management Systems', dir: 'dbms' }
-    ];
+    // 2. Index PYQ questions dynamically from all subject folders
+    const pyqRoot = path.resolve(__dirname, '../../data/pyq');
+    if (fs.existsSync(pyqRoot)) {
+      const subjectDirs = fs.readdirSync(pyqRoot, { withFileTypes: true })
+        .filter(d => d.isDirectory())
+        .map(d => d.name);
 
-    for (const item of pyqDirs) {
-      const qFile = path.resolve(__dirname, `../../data/pyq/${item.dir}/questions.json`);
-      if (fs.existsSync(qFile)) {
-        const questions = JSON.parse(fs.readFileSync(qFile, 'utf8'));
-        for (const q of questions) {
-          const text = `GATE ${q.year} ${q.subject} [${q.topic_id}] Question: ${q.question} Options: ${q.options ? q.options.join(' | ') : 'N/A'}. Correct Answer: ${q.answer}. Solution Explanation: ${q.explanation}`;
-          newChunks.push({
-            id: `pyq_${q.id}`,
-            text,
-            metadata: {
-              source_type: 'pyq',
-              subject: q.subject,
-              topic_id: q.topic_id,
-              year: q.year,
-              question_id: q.id,
-              type: q.type,
-              answer: q.answer,
-              explanation: q.explanation
-            },
-            embedding: generateEmbedding(text)
-          });
+      for (const dirName of subjectDirs) {
+        const qFile = path.join(pyqRoot, dirName, 'questions.json');
+        if (fs.existsSync(qFile)) {
+          try {
+            const questions = JSON.parse(fs.readFileSync(qFile, 'utf8'));
+            for (const q of questions) {
+              const text = `GATE ${q.year} ${q.subject || dirName} [${q.topic_id}] Question: ${q.question} Options: ${q.options ? q.options.join(' | ') : 'N/A'}. Correct Answer: ${q.answer}. Solution Explanation: ${q.explanation}`;
+              newChunks.push({
+                id: `pyq_${q.id}`,
+                text,
+                metadata: {
+                  source_type: 'pyq',
+                  subject: q.subject || dirName,
+                  topic_id: q.topic_id,
+                  year: q.year,
+                  question_id: q.id,
+                  type: q.type,
+                  answer: q.answer,
+                  explanation: q.explanation
+                },
+                embedding: generateEmbedding(text)
+              });
+            }
+          } catch (err) {
+            console.warn(`Could not index ${qFile}:`, err.message);
+          }
         }
       }
     }

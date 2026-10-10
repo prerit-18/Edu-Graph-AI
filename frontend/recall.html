@@ -12,61 +12,61 @@
   <main class="container">
     <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
       <div>
-        <div class="hero-pill" style="margin-bottom: 0.5rem;">🧠 Cognitive Retrieval & BKT Feedback</div>
-        <h1>Active Recall Challenge Studio</h1>
-        <p style="color: var(--text-secondary);">Test your conceptual recall directly from memory, not passive multiple-choice recognition</p>
+        <div class="hero-pill" style="margin-bottom: 0.5rem;">Retrieval Practice</div>
+        <h1>Active Recall Studio</h1>
+        <p style="color: var(--text-secondary);">Test conceptual recall directly from memory to reinforce retention.</p>
       </div>
-      <button class="btn btn-secondary btn-sm" onclick="loadNextPrompt()">🔄 Load Another Prompt</button>
+      <button class="btn btn-secondary btn-sm" onclick="loadNextPrompt()">Next Prompt</button>
     </div>
 
     <!-- Active Recall Challenge Card -->
-    <div class="glass-card" style="max-width: 800px; margin: 0 auto; padding: 2.5rem;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+    <div class="glass-card" style="max-width: 800px; margin: 0 auto; padding: 2rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
         <div>
           <span class="topic-badge" id="topic-badge">Operating Systems</span>
-          <h3 id="topic-title" style="margin-top: 0.4rem;">CPU Scheduling</h3>
+          <h3 id="topic-title" style="margin-top: 0.35rem;">CPU Scheduling</h3>
         </div>
-        <span class="mastery-score-badge" id="probe-type-badge">Short Answer Probe</span>
+        <span class="topic-badge" id="probe-type-badge">Short Answer Probe</span>
       </div>
 
       <!-- Question Probe -->
-      <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 1.5rem; margin-bottom: 1.5rem;">
-        <p id="prompt-question" style="font-size: 1.1rem; line-height: 1.6; color: var(--text-primary);">
-          Loading active recall prompt...
+      <div style="background: var(--bg-surface-secondary); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 1.25rem; margin-bottom: 1.25rem;">
+        <p id="prompt-question" style="font-size: 1.05rem; line-height: 1.6; color: var(--text-primary); margin: 0;">
+          Generating recall prompt...
         </p>
       </div>
 
       <!-- Student Input Area -->
       <form onsubmit="submitRecallAnswer(event)" id="recall-form">
-        <div style="margin-bottom: 1.5rem;">
-          <label for="student-response" style="display: block; font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
-            Your Conceptual Explanation / Answer:
+        <div style="margin-bottom: 1.25rem;">
+          <label for="student-response" style="display: block; font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 0.4rem; font-weight: 500;">
+            Your Explanation / Answer:
           </label>
-          <textarea id="student-response" class="input-field" rows="4" placeholder="Type your answer in your own words. Focus on key mechanisms, trade-offs, and conditions..." style="resize: vertical; font-family: 'Inter', sans-serif;" required></textarea>
+          <textarea id="student-response" class="input-field" rows="4" placeholder="Type your response in your own words. Include key mechanisms, trade-offs, or formulas..." style="resize: vertical; font-family: inherit;" required></textarea>
         </div>
 
         <button type="submit" class="btn btn-primary" id="btn-submit-recall" style="width: 100%;">
-          Submit to Active Recall Grader & Update BKT 🚀
+          Submit Response
         </button>
       </form>
 
-      <!-- Grader Feedback (Revealed after submission) -->
-      <div id="feedback-section" style="display: none; margin-top: 2rem; border-top: 1px solid var(--border-subtle); padding-top: 1.5rem;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-          <h4>Active Recall Agent Feedback</h4>
+      <!-- Grader Feedback -->
+      <div id="feedback-section" style="display: none; margin-top: 1.5rem; border-top: 1px solid var(--border-subtle); padding-top: 1.25rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+          <h4 style="margin: 0;">Evaluation Feedback</h4>
           <span class="mastery-score-badge" id="score-badge">Score: --%</span>
         </div>
 
-        <div id="feedback-msg" style="padding: 1rem; border-radius: var(--radius-sm); margin-bottom: 1.25rem; font-size: 0.95rem; line-height: 1.5;"></div>
+        <div id="feedback-msg" style="padding: 0.85rem 1rem; border-radius: var(--radius-sm); margin-bottom: 1rem; font-size: 0.92rem; line-height: 1.5;"></div>
 
-        <div style="background: rgba(255, 255, 255, 0.04); padding: 1.25rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); margin-bottom: 1.5rem;">
-          <div style="font-size: 0.82rem; color: var(--accent-emerald); font-weight: 700; text-transform: uppercase; margin-bottom: 0.3rem;">
-            Official Reference Solution:
+        <div style="background: var(--bg-surface-secondary); padding: 1rem 1.15rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); margin-bottom: 1rem;">
+          <div style="font-size: 0.78rem; color: var(--accent-primary); font-weight: 700; text-transform: uppercase; margin-bottom: 0.25rem;">
+            Reference Solution:
           </div>
-          <div id="reference-solution" style="font-size: 0.92rem; color: var(--text-secondary); line-height: 1.5;"></div>
+          <div id="reference-solution" style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.55;"></div>
         </div>
 
-        <div id="bkt-outcome-banner" style="background: rgba(16, 185, 129, 0.15); border: 1px solid var(--border-glow); padding: 0.9rem; border-radius: var(--radius-sm); font-size: 0.9rem; text-align: center;">
+        <div id="bkt-outcome-banner" style="background: var(--accent-subtle); border: 1px solid rgba(36, 91, 69, 0.25); color: var(--accent-primary); padding: 0.75rem 1rem; border-radius: var(--radius-sm); font-size: 0.88rem; text-align: center;">
         </div>
       </div>
     </div>
@@ -84,7 +84,7 @@
       document.getElementById('feedback-section').style.display = 'none';
       document.getElementById('student-response').value = '';
       document.getElementById('btn-submit-recall').disabled = false;
-      document.getElementById('prompt-question').textContent = 'Generating tailored recall challenge from knowledge base...';
+      document.getElementById('prompt-question').textContent = 'Loading recall challenge...';
 
       try {
         const query = topicId ? `?topicId=${topicId}` : '';
@@ -118,7 +118,6 @@
           keyConcepts: currentPrompt.keyConcepts
         });
 
-        // Display results
         const fbSection = document.getElementById('feedback-section');
         const fbMsg = document.getElementById('feedback-msg');
         const scoreBadge = document.getElementById('score-badge');
@@ -126,27 +125,27 @@
         const bktBanner = document.getElementById('bkt-outcome-banner');
 
         fbSection.style.display = 'block';
-        scoreBadge.textContent = `Recall Accuracy: ${evalResult.score}%`;
+        scoreBadge.textContent = `Accuracy: ${evalResult.score}%`;
         refSol.textContent = evalResult.referenceAnswer;
 
         if (evalResult.isCorrect) {
-          fbMsg.style.background = 'rgba(16, 185, 129, 0.15)';
-          fbMsg.style.border = '1px solid rgba(16, 185, 129, 0.35)';
-          fbMsg.style.color = 'var(--accent-emerald)';
-          fbMsg.innerHTML = `<strong>✓ High Retrieval Strength!</strong> ${evalResult.feedback}`;
+          fbMsg.style.background = 'var(--accent-subtle)';
+          fbMsg.style.border = '1px solid rgba(36, 91, 69, 0.3)';
+          fbMsg.style.color = 'var(--accent-primary)';
+          fbMsg.innerHTML = `<strong>Accurate Retrieval:</strong> ${evalResult.feedback}`;
         } else {
-          fbMsg.style.background = 'rgba(244, 63, 94, 0.15)';
-          fbMsg.style.border = '1px solid rgba(244, 63, 94, 0.35)';
+          fbMsg.style.background = 'var(--accent-rose-subtle)';
+          fbMsg.style.border = '1px solid rgba(168, 40, 40, 0.3)';
           fbMsg.style.color = 'var(--accent-rose)';
-          fbMsg.innerHTML = `<strong>Need Reinforcement:</strong> ${evalResult.feedback}`;
+          fbMsg.innerHTML = `<strong>Needs Reinforcement:</strong> ${evalResult.feedback}`;
         }
 
         if (evalResult.bktUpdate) {
           const prev = (evalResult.bktUpdate.previousPKnow * 100).toFixed(1);
           const next = (evalResult.bktUpdate.newPKnow * 100).toFixed(1);
-          bktBanner.innerHTML = `🎯 <strong>BKT Learner State Updated:</strong> P(Know) shifted from <strong>${prev}%</strong> → <strong style="color: var(--accent-mint);">${next}%</strong>! Revision priority updated.`;
+          bktBanner.innerHTML = `<strong>Knowledge State Updated:</strong> P(Know) changed from <strong>${prev}%</strong> → <strong style="color: var(--accent-primary);">${next}%</strong>.`;
         } else {
-          bktBanner.innerHTML = 'Sign in to persist your BKT updates to SQLite permanently.';
+          bktBanner.innerHTML = 'Sign in to persist your knowledge state records.';
         }
       } catch (err) {
         alert('Grading failed: ' + err.message);

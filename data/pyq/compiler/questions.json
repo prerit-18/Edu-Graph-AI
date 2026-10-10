@@ -1,0 +1,36 @@
+[
+  {
+    "id": "compiler_2024_001",
+    "year": 2024,
+    "subject": "Compiler Design",
+    "topic_id": "compiler_parsing",
+    "type": "MCQ",
+    "question": "Which of the following statements is TRUE regarding LR parsers?",
+    "options": [
+      "A. LALR(1) parser can have shift-reduce conflicts that are not present in CLR(1)",
+      "B. LALR(1) parser can have reduce-reduce conflicts that are not present in CLR(1)",
+      "C. SLR(1) parser has strictly more states than LALR(1) parser",
+      "D. LR(0) parser can parse all LL(1) grammars"
+    ],
+    "answer": "B",
+    "numeric_answer": null,
+    "explanation": "LALR(1) is constructed by merging states of CLR(1) that have identical sets of core items. Merging states with identical cores never produces shift-reduce conflicts, but it CAN produce reduce-reduce conflicts if lookaheads overlap."
+  },
+  {
+    "id": "compiler_2023_001",
+    "year": 2023,
+    "subject": "Compiler Design",
+    "topic_id": "compiler_sdt_codegen",
+    "type": "MCQ",
+    "question": "An SDD is S-attributed if every attribute is synthesized. Which of the following is true for L-attributed definitions?",
+    "options": [
+      "A. Inherited attributes of a symbol can depend on right sibling attributes",
+      "B. Inherited attributes of a symbol can depend only on parent and left sibling attributes",
+      "C. It cannot be evaluated in a single depth-first left-to-right pass",
+      "D. It cannot contain synthesized attributes"
+    ],
+    "answer": "B",
+    "numeric_answer": null,
+    "explanation": "In an L-attributed SDD, each inherited attribute of node X_j in production A -> X_1 X_2 ... X_n can depend only on inherited attributes of parent A and attributes of symbols X_1 ... X_{j-1} to its left."
+  }
+]

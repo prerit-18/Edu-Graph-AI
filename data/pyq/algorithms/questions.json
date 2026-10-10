@@ -28,6 +28,23 @@
     "explanation": "The longest common subsequence is 'GTAB'. Its length is 4 ('G', 'T', 'A', 'B')."
   },
   {
+    "id": "algo_2023_002",
+    "year": 2023,
+    "subject": "Algorithms",
+    "topic_id": "algo_graphs",
+    "type": "MCQ",
+    "question": "Which of the following shortest path algorithms can handle negative edge weights but cannot detect negative weight cycles?",
+    "options": [
+      "A. Dijkstra's Algorithm",
+      "B. Bellman-Ford Algorithm",
+      "C. Floyd-Warshall Algorithm",
+      "D. Topological Sort Algorithm for DAGs"
+    ],
+    "answer": "D",
+    "numeric_answer": null,
+    "explanation": "Topological Sort finds shortest paths in O(V+E) in Directed Acyclic Graphs even with negative weights because cycles cannot exist in a DAG. Bellman-Ford and Floyd-Warshall detect negative cycles. Dijkstra fails on negative weights."
+  },
+  {
     "id": "algo_2023_001",
     "year": 2023,
     "subject": "Algorithms",

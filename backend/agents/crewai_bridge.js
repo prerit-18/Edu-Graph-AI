@@ -43,7 +43,11 @@ function runCrewAITask({ task, query = '', subject, topicId, questionId, student
         }
 
         try {
-          const parsed = JSON.parse(stdout.trim());
+          const raw = stdout.trim();
+          const jsonStart = raw.indexOf('{');
+          const jsonEnd = raw.lastIndexOf('}');
+          const jsonStr = (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd >= jsonStart) ? raw.substring(jsonStart, jsonEnd + 1) : raw;
+          const parsed = JSON.parse(jsonStr);
           resolve(parsed);
         } catch (parseErr) {
           console.warn('[CrewAI Bridge Parse Warning] Raw output:', stdout);

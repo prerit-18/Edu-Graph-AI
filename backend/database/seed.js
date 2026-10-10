@@ -10,6 +10,20 @@ function seedDatabase() {
   }
 
   const syllabus = JSON.parse(fs.readFileSync(syllabusPath, 'utf8'));
+  const validTopicIds = [];
+  for (const subjectObj of syllabus) {
+    for (const topic of subjectObj.topics) {
+      validTopicIds.push(topic.id);
+    }
+  }
+
+  // Remove topics from non-selected subjects
+  if (validTopicIds.length > 0) {
+    const placeholders = validTopicIds.map(() => '?').join(',');
+    db.prepare(`DELETE FROM topics WHERE id NOT IN (${placeholders})`).run(...validTopicIds);
+    db.prepare(`DELETE FROM mastery WHERE topic_id NOT IN (${placeholders})`).run(...validTopicIds);
+  }
+
   const insertTopic = db.prepare(`
     INSERT OR REPLACE INTO topics (id, subject, name, prerequisite_id, pyq_weight)
     VALUES (?, ?, ?, ?, ?)

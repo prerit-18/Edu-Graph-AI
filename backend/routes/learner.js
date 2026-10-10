@@ -51,7 +51,7 @@ router.get('/dashboard', authRequired, (req, res) => {
   const totalTopics = mastery.length;
   const masteredCount = mastery.filter(m => m.p_know >= 0.75).length;
   const learningCount = mastery.filter(m => m.p_know >= 0.45 && m.p_know < 0.75).length;
-  const weakCount = mastery.filter(m => m.p_know < 0.45).length;
+  const weakCount = mastery.filter(m => m.last_seen && m.p_know < 0.45).length;
 
   const avgMastery = totalTopics > 0 
     ? (mastery.reduce((acc, curr) => acc + curr.p_know, 0) / totalTopics) * 100 

@@ -59,18 +59,13 @@ function getMastery(userId, topicId) {
     return row;
   }
 
-  // If not yet present, initialize with p_l0 = 0.30
-  const now = new Date().toISOString();
-  db.prepare(`
-    INSERT OR IGNORE INTO mastery (user_id, topic_id, p_know, last_seen)
-    VALUES (?, ?, ?, ?)
-  `).run(userId, topicId, DEFAULT_BKT_PARAMS.p_l0, now);
-
+  // If not yet present in mastery table, return the standard Bayesian initial prior p_l0 (0.30)
+  // for mathematical updating on the first attempt without modifying the DB prematurely.
   return {
     user_id: userId,
     topic_id: topicId,
     p_know: DEFAULT_BKT_PARAMS.p_l0,
-    last_seen: now
+    last_seen: null
   };
 }
 

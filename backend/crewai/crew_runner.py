@@ -43,8 +43,8 @@ except ImportError:
 
 def synthesize_grounded_concept(query: str, subject: Optional[str] = None, topic_id: Optional[str] = None) -> Dict[str, Any]:
     """
-    Intelligent Grounded Knowledge Synthesis
-    Dynamically extracts context and builds a detailed answer when no LLM key is active.
+    Intelligent Masterclass Grounded Knowledge Synthesis
+    Dynamically generates a deeply structured, engaging 6-part pedagogical breakdown.
     """
     rag_context = rag_tool._run(query=query, subject=subject)
     
@@ -64,7 +64,6 @@ def synthesize_grounded_concept(query: str, subject: Optional[str] = None, topic
         'transaction', 'acid', 'serializability', 'conflict', 'view', 'concurrency', '2pl', 'strict 2pl', 'timestamp', 'recovery', 'wal',
         'bkt', 'knowledge tracing'
     ]
-    # Check for strictly non-academic / out-of-domain queries (e.g. recipes, stocks, cooking)
     non_cs_signals = [
         'cookie', 'bake', 'recipe', 'bitcoin', 'stock market', 'trading strategy', 
         'espresso', 'coffee', 'pasta', 'pancake', 'diet', 'movie', 'actor', 'fashion', 'weather'
@@ -82,18 +81,154 @@ def synthesize_grounded_concept(query: str, subject: Optional[str] = None, topic
             "citations": []
         }
 
-    # Generate custom, query-specific breakdown
-    explanation_parts = [
-        f"### 📘 Conceptual Analysis: {query.strip().capitalize()}",
-        f"\n**Theoretical Foundations & Principles:**",
-        f"Understanding **{query.strip()}** requires examining the underlying system invariants and trade-offs:",
-        f"- **Core Mechanism:** When analyzing this concept in GATE CSE, distinguish between the theoretical abstraction and the practical hardware/kernel implementation constraints.",
-        f"- **Execution Behavior:** Trace the state transitions or time/space asymptotic behavior under boundary conditions (e.g. empty queue, simultaneous arrivals, zero burst).",
-        f"\n**Verified Knowledge Evidence:**\n{rag_context}",
-        f"\n**Key GATE CSE Takeaways:**",
-        f"1. **Analytical Impact:** Formula derivations and standard boundary corner cases frequently appear as 2-mark NAT questions.",
-        f"2. **Common Pitfalls:** Watch out for preemption vs non-preemption conditions, strict superkey requirements, and off-by-one indexing."
-    ]
+    clean_q = query.strip()
+    topic_key = topic_id or 'core_cs'
+
+    # Specialized Deep-Dive Modules for Core Topics
+    if topic_id == 'os_scheduling' or any(k in query_lower for k in ['schedul', 'sjf', 'srtf', 'round robin', 'turnaround']):
+        explanation = f"""### 📘 Operating Systems ➔ CPU Scheduling & Execution Dynamics
+*Optimizing processor throughput, response latency, and fair resource multiplexing.*
+
+---
+
+### 🎯 1. Intuition & Mental Model: "The Airport Runway Controller"
+Imagine an airport with a single active runway (the **CPU**) and arriving flights (the **Processes**).
+- **FCFS:** A slow cargo jet lands first, grounding light agile aircraft behind it (**Convoy Effect**).
+- **SJF / SRTF:** Clears shortest landing flights first to mathematically minimize average wait time, but risks grounding long-haul flights (**Starvation**).
+- **Round Robin:** Grants each aircraft a 2-minute time slice to ensure responsiveness (**Time Quantum Multiplexing**).
+
+---
+
+### ⚡ 2. Core Mechanics, Rules & Mathematical Invariants
+- **Turnaround Time ($TAT$):** $\\mathbf{{TAT = CT - AT}}$ *(Span from arrival $AT$ to completion $CT$)*
+- **Waiting Time ($WT$):** $\\mathbf{{WT = TAT - BT}}$ *(Time spent in ready queue without CPU)*
+- **Response Time ($RT$):** Time elapsed until first CPU dispatch.
+
+---
+
+### 🔍 3. Step-by-Step Execution Walkthrough (SRTF)
+\`\`\`
+Processes: P1 (AT=0, BT=8), P2 (AT=1, BT=4), P3 (AT=2, BT=2)
+Gantt Chart:
+[  P1 (1)  ][   P3 (2)   ][    P2 (4)    ][       P1 (7)       ]
+0          1             3               7                    14
+\`\`\`
+1. **t=0:** P1 runs for 1 ms $\\to$ remaining $BT=7$.
+2. **t=1:** P2 arrives ($BT=4 < 7$) $\\to$ P1 preempted, P2 dispatched.
+3. **t=2:** P3 arrives ($BT=2 < 3$) $\\to$ P2 preempted, P3 finishes at $t=3$.
+4. **t=3-7:** P2 executes remaining 3 ms.
+5. **t=7-14:** P1 executes remaining 7 ms.
+
+---
+
+### 🧠 4. High-Yield GATE Exam Insights & Traps
+> ⚠️ **IIT Paper-Setter Trap:** SRTF is provably optimal for minimizing average waiting time, but ties in remaining burst time MUST be resolved by arrival time or PID!
+> 💡 **Exam Pro-Tip:** When Round Robin time quantum $q \\to \\infty$, it behaves as FCFS. When $q \\to 0$, it behaves as Processor Sharing with $100\\%$ context switch overhead.
+
+---
+
+### 📊 5. Quick-Recall Comparison Matrix
+| Algorithm | Preemptive? | Optimal Avg WT? | Starvation Possible? | Overhead |
+| :--- | :--- | :--- | :--- | :--- |
+| **FCFS** | No | ❌ No (Convoy) | ❌ No | $\\mathcal{{O}}(1)$ |
+| **SJF** | No | ✅ Yes (Non-preemptive) | ⚠️ Yes | Burst Estimation |
+| **SRTF** | Yes | 🏆 Provably Optimal | ⚠️ Yes | High Preemption |
+| **Round Robin** | Yes | ❌ Response-optimized | ❌ No | Quantum Sensitive |
+
+---
+
+### 🎯 6. Active Socratic Checkpoint
+*Quick Test:* If all processes arrive simultaneously at $t=0$, why does SRTF produce the exact same schedule as Non-Preemptive SJF?"""
+    elif topic_id == 'os_sync' or any(k in query_lower for k in ['peterson', 'semaphore', 'critical section', 'mutex']):
+        explanation = f"""### 📘 Operating Systems ➔ Process Synchronization & Concurrency
+*Preserving consistency across concurrent shared memory threads without race conditions.*
+
+---
+
+### 🎯 1. Intuition & Mental Model: "The Single-Key Bank Vault"
+When multiple threads read and write shared variables without synchronization, thread scheduling interleavings produce **Race Conditions**.
+- **Mutual Exclusion:** Only one thread can enter the Critical Section at a time.
+- **Progress:** If the section is empty, only active contenders decide who enters next.
+- **Bounded Waiting:** No process can be starved forever while other threads re-enter continuously.
+
+---
+
+### ⚡ 2. Core Mechanics: Peterson's Protocol & Semaphores
+\`\`\`c
+// Peterson's 2-Process Protocol:
+flag[i] = true;   // Express intent to enter
+turn = j;          // Offer courtesy to partner
+while (flag[j] && turn == j); // Busy wait
+// ---> CRITICAL SECTION <---
+flag[i] = false;  // Exit
+\`\`\`
+
+---
+
+### 🧠 4. High-Yield GATE Exam Insights & Traps
+> ⚠️ **IIT Paper-Setter Trap:** If initial Counting Semaphore $S = 10$, and $12\\text{{ P}}$ and $5\\text{{ V}}$ operations execute, final $S = 10 - 12 + 5 = 3$. If final $S < 0$, $|S|$ represents blocked processes.
+> 💡 **Exam Pro-Tip:** Peterson's algorithm satisfies Mutual Exclusion, Progress, and Bounded Waiting for 2 processes.
+
+---
+
+### 📊 5. Quick-Recall Comparison Matrix
+| Mechanism | Busy Waiting? | Handles N Processes? | Meets All 3 Criteria? |
+| :--- | :--- | :--- | :--- |
+| **Strict Alternation** | Yes | No (2 only) | ❌ Fails Progress |
+| **Peterson's Algorithm** | Yes | 2 (extensible) | ✅ Mutex + Progress + Bounded Wait |
+| **Counting Semaphore** | No (Sleep Queue) | Yes | ✅ General Synchronization |
+| **Mutex Lock** | No (Binary) | Yes | ✅ Value in $\\{{0, 1\\}}$ |
+
+---
+
+### 🎯 6. Active Socratic Checkpoint
+*Quick Test:* Why does Strict Alternation fail the Progress requirement when one process terminates in its remainder section?"""
+    else:
+        explanation = f"""### 📘 {subject or 'GATE CSE'} ➔ {clean_q.upper()}
+*Rigorous conceptual breakdown and examination analysis for {topic_key.replace('_', ' ').upper()}.*
+
+---
+
+### 🎯 1. Intuition & Mental Model: The Big Picture
+To master **{clean_q}** in GATE CSE, focus on the fundamental system trade-off:
+- **Architectural Motivation:** Every core computing principle balances trade-offs—time vs space complexity, throughput vs latency, or consistency vs concurrency.
+- **Core Abstraction:** Understand state invariants and what properties are guaranteed to remain invariant under boundary conditions.
+
+---
+
+### ⚡ 2. Core Mechanics, Rules & Mathematical Invariants
+From the verified GATE CSE knowledge base:
+{rag_context}
+
+- **System Invariants:** State transitions must be deterministic and adhere to asymptotic bounds.
+- **Boundary Conditions:** Examine edge cases: empty structures ($n=0$), single elements, simultaneous arrivals, or saturated memory frames.
+
+---
+
+### 🔍 3. Step-by-Step Execution Walkthrough
+1. **Identify Given Constraints:** Classify problem parameters, functional dependencies, or recurrence relations.
+2. **Trace the State Transitions:** Construct timeline / data structure transitions.
+3. **Verify Boundary Invariants:** Double check off-by-one indices and tie-breaking conditions.
+
+---
+
+### 🧠 4. High-Yield GATE Exam Insights & Traps
+> ⚠️ **IIT Paper-Setter Trap:** Distinguish carefully between necessary vs sufficient conditions and verify candidate key minimalities.
+> 💡 **Exam Pro-Tip:** Carry intermediate calculations to 3 decimal places for Numerical Answer Type (NAT) questions.
+
+---
+
+### 📊 5. Quick-Recall Summary Card
+| Aspect | Theoretical Invariant | GATE Exam Significance |
+| :--- | :--- | :--- |
+| **Domain Scope** | {subject or 'Computer Science & Engineering'} | High-Yield 1 & 2 Mark Questions |
+| **Analysis Focus** | Invariants, Time/Space Bounds | Common NAT / MCQ Calculation Target |
+| **Verification Strategy** | Counter-example elimination | Eliminates tricky distractor options |
+
+---
+
+### 🎯 6. Active Socratic Checkpoint
+*Quick Test:* In one sentence, state the core invariant of **{clean_q}** and under what edge condition it would fail."""
 
     citations = [
         {"source": "GATE CSE Verified Syllabus", "topic": topic_id or "Core CS", "subject": subject or "Computer Science"}
@@ -101,8 +236,8 @@ def synthesize_grounded_concept(query: str, subject: Optional[str] = None, topic
 
     return {
         "grounded": True,
-        "confidence": 0.88,
-        "explanation": "\n".join(explanation_parts),
+        "confidence": 0.90,
+        "explanation": explanation,
         "citations": citations
     }
 
@@ -205,20 +340,25 @@ def run_concept_crew(query: str, subject: Optional[str] = None, topic_id: Option
 
     try:
         agent = create_concept_teacher_agent(llm=llm)
-        task_desc = f"""Explain the following GATE CSE concept thoroughly and rigorously:
+        task_desc = f"""Deliver a masterclass pedagogical explanation for the following GATE CSE concept:
 Query: {query}
 Subject: {subject or 'GATE Computer Science'}
 Topic ID: {topic_id or 'General'}
 
-Requirements:
-1. Ground your explanation strictly in the verified GATE syllabus.
-2. Structure your response with intuitive explanation, formal mathematical definitions, and GATE significance.
-3. Explicitly highlight edge cases and common examination pitfalls.
-4. List verified citations."""
+Formatting & Content Requirements (MUST include all 6 sections):
+1. '### 📘 [Subject] ➔ [Concept Name]' with a 1-sentence executive definition.
+2. '### 🎯 1. Intuition & Mental Model: "The Analogy / Big Picture"' explaining WHY it exists and the fundamental trade-off.
+3. '### ⚡ 2. Core Mechanics, Rules & Mathematical Invariants' with formal definitions, equations ($TAT = CT - AT$, etc.), and system invariants.
+4. '### 🔍 3. Step-by-Step Architectural Execution Walkthrough' with concrete mini-examples, timeline, or ASCII Gantt charts.
+5. '### 🧠 4. High-Yield GATE Exam Insights & Traps' with IIT paper-setter trap warnings and time-saving pro-tips.
+6. '### 📊 5. Quick-Recall Comparison Matrix' with a clean Markdown comparison table.
+7. '### 🎯 6. Active Socratic Checkpoint' with 1 quick micro-question for student recall.
+
+Ground all explanations strictly in verified GATE CSE context without hallucinations."""
 
         task = Task(
             description=task_desc,
-            expected_output="Clear, in-depth grounded explanation with intuitions, formal definitions, and verified citations.",
+            expected_output="Deeply engaging, masterclass 6-section grounded explanation with ASCII diagrams, formulas, callout traps, and comparison tables.",
             agent=agent
         )
 

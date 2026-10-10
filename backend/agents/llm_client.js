@@ -40,7 +40,7 @@ class LLMClient {
     return false;
   }
 
-  async generate({ systemPrompt, userPrompt, temperature = 0.3 }) {
+  async generate({ systemPrompt, userPrompt, temperature = 0.3, jsonMode = false, responseSchema = null }) {
     if (!this.hasValidKey()) {
       return null; // Signals fallback to local domain grounding engine
     }
@@ -48,9 +48,20 @@ class LLMClient {
     try {
       // 1. Google Gemini API
       if (this.provider === 'gemini') {
-        const geminiModel = this.model && !this.model.includes('/') ? this.model : 'gemini-1.5-flash';
+        const geminiModel = this.model ? this.model.replace(/^gemini\//i, '') : 'gemini-2.5-flash';
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${this.geminiKey}`;
         
+        const genConfig = {
+          temperature,
+          maxOutputTokens: 8192
+        };
+        if (jsonMode || responseSchema) {
+          genConfig.responseMimeType = 'application/json';
+        }
+        if (responseSchema) {
+          genConfig.responseSchema = responseSchema;
+        }
+
         const res = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -61,10 +72,7 @@ class LLMClient {
                 parts: [{ text: `${systemPrompt}\n\n${userPrompt}` }]
               }
             ],
-            generationConfig: {
-              temperature,
-              maxOutputTokens: 2048
-            }
+            generationConfig: genConfig
           })
         });
 

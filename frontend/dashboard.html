@@ -25,19 +25,20 @@
       flex-wrap: wrap;
     }
     .filter-btn {
-      background: rgba(255, 255, 255, 0.05);
+      background: #FFFFFF;
       border: 1px solid var(--border-subtle);
       color: var(--text-secondary);
       padding: 0.4rem 1rem;
-      border-radius: 999px;
+      border-radius: var(--radius-pill);
       font-size: 0.85rem;
       cursor: pointer;
       transition: var(--transition);
     }
     .filter-btn.active, .filter-btn:hover {
-      background: rgba(16, 185, 129, 0.18);
-      color: var(--text-primary);
-      border-color: var(--accent-emerald);
+      background: var(--accent-subtle);
+      color: var(--accent-primary);
+      border-color: var(--accent-primary);
+      font-weight: 600;
     }
   </style>
 </head>
@@ -48,29 +49,26 @@
     <!-- Header Banner -->
     <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
       <div>
-        <div class="hero-pill" style="margin-bottom: 0.5rem;">📊 Bayesian Knowledge Tracing (BKT) State</div>
-        <h1 id="welcome-title">GATE CSE Mastery Dashboard</h1>
-        <p style="color: var(--text-secondary);">Real-time learner state updated through practice attempts</p>
+        <div class="hero-pill" style="margin-bottom: 0.5rem;">Learner State & Mastery Tracing</div>
+        <h1 id="welcome-title">Mastery Dashboard</h1>
+        <p style="color: var(--text-secondary);">Real-time knowledge probabilities updated through practice attempts</p>
       </div>
-      <div style="display: flex; gap: 0.75rem;">
-        <a href="study.html" class="btn btn-primary btn-sm">⚡ Study Studio (3 Agents)</a>
-        <a href="recall.html" class="btn btn-secondary btn-sm">🧠 Active Recall</a>
-        <a href="mock.html" class="btn btn-secondary btn-sm">📝 Take Mock</a>
+      <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+        <a href="study.html" class="btn btn-primary btn-sm">Study Studio</a>
+        <a href="recall.html" class="btn btn-secondary btn-sm">Active Recall</a>
+        <a href="mock.html" class="btn btn-secondary btn-sm">Diagnostic Mock</a>
       </div>
     </div>
 
     <!-- Revision Due Alert (Shown dynamically if topics need review) -->
-    <div id="revision-alert" class="glass-card" style="display: none; background: rgba(245, 158, 11, 0.1); border-color: rgba(245, 158, 11, 0.35); margin-bottom: 2rem; padding: 1.25rem;">
+    <div id="revision-alert" class="glass-card" style="display: none; background: var(--accent-amber-subtle); border-color: rgba(154, 91, 0, 0.3); margin-bottom: 2rem; padding: 1.25rem;">
       <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
-        <div style="display: flex; align-items: center; gap: 0.75rem;">
-          <span style="font-size: 1.5rem;">⏰</span>
-          <div>
-            <h4 style="color: var(--accent-amber); margin-bottom: 0.2rem;">Spaced Repetition Recommended</h4>
-            <p id="revision-msg" style="font-size: 0.88rem; color: var(--text-secondary);"></p>
-          </div>
+        <div>
+          <h4 style="color: var(--accent-amber); margin-bottom: 0.2rem;">Spaced Repetition Due</h4>
+          <p id="revision-msg" style="font-size: 0.88rem; color: var(--text-secondary); margin: 0;"></p>
         </div>
-        <a href="recall.html" class="btn btn-primary btn-sm" style="background: var(--accent-amber); color: #000;">
-          Start Recall Session →
+        <a href="recall.html" class="btn btn-primary btn-sm">
+          Start Recall Session
         </a>
       </div>
     </div>
@@ -78,31 +76,31 @@
     <!-- Top Metric Cards -->
     <div class="metric-grid">
       <div class="glass-card metric-card">
-        <div class="metric-icon" style="color: var(--accent-emerald);">🎯</div>
+        <div class="metric-icon">P(K)</div>
         <div>
           <div class="metric-value" id="val-avg-mastery">--%</div>
-          <div class="metric-label">Average P(Know)</div>
+          <div class="metric-label">Average Mastery</div>
         </div>
       </div>
 
       <div class="glass-card metric-card">
-        <div class="metric-icon" style="color: var(--accent-emerald);">🏆</div>
+        <div class="metric-icon">M</div>
         <div>
           <div class="metric-value" id="val-mastered">--</div>
-          <div class="metric-label">Topics Mastered (>75%)</div>
+          <div class="metric-label">Mastered Topics (>75%)</div>
         </div>
       </div>
 
       <div class="glass-card metric-card">
-        <div class="metric-icon" style="color: var(--accent-rose);">⚠️</div>
+        <div class="metric-icon">R</div>
         <div>
           <div class="metric-value" id="val-weak">--</div>
-          <div class="metric-label">Topics Needing Focus</div>
+          <div class="metric-label">Topics Needing Review</div>
         </div>
       </div>
 
       <div class="glass-card metric-card">
-        <div class="metric-icon" style="color: var(--accent-amber);">🔥</div>
+        <div class="metric-icon">S</div>
         <div>
           <div class="metric-value" id="val-streak">-- Days</div>
           <div class="metric-label">Practice Streak</div>
@@ -112,7 +110,7 @@
 
     <!-- Subject Breakdown Progress -->
     <section class="glass-card" style="margin-bottom: 2rem;">
-      <h3 style="margin-bottom: 1.25rem;">Core Subject Mastery</h3>
+      <h3 style="margin-bottom: 1.25rem;">Subject Progress</h3>
       <div id="subject-progress-list" class="grid-3">
         <!-- Injected dynamically -->
       </div>
@@ -120,37 +118,39 @@
 
     <!-- Filter & Topic Grid -->
     <section>
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
-        <h3>Detailed Topic Knowledge Tracing</h3>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 1rem;">
+        <h3>Topic Knowledge States</h3>
         <div class="subject-pill-filter" id="subject-filters">
-          <button class="filter-btn active" onclick="filterTopics('All')">All Subjects</button>
-          <button class="filter-btn" onclick="filterTopics('Operating Systems')">Operating Systems</button>
+          <button class="filter-btn active" onclick="filterTopics('All')">All 5 Subjects</button>
           <button class="filter-btn" onclick="filterTopics('Algorithms')">Algorithms</button>
-          <button class="filter-btn" onclick="filterTopics('Database Management Systems')">DBMS</button>
+          <button class="filter-btn" onclick="filterTopics('Compiler Design')">Compiler Design</button>
+          <button class="filter-btn" onclick="filterTopics('Operating Systems')">Operating Systems</button>
+          <button class="filter-btn" onclick="filterTopics('Databases')">Databases</button>
+          <button class="filter-btn" onclick="filterTopics('Computer Networks')">Computer Networks</button>
         </div>
       </div>
 
       <div id="topic-grid" class="grid-3">
-        <div style="color: var(--text-secondary); padding: 2rem;">Loading knowledge graph...</div>
+        <div style="color: var(--text-secondary); padding: 2rem;">Loading knowledge records...</div>
       </div>
     </section>
 
     <!-- Recent Attempts Table -->
     <section class="glass-card" style="margin-top: 2.5rem;">
-      <h3 style="margin-bottom: 1rem;">Recent Practice & Evaluation Logs</h3>
+      <h3 style="margin-bottom: 1rem;">Recent Practice Logs</h3>
       <div style="overflow-x: auto;">
         <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem; text-align: left;">
           <thead>
             <tr style="border-bottom: 1px solid var(--border-subtle); color: var(--text-muted);">
               <th style="padding: 0.75rem;">Time</th>
               <th style="padding: 0.75rem;">Topic</th>
-              <th style="padding: 0.75rem;">Agent</th>
+              <th style="padding: 0.75rem;">Mode</th>
               <th style="padding: 0.75rem;">Result</th>
-              <th style="padding: 0.75rem;">Student Answer</th>
+              <th style="padding: 0.75rem;">Student Response</th>
             </tr>
           </thead>
           <tbody id="attempts-tbody">
-            <tr><td colspan="5" style="padding: 1.5rem; text-align: center; color: var(--text-muted);">No attempts logged yet. Solve questions in the Study Studio to initialize!</td></tr>
+            <tr><td colspan="5" style="padding: 1.5rem; text-align: center; color: var(--text-muted);">No attempts logged yet. Solve problems in the Study Studio to initialize your records.</td></tr>
           </tbody>
         </table>
       </div>
@@ -161,7 +161,6 @@
   <script>
     renderHeader('dashboard');
 
-    // Auto prompt login if not authenticated
     if (!Auth.isAuthenticated()) {
       window.location.href = 'login.html';
     }
@@ -190,7 +189,7 @@
           <div>
             <div style="display: flex; justify-content: space-between; font-size: 0.88rem; margin-bottom: 0.3rem;">
               <span><strong>${sp.subject}</strong> (${sp.topicCount} topics)</span>
-              <span style="color: var(--accent-mint); font-family: 'JetBrains Mono'; font-weight: 700;">${sp.percentage}%</span>
+              <span style="color: var(--accent-primary); font-family: 'JetBrains Mono'; font-weight: 700;">${sp.percentage}%</span>
             </div>
             <div class="progress-bar-bg">
               <div class="progress-bar-fill" style="width: ${sp.percentage}%;"></div>
@@ -216,14 +215,14 @@
         if (data.recentAttempts && data.recentAttempts.length > 0) {
           tbody.innerHTML = data.recentAttempts.map(a => `
             <tr style="border-bottom: 1px solid var(--border-subtle);">
-              <td style="padding: 0.75rem; color: var(--text-muted); font-size: 0.8rem;">
+              <td style="padding: 0.75rem; color: var(--text-muted); font-size: 0.82rem;">
                 ${new Date(a.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </td>
               <td style="padding: 0.75rem;"><strong>${a.topic_name || a.topic_id}</strong></td>
               <td style="padding: 0.75rem;"><span class="topic-badge">${a.agent}</span></td>
               <td style="padding: 0.75rem;">
-                <span style="color: ${a.correct ? 'var(--accent-emerald)' : 'var(--accent-rose)'}; font-weight: 700;">
-                  ${a.correct ? '✓ Correct' : '✗ Incorrect'}
+                <span style="color: ${a.correct ? 'var(--accent-emerald)' : 'var(--accent-rose)'}; font-weight: 600;">
+                  ${a.correct ? 'Correct' : 'Incorrect'}
                 </span>
               </td>
               <td style="padding: 0.75rem; font-family: 'JetBrains Mono'; font-size: 0.85rem; color: var(--text-secondary);">
@@ -258,7 +257,7 @@
       }
 
       if (filtered.length === 0) {
-        grid.innerHTML = '<div style="color: var(--text-muted);">No topics match filter.</div>';
+        grid.innerHTML = '<div style="color: var(--text-muted); padding: 1.5rem;">No topics found for this subject.</div>';
         return;
       }
 
@@ -275,9 +274,9 @@
                 <span class="topic-badge">${t.subject}</span>
                 <span class="mastery-score-badge ${badgeClass}">${pct}% P(Know)</span>
               </div>
-              <h4 style="margin: 0.8rem 0 0.4rem;">${t.topic_name}</h4>
-              <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem;">
-                GATE PYQ Weight: <strong>${t.pyq_weight}</strong>
+              <h4 style="margin: 0.8rem 0 0.35rem;">${t.topic_name}</h4>
+              <div style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.6rem;">
+                PYQ Weight: <strong>${t.pyq_weight}</strong>
               </div>
               <div class="progress-bar-bg">
                 <div class="progress-bar-fill" style="width: ${pct}%;"></div>
@@ -286,13 +285,13 @@
 
             <div style="display: flex; gap: 0.5rem; margin-top: 0.75rem;">
               <a href="study.html?topic=${t.topic_id}" class="btn btn-secondary btn-sm" style="flex: 1;">
-                Study Concept 📘
+                Study
               </a>
               <a href="study.html?view=pyq&topic=${t.topic_id}" class="btn btn-secondary btn-sm" style="flex: 1;">
-                PYQ Trends 📊
+                PYQ Trends
               </a>
               <a href="recall.html?topic=${t.topic_id}" class="btn btn-primary btn-sm" style="flex: 1;">
-                Recall Probe 🧠
+                Recall Probe
               </a>
             </div>
           </div>

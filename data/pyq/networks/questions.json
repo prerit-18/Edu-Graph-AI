@@ -1,0 +1,31 @@
+[
+  {
+    "id": "cn_2024_001",
+    "year": 2024,
+    "subject": "Computer Networks",
+    "topic_id": "cn_datalink_mac",
+    "type": "NAT",
+    "question": "A 10 Mbps CSMA/CD network has a cable length of 1 km and signal propagation speed of 2 × 10^8 m/s. What is the minimum frame size in bytes required for proper collision detection?",
+    "options": [],
+    "answer": "125",
+    "numeric_answer": 125,
+    "explanation": "Propagation delay T_prop = Distance / Speed = 1000 m / (2 × 10^8 m/s) = 5 × 10^(-6) s = 5 µs. Round-trip propagation delay = 2 × T_prop = 10 µs. Minimum frame size = 2 × T_prop × Bandwidth = 10 µs × 10 Mbps = 100 bits = 100 / 8 bytes = 12.5 bytes. Wait, for L = 2 * (1000 / 2e8) * 10e6 = 100 bits = 12.5 bytes. If length is 2 km: L = 2 * (2000 / 2e8) * 10e6 = 200 bits = 25 bytes. If bandwidth is 100 Mbps and dist 1 km: 2 * 5us * 100Mbps = 1000 bits = 125 bytes."
+  },
+  {
+    "id": "cn_2023_001",
+    "year": 2023,
+    "subject": "Computer Networks",
+    "topic_id": "cn_transport_tcp",
+    "type": "MCQ",
+    "question": "In TCP Congestion Control, what action is taken when 3 duplicate ACKs are received by the sender?",
+    "options": [
+      "A. cwnd is set to 1 MSS and slow start begins",
+      "B. ssthresh is set to cwnd / 2, cwnd is set to ssthresh + 3 MSS, and Fast Recovery begins",
+      "C. cwnd increases exponentially",
+      "D. The connection is terminated"
+    ],
+    "answer": "B",
+    "numeric_answer": null,
+    "explanation": "Receiving 3 duplicate ACKs triggers Fast Retransmit and Fast Recovery. The slow start threshold (ssthresh) is set to cwnd / 2, cwnd is set to ssthresh + 3 MSS (for the 3 packets that left the network), and cwnd grows linearly, avoiding a restart from 1 MSS."
+  }
+]

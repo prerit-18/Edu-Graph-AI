@@ -29,10 +29,10 @@ class SyllabusAgent {
 
     // Build directed acyclic graph (DAG) of syllabus
     const topicsWithPrereqStatus = allTopics.map(t => {
-      const pKnow = masteryMap[t.id] !== undefined ? masteryMap[t.id] : 0.30;
+      const pKnow = masteryMap[t.id] !== undefined ? masteryMap[t.id] : 0.0;
       let prereqStatus = 'Ready';
       if (t.prerequisite_id) {
-        const prereqPKnow = masteryMap[t.prerequisite_id] !== undefined ? masteryMap[t.prerequisite_id] : 0.30;
+        const prereqPKnow = masteryMap[t.prerequisite_id] !== undefined ? masteryMap[t.prerequisite_id] : 0.0;
         if (prereqPKnow < 0.60) {
           prereqStatus = `Prerequisite "${t.prerequisite_id}" below 60% mastery`;
         }
@@ -54,7 +54,7 @@ class SyllabusAgent {
     if (topicId) {
       path = syllabusTool.getPrerequisiteChain(topicId).map(t => ({
         ...t,
-        p_know: masteryMap[t.id] !== undefined ? masteryMap[t.id] : 0.30
+        p_know: masteryMap[t.id] !== undefined ? masteryMap[t.id] : 0.0
       }));
     }
 

@@ -45,6 +45,23 @@
     "explanation": "Let order be p. An internal node has at most p block pointers and (p - 1) search keys. Condition: p * (pointer_size) + (p - 1) * (key_size) <= block_size => p * 8 + (p - 1) * 12 <= 4096 => 20p - 12 <= 4096 => 20p <= 4108 => p <= 205.4. Thus maximum order p = 205."
   },
   {
+    "id": "dbms_2022_002",
+    "year": 2022,
+    "subject": "Database Management Systems",
+    "topic_id": "dbms_transactions",
+    "type": "MCQ",
+    "question": "Which concurrency control locking protocol guarantees serializability and freedom from cascading aborts without deadlocks?",
+    "options": [
+      "A. Basic Two-Phase Locking (2PL)",
+      "B. Strict Two-Phase Locking (Strict 2PL)",
+      "C. Conservative Strict Two-Phase Locking",
+      "D. Timestamp Ordering Protocol"
+    ],
+    "answer": "C",
+    "numeric_answer": null,
+    "explanation": "Conservative 2PL acquires all locks beforehand, preventing deadlocks. Strict 2PL holds exclusive locks until commit, preventing cascading aborts (ACA) and ensuring serializability."
+  },
+  {
     "id": "dbms_2022_001",
     "year": 2022,
     "subject": "Database Management Systems",
