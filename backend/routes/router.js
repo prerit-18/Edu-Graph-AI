@@ -9,6 +9,7 @@ const revisionRoutes = require('./revision');
 const recallRoutes = require('./recall');
 const mockRoutes = require('./mock');
 const flashcardRoutes = require('./flashcards');
+const ttsRoutes = require('./tts');
 
 // Mount routes
 router.use('/auth', authRoutes);
@@ -19,5 +20,6 @@ router.use('/revision', revisionRoutes);
 router.use('/recall', recallRoutes);
 router.use('/mock', mockRoutes);
 router.use('/flashcards', flashcardRoutes);
+router.use('/tts', ttsRoutes);
 
 module.exports = router;

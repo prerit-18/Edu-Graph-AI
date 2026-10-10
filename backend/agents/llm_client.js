@@ -50,7 +50,7 @@ class LLMClient {
       if (this.provider === 'gemini') {
         const geminiModel = this.model ? this.model.replace(/^gemini\//i, '') : 'gemini-2.5-flash';
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${this.geminiKey}`;
-        
+
         const genConfig = {
           temperature,
           maxOutputTokens: 8192

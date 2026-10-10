@@ -132,8 +132,11 @@
           </form>
         </div>
 
-        <!-- Concept Right Side: Syllabus Details -->
+        <!-- Concept Right Side: Syllabus Details & Speaking Tutor -->
         <div style="display: flex; flex-direction: column; gap: 1rem;">
+          <!-- AI Speaking Tutor Widget -->
+          <div id="concept-tutor-container" data-speech-text="Welcome to the Concept Studio. Ask any theoretical or algorithmic question across the GATE CSE syllabus to listen to grounded explanations."></div>
+
           <div class="glass-card" style="padding: 1.25rem;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
               <h3 style="font-size: 1rem; margin: 0;">Curriculum Pathway</h3>
@@ -362,7 +365,7 @@
           </div>
         </div>
 
-        <!-- Right: Mastery Meter & Calculator -->
+        <!-- Right: Topic Knowledge State & Calculator -->
         <div style="display: flex; flex-direction: column; gap: 1.25rem;">
           <!-- Topic Mastery Gauge -->
           <div class="glass-card" style="padding: 1.25rem;">
@@ -406,8 +409,18 @@
   </main>
 
   <script src="app.js"></script>
+  <script src="tutor_speech.js"></script>
   <script>
     renderHeader('study');
+
+    // Instantiate AI Speaking Tutor Widget (Concept Study only)
+    let conceptTutorWidget = null;
+    if (typeof createTutorAvatarWidget === 'function') {
+      conceptTutorWidget = createTutorAvatarWidget('concept-tutor-container', {
+        tutorName: 'Arya',
+        tutorRole: 'GATE CSE AI Professor & Speaking Tutor'
+      });
+    }
 
     const PRESETS = {
       os_2024_001: {
@@ -469,6 +482,11 @@
     }
 
     function switchAgentView(view, updateUrl = true) {
+      // Clean up any currently playing speech when switching view
+      if (window.tutorSpeechService) {
+        tutorSpeechService.stop();
+      }
+
       activeAgent = view;
 
       if (updateUrl && window.history && window.history.replaceState) {
@@ -541,6 +559,14 @@
         const res = await apiCall('/agents/concept', 'POST', { query });
         addConceptMessage('agent', res.explanation, res.citations);
 
+        // Update Tutor widget with speech text
+        const tutorContainer = document.getElementById('concept-tutor-container');
+        if (tutorContainer) {
+          tutorContainer.setAttribute('data-speech-text', res.explanation);
+          const statusText = document.getElementById('concept-tutor-container-status');
+          if (statusText) statusText.textContent = 'Explanation ready — click Listen to hear Arya speak';
+        }
+
         if (res.citations && res.citations.length > 0) {
           const topCit = res.citations[0];
           document.getElementById('curriculum-unit-title').textContent = topCit.topic || topCit.topic_id || 'Core Topic';
@@ -570,11 +596,20 @@
           '</div>';
       }
 
+      const audioBtnHtml = role === 'agent' ? `
+        <div style="margin-top: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+          <button class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.78rem; padding: 0.25rem 0.65rem;" onclick="handleInlineTutorSpeak(this)" data-content="${encodeURIComponent(content)}">
+            <span>🎧</span> <span>Listen to explanation</span>
+          </button>
+        </div>
+      ` : '';
+
       msgDiv.innerHTML = `
         <div class="message-avatar">${avatar}</div>
         <div class="message-body">
           ${formatMarkdown(content)}
           ${citationsHtml}
+          ${audioBtnHtml}
         </div>
       `;
 
@@ -582,7 +617,16 @@
       chat.scrollTop = chat.scrollHeight;
     }
 
+    function handleInlineTutorSpeak(btn) {
+      const raw = btn.getAttribute('data-content');
+      if (raw && window.tutorSpeechService) {
+        const text = decodeURIComponent(raw);
+        tutorSpeechService.speak(text);
+      }
+    }
+
     function clearConceptChat() {
+      if (window.tutorSpeechService) tutorSpeechService.stop();
       document.getElementById('concept-chat-messages').innerHTML = '';
       addConceptMessage('agent', 'Chat cleared. Ask any GATE CSE conceptual question to begin.');
     }

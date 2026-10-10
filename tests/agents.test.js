@@ -66,6 +66,7 @@ async function runAgentTests() {
   console.log('Testing Active Recall Agent...');
   const recallPrompt = await orchestrator.generateActiveRecall({
     topicId: 'os_scheduling',
+    type: 'concept_recall',
     userId: testUserId
   });
   assert(recallPrompt.question.length > 10, 'Prompt should have question text');

@@ -141,7 +141,7 @@ async function runE2EDemo() {
 
   // Step 13: Active Recall creates a recall prompt
   console.log('Step 13: Active Recall generates a conceptual retrieval challenge...');
-  const recallPrompt = await get(`/api/recall/prompt?topicId=os_scheduling`, authToken);
+  const recallPrompt = await get(`/api/recall/prompt?topicId=os_scheduling&type=concept_recall`, authToken);
   assert.strictEqual(recallPrompt.status, 200);
   assert(recallPrompt.data.question, 'Recall question must exist');
   assert(recallPrompt.data.promptId, 'Prompt ID must exist');
