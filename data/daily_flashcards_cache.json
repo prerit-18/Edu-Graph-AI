@@ -89,5 +89,94 @@
         "back": "• Dijkstra: Single source, non-negative weights only. Min-Heap time: O((V + E) log V).\n• Bellman-Ford: Single source, handles negative weights & detects negative cycles. Time: O(V · E).\n• Floyd-Warshall: All-pairs shortest path, DP dynamic matrix. Time: Θ(V³).\n• DAG Shortest Path: Topological Sort + Edge relaxation. Time: O(V + E) (handles negative weights!)."
       }
     ]
+  },
+  "2026-10-15_All_daily_10": {
+    "date": "2026-10-15",
+    "source": "Google Gemini (Live Syllabus Synthesis)",
+    "aiGenerated": true,
+    "subject": "All",
+    "total": 10,
+    "flashcards": [
+      {
+        "id": "fc_gemini_1792074820744_0",
+        "subject": "Algorithms",
+        "topic_id": "Searching, Sorting and Hashing",
+        "type": "complexity",
+        "front": "Under what specific condition does Quick Sort exhibit its worst-case time complexity, and what is that complexity?",
+        "back": "Condition: When the pivot selection consistently results in highly unbalanced partitions (e.g., always picking the smallest or largest element, or an already sorted/reverse-sorted array).Worst-Case Complexity: O(n^2)Explanation: Each partition step processes 'n' elements, but only reduces the problem size by a constant amount (e.g., 1 element), leading to 'n' levels of recursion, each taking O(n) time.Trap Alert: While average case is O(n log n), the worst case is a significant performance hit. Randomized Quick Sort mitigates this by making the worst case highly improbable."
+      },
+      {
+        "id": "fc_gemini_1792074820744_1",
+        "subject": "Compiler Design",
+        "topic_id": "Code Optimization and Data Flow Analysis",
+        "type": "definition",
+        "front": "What is the primary purpose of Liveness Analysis in compiler optimization, and how is a variable considered \"live\"?",
+        "back": "Purpose: To determine, for each program point, which variables might be used in the future. This information is crucial for optimizations like dead code elimination and register allocation.Definition of \"Live\": A variable 'v' is *live* at program point 'p' if there exists a path from 'p' to a use of 'v' that does not pass through any definition of 'v'.Dead Variable: A variable that is not live is \"dead\". Its value will not be used again before it's redefined or the program terminates.Application: If a variable is dead after its last definition, that definition can be eliminated (dead code elimination)."
+      },
+      {
+        "id": "fc_gemini_1792074820744_2",
+        "subject": "Computer Networks",
+        "topic_id": "Data Link Layer, MAC and Ethernet",
+        "type": "formula",
+        "front": "In a CSMA/CD network, what is the formula for the minimum frame size required to ensure proper collision detection, and why is it critical?",
+        "back": "Formula: Minimum Frame Size (bits) = 2 * Propagation Delay (seconds) * Bandwidth (bits/second)Alternatively: Minimum Frame Size (bits) = 2 * (Max Segment Length / Propagation Speed) * BandwidthExplanation: A station must continue transmitting long enough for its signal to propagate to the farthest node in the network and for a potential collision signal to propagate back to the transmitting station. If the frame is too short, the station might finish transmitting before the collision signal returns, incorrectly assuming the transmission was successful.Criticality: Ensures that a transmitting station can detect a collision before it finishes sending the entire frame. If a collision occurs and the sender finishes transmitting before detecting it, the sender won't retransmit, leading to data loss.Trap Alert: The '2' in the formula accounts for the round-trip time (RTT) to the farthest node."
+      },
+      {
+        "id": "fc_gemini_1792074820744_3",
+        "subject": "Databases",
+        "topic_id": "File Organization and B/B+ Tree Indexing",
+        "type": "formula",
+        "front": "Given a B+ Tree with 'P' pointers per internal node and 'L' records per leaf node, how do you calculate the maximum number of records 'N' that can be stored for a given height 'H'? Conversely, how do you determine the minimum height 'H' required for 'N' records?",
+        "back": "Maximum Records (N) for a given Height (H):N_max = P^(H-1) * LExplanation: An internal node at level 'k' (from root, root is level 1) can point to 'P' children. The leaf nodes are at height 'H'. So, there are P^(H-1) leaf nodes, each holding 'L' records.Minimum Height (H) for N records:H_min = ceil(log_P(ceil(N/L))) + 1Explanation: We need ceil(N/L) leaf nodes. Each internal node can point to 'P' children. So, P^(H-1) must be at least ceil(N/L).Block Accesses: For a B+ tree of height 'H', a search for a record typically requires 'H' disk block accesses (one for each node from root to leaf)."
+      },
+      {
+        "id": "fc_gemini_1792074820744_4",
+        "subject": "Computer Networks",
+        "topic_id": "Principles of Layering, Switching and Metrics",
+        "type": "definition",
+        "front": "Define the Bandwidth-Delay Product (BDP) and explain its significance in network performance, particularly for window-based flow control.",
+        "back": "Definition: The Bandwidth-Delay Product (BDP) is the maximum amount of data that can be \"in flight\" or \"in transit\" on the network at any given time.Formula: BDP = Bandwidth (bits/second) * Round-Trip Time (RTT) (seconds)Significance:Network Capacity: It represents the \"volume\" of the network pipe.Optimal Window Size: For efficient utilization of the network, the sender's window size in protocols like TCP should ideally be at least equal to the BDP. If the window is smaller, the sender might be idle waiting for ACKs even when the network has capacity. If larger, it could lead to congestion.Buffer Sizing: It helps in determining appropriate buffer sizes for routers and hosts to prevent packet loss due to overflow.Trap Alert: RTT is used, not just one-way propagation delay, because it accounts for the time for data to go and ACK to return."
+      },
+      {
+        "id": "fc_gemini_1792074820744_5",
+        "subject": "Operating Systems",
+        "topic_id": "Deadlock Characterization and Banker's Algorithm",
+        "type": "protocol",
+        "front": "Outline the steps of the Banker's Algorithm's Safety Algorithm. What is its primary goal?",
+        "back": "Primary Goal: To determine if the system is in a *safe state*, meaning there exists a sequence of processes that can complete execution without resulting in a deadlock.Safety Algorithm Steps:1. Initialization:Work = Available (vector of length 'm', where 'm' is number of resource types)Finish = [false, false, ..., false] (vector of length 'n', where 'n' is number of processes)2. Find Process: Find an index 'i' such that:Finish[i] == falseNeed[i] <= Work (where Need[i] is the remaining resources process 'i' needs)3. If Found:Work = Work + Allocation[i] (Process 'i' finishes and releases its resources)Finish[i] = trueGo to Step 2.4. If Not Found:If Finish[i] == true for all 'i', then the system is in a *safe state*.Otherwise, the system is in an *unsafe state* (which *may* lead to deadlock).Trap Alert: An unsafe state does *not* necessarily mean a deadlock will occur, but it indicates the *possibility* of a deadlock. A safe state guarantees no deadlock."
+      },
+      {
+        "id": "fc_gemini_1792074820744_6",
+        "subject": "Computer Networks",
+        "topic_id": "IPv4 Header, Fragmentation, CIDR and NAT",
+        "type": "trap",
+        "front": "An IPv4 packet with a total length of 1500 bytes (including header) needs to be fragmented into segments of 500 bytes (including header). If the original packet's data starts at offset 0, what will be the fragmentation offset value for the *second* fragment?",
+        "back": "Key Concept: Fragmentation offset is measured in units of 8 bytes.Original Packet Data Size: 1500 (Total Length) - 20 (Typical Header Length) = 1480 bytes.Fragment Size (including header): 500 bytes.Fragment Data Size: 500 - 20 = 480 bytes.First Fragment:Data: Bytes 0-479Offset: 0Second Fragment:Data: Bytes 480-959Offset Calculation: The data for the second fragment starts at byte 480.Offset = 480 bytes / 8 bytes/unit = 60Answer: The fragmentation offset for the second fragment will be 60.Trap Alert: Always remember that the fragmentation offset field in the IPv4 header is in units of 8 bytes. The data portion of each fragment (except possibly the last) must be a multiple of 8 bytes."
+      },
+      {
+        "id": "fc_gemini_1792074820744_7",
+        "subject": "Algorithms",
+        "topic_id": "Greedy Algorithm Design",
+        "type": "theorem",
+        "front": "What two fundamental properties must a problem exhibit for a greedy algorithm to guarantee an optimal solution? Briefly explain each.",
+        "back": "1. Greedy Choice Property:Explanation: A globally optimal solution can be reached by making a locally optimal (greedy) choice. This means that at each step, we can make the choice that seems best at the moment, and this choice will lead to a global optimum without needing to reconsider previous choices.Example: In Activity Selection, picking the activity that finishes earliest is a greedy choice that leads to an optimal solution.2. Optimal Substructure:Explanation: An optimal solution to the problem contains optimal solutions to its subproblems. After making a greedy choice, the remaining subproblem must also have an optimal solution.Example: After selecting an activity in Activity Selection, the remaining compatible activities form a subproblem that can also be optimally solved.Trap Alert: Not all problems with optimal substructure can be solved optimally by a greedy approach (e.g., 0/1 Knapsack problem, which requires dynamic programming). The Greedy Choice Property is the crucial distinguishing factor."
+      },
+      {
+        "id": "fc_gemini_1792074820744_8",
+        "subject": "Databases",
+        "topic_id": "Functional Dependencies and Normal Forms",
+        "type": "definition",
+        "front": "What is the primary difference between BCNF (Boyce-Codd Normal Form) and 3NF (Third Normal Form)? Under what condition is a relation in 3NF but not in BCNF?",
+        "back": "3NF (Third Normal Form):A relation is in 3NF if it is in 2NF and for every non-trivial functional dependency X -> A, either:1. X is a superkey, OR2. A is a prime attribute (part of *some* candidate key).BCNF (Boyce-Codd Normal Form):A relation is in BCNF if for every non-trivial functional dependency X -> A, X is a superkey.Primary Difference: BCNF is a stricter form of 3NF. The condition 'A' is a prime attribute is removed in BCNF.Condition for 3NF but not BCNF: A relation is in 3NF but not BCNF if there exists a non-trivial functional dependency X -> A where X is *not* a superkey, but A *is* a prime attribute. This typically occurs when:1. The relation has multiple overlapping candidate keys.2. A non-prime attribute is functionally dependent on a part of a candidate key.3. A prime attribute is functionally dependent on a non-superkey.Example: R(A, B, C) with FDs AB -> C, C -> B.Candidate keys: AB, AC.C -> B: C is not a superkey, B is a prime attribute. So, it's in 3NF.C -> B: C is not a superkey, B is not a superkey. So, it's NOT in BCNF."
+      },
+      {
+        "id": "fc_gemini_1792074820744_9",
+        "subject": "Operating Systems",
+        "topic_id": "File Systems and Disk Scheduling",
+        "type": "complexity",
+        "front": "Compare SSTF (Shortest Seek Time First) and SCAN disk scheduling algorithms in terms of average seek time, starvation, and suitability for different workloads.",
+        "back": "SSTF (Shortest Seek Time First):Average Seek Time: Generally provides better average seek time than FCFS and SCAN because it always picks the request closest to the current head position.Starvation: Prone to starvation. Requests far from the current head position might never get serviced if a continuous stream of closer requests arrives.Suitability: Good for batch systems where average response time is critical and starvation is less of a concern.SCAN (Elevator Algorithm):Average Seek Time: Better than FCFS, but typically worse than SSTF. It moves the head in one direction, servicing all requests in its path, until it reaches the end of the disk or no more requests in that direction, then reverses.Starvation: Avoids starvation. All requests will eventually be serviced as the head sweeps across the disk.Suitability: Good for interactive systems where fairness and preventing starvation are important. Provides a more uniform wait time.Key Trade-off: SSTF prioritizes efficiency (lower average seek time) at the risk of fairness (starvation), while SCAN prioritizes fairness (no starvation) at the cost of slightly higher average seek time."
+      }
+    ]
   }
 }
