@@ -3,6 +3,8 @@ const ragTool = require('../tools/rag_tool');
 const llmClient = require('./llm_client');
 const db = require('../database/db');
 const crypto = require('crypto');
+const agentPrompts = require('../services/agent_prompts');
+const responseCache = require('../services/response_cache');
 
 /**
  * PYQ Analyst Agent
@@ -40,18 +42,28 @@ class PYQAnalystAgent {
     const topicName = topicRow ? topicRow.name : targetTopicId;
     const topicSubject = topicRow ? topicRow.subject : (subject || 'General');
 
-    const systemPrompt = `You are the GATE CSE PYQ Analyst.
-Analyze the provided PYQ dataset for topic "${topicName}".
-Highlight:
-1. Exam recurrence rate and typical marks allocation.
-2. Most frequent subtopics tested (e.g. Gantt charts, formulas, definitions).
-3. Common distractors and traps set by IIT question setters.`;
+    // Check response cache
+    const cacheKey = responseCache.makeKey('PYQ Analyst', targetTopicId, query || topicName, userId);
+    if (cacheKey) {
+      const cached = responseCache.get(cacheKey);
+      if (cached) {
+        return cached;
+      }
+    }
+
+    const systemPrompt = agentPrompts.PYQ_ANALYST;
 
     const userPrompt = `Topic: ${topicName} (${topicSubject})\n` +
       `Stats: ${JSON.stringify(stats, null, 2)}\n` +
       `Sample Questions: ${JSON.stringify(questions.slice(0, 3), null, 2)}`;
 
-    let analysis = await llmClient.generate({ systemPrompt, userPrompt });
+    let analysis = await llmClient.generate({
+      systemPrompt,
+      userPrompt,
+      maxOutputTokens: agentPrompts.LIMITS.pyq_solution || 1024,
+      agentLabel: 'PYQ Analyst',
+      featureLabel: 'pyq_analysis'
+    });
 
     if (!analysis) {
       const sampleList = questions.slice(0, 2).map((q, idx) => 
@@ -84,7 +96,7 @@ Highlight:
       );
     }
 
-    return {
+    const result = {
       agent: this.role,
       topicId: targetTopicId,
       topicName,
@@ -93,6 +105,12 @@ Highlight:
       sampleQuestions: questions,
       analysis
     };
+
+    if (cacheKey && analysis) {
+      responseCache.set(cacheKey, 'PYQ Analyst', targetTopicId, result);
+    }
+
+    return result;
   }
 }
 

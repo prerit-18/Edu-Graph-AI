@@ -1,4 +1,4 @@
-const { retrieve } = require('../rag/retriever');
+const { retrieve, retrieveCompact } = require('../rag/retriever');
 
 /**
  * RAG Tool for Agents
@@ -14,6 +14,12 @@ class RAGTool {
     const query = typeof params === 'string' ? params : params.query;
     const filters = typeof params === 'object' ? params.filters || {} : {};
     return retrieve(query, filters);
+  }
+
+  executeCompact(params) {
+    const query = typeof params === 'string' ? params : params.query;
+    const filters = typeof params === 'object' ? params.filters || {} : {};
+    return retrieveCompact(query, filters);
   }
 }
 

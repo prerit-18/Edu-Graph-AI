@@ -5,6 +5,7 @@ const bktTool = require('../tools/bkt_tool');
 const llmClient = require('./llm_client');
 const db = require('../database/db');
 const crypto = require('crypto');
+const agentPrompts = require('../services/agent_prompts');
 
 /**
  * Problem Solver Agent
@@ -77,16 +78,15 @@ class ProblemSolverAgent {
 
     if (!explanation) {
       // 1. Try live LLM derivation
-      const systemPrompt = `You are the GATE CSE Problem Solver & Mathematical Verifier.
-Derive a rigorous, verified step-by-step mathematical and logical solution to the problem.
-Guidelines:
-1. List all given parameters, boundary conditions, and state invariants.
-2. Provide a clear execution trace (e.g. Gantt chart, timeline, state transition table, or recurrence tree).
-3. Compute exact numerical values showing all intermediate steps.
-4. Conclude with the final verified answer and common pitfalls.`;
-
+      const systemPrompt = agentPrompts.PROBLEM_SOLVER;
       const userPrompt = `Problem: ${problem}\nTopic: ${assignedTopic}\nStudent Answer: ${studentAnswer || 'None provided'}`;
-      explanation = await llmClient.generate({ systemPrompt, userPrompt });
+      explanation = await llmClient.generate({
+        systemPrompt,
+        userPrompt,
+        maxOutputTokens: agentPrompts.LIMITS.pyq_solution,
+        agentLabel: 'Problem Solver',
+        featureLabel: 'pyq_solution'
+      });
     }
 
     if (!explanation) {

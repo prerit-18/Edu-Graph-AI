@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { optionalAuth } = require('../middleware/authRequired');
 const orchestrator = require('../agents/orchestrator');
+const tokenMonitor = require('../services/token_monitor');
 
 /**
  * POST /api/agents/concept
@@ -71,6 +72,20 @@ router.post('/solve', optionalAuth, async (req, res) => {
     res.json(result);
   } catch (err) {
     console.error('Problem solver route error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * GET /api/agents/token-report
+ * Token Usage & Cost Audit Report
+ */
+router.get('/token-report', (req, res) => {
+  try {
+    const report = tokenMonitor.getReport();
+    res.json(report);
+  } catch (err) {
+    console.error('Token report route error:', err);
     res.status(500).json({ error: err.message });
   }
 });

@@ -104,7 +104,7 @@ class OrchestrationInterface {
     return await agents.activeRecallAgent.runner.generatePrompt({ topicId, subject, type, userId });
   }
 
-  async gradeActiveRecall({ promptId, topicId, question, studentAnswer, referenceAnswer, keyConcepts, idempotencyKey, userId }) {
+  async gradeActiveRecall({ promptId, topicId, question, studentAnswer, referenceAnswer, keyConcepts, idempotencyKey, attemptNumber, userId }) {
     return await agents.activeRecallAgent.runner.gradeResponse({
       promptId,
       topicId,
@@ -113,6 +113,7 @@ class OrchestrationInterface {
       referenceAnswer,
       keyConcepts,
       idempotencyKey,
+      attemptNumber,
       userId
     });
   }

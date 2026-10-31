@@ -106,6 +106,16 @@
         </div>
       </div>
 
+      <!-- Quick Actions Bar -->
+      <div style="display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1rem; padding: 0.75rem 1rem; background: #FFFFFF; border: 1px solid var(--border-subtle); border-radius: var(--radius-sm);">
+        <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; align-self: center; margin-right: 0.25rem;">QUICK ACTIONS:</span>
+        <button class="btn btn-secondary btn-sm" onclick="triggerQuickAction('quick_revision')" title="5-bullet revision summary">⚡ Quick Revision</button>
+        <button class="btn btn-secondary btn-sm" onclick="triggerQuickAction('give_example')" title="Worked example">📌 Give Example</button>
+        <button class="btn btn-secondary btn-sm" onclick="triggerQuickAction('exam_traps')" title="Common GATE traps">⚠ Exam Traps</button>
+        <button class="btn btn-secondary btn-sm" onclick="triggerQuickAction('solve_pyq')" title="Solve a PYQ">🧮 Solve PYQ</button>
+        <button class="btn btn-secondary btn-sm" onclick="triggerQuickAction('explain_concept')" title="Full explanation">📘 Full Explain</button>
+      </div>
+
       <div style="display: grid; grid-template-columns: 1fr 320px; gap: 1.25rem;">
         <!-- Concept Chat Canvas -->
         <div class="chat-container">
@@ -459,6 +469,9 @@
 
     let activeAgent = 'concept';
     let currentProblem = PRESETS.os_2024_001;
+    let currentConceptTopicId = 'os_scheduling';
+    let currentConceptTopic = 'CPU Scheduling & Algorithms';
+    let currentConceptSubject = 'Operating Systems';
 
     const urlParams = new URLSearchParams(window.location.search);
     const initialView = urlParams.get('view') || urlParams.get('agent') || window.location.hash.replace('#', '');
@@ -539,10 +552,60 @@
     function askQuickConcept(query, topicId = null) {
       switchAgentView('concept');
       if (topicId) {
+        currentConceptTopicId = topicId;
         updateSidebarForTopic(topicId);
       }
       document.getElementById('concept-user-input').value = query;
       handleConceptSend();
+    }
+
+    async function triggerQuickAction(action) {
+      switchAgentView('concept');
+      const topicInput = document.getElementById('concept-user-input');
+      const topic = (topicInput && topicInput.value.trim()) || currentConceptTopic || 'CPU Scheduling';
+      const topicId = currentConceptTopicId || 'os_scheduling';
+      const subject = currentConceptSubject || 'Operating Systems';
+
+      const actionLabels = {
+        quick_revision: '⚡ Quick Revision',
+        give_example: '📌 Give Example',
+        exam_traps: '⚠ Exam Traps',
+        solve_pyq: '🧮 Solve PYQ',
+        explain_concept: '📘 Full Explain'
+      };
+      const label = actionLabels[action] || action.replace(/_/g, ' ').toUpperCase();
+
+      addConceptMessage('user', `[${label}] ${topic}`);
+
+      const chat = document.getElementById('concept-chat-messages');
+      const loadingDiv = document.createElement('div');
+      loadingDiv.id = 'concept-quick-loading';
+      loadingDiv.className = 'chat-message agent';
+      loadingDiv.innerHTML = `
+        <div class="message-avatar">CT</div>
+        <div class="message-body"><em>Synthesizing ${label.toLowerCase()} for <strong>${topic}</strong>...</em></div>
+      `;
+      chat.appendChild(loadingDiv);
+      chat.scrollTop = chat.scrollHeight;
+
+      try {
+        const result = await apiCall(`/quick-actions/${action}`, 'POST', { topic, topicId, subject });
+        const loadEl = document.getElementById('concept-quick-loading');
+        if (loadEl) loadEl.remove();
+
+        addConceptMessage('agent', result.explanation || result.analysis || 'No response generated.', result.citations || []);
+
+        const tutorContainer = document.getElementById('concept-tutor-container');
+        if (tutorContainer && result.explanation) {
+          tutorContainer.setAttribute('data-speech-text', result.explanation);
+          const statusText = document.getElementById('concept-tutor-container-status');
+          if (statusText) statusText.textContent = 'Explanation ready — click Listen to hear Arya speak';
+        }
+      } catch (err) {
+        const loadEl = document.getElementById('concept-quick-loading');
+        if (loadEl) loadEl.remove();
+        addConceptMessage('agent', `Quick action failed: ${err.message}`);
+      }
     }
 
     async function handleConceptSend(e) {
@@ -685,6 +748,9 @@
 
       const detail = topicDetails[topicId];
       if (detail) {
+        currentConceptTopicId = topicId;
+        currentConceptTopic = detail.title;
+        currentConceptSubject = detail.subject;
         document.getElementById('curriculum-unit-title').textContent = detail.title;
         document.getElementById('concept-subject-badge').textContent = detail.subject;
         document.getElementById('curriculum-unit-desc').textContent = detail.desc;

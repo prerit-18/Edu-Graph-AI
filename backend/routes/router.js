@@ -10,6 +10,7 @@ const recallRoutes = require('./recall');
 const mockRoutes = require('./mock');
 const flashcardRoutes = require('./flashcards');
 const ttsRoutes = require('./tts');
+const quickActionsRoutes = require('./quick_actions');
 
 // Mount routes
 router.use('/auth', authRoutes);
@@ -21,5 +22,6 @@ router.use('/recall', recallRoutes);
 router.use('/mock', mockRoutes);
 router.use('/flashcards', flashcardRoutes);
 router.use('/tts', ttsRoutes);
+router.use('/quick-actions', quickActionsRoutes);
 
 module.exports = router;

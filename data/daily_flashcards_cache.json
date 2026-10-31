@@ -178,5 +178,308 @@
         "back": "SSTF (Shortest Seek Time First):Average Seek Time: Generally provides better average seek time than FCFS and SCAN because it always picks the request closest to the current head position.Starvation: Prone to starvation. Requests far from the current head position might never get serviced if a continuous stream of closer requests arrives.Suitability: Good for batch systems where average response time is critical and starvation is less of a concern.SCAN (Elevator Algorithm):Average Seek Time: Better than FCFS, but typically worse than SSTF. It moves the head in one direction, servicing all requests in its path, until it reaches the end of the disk or no more requests in that direction, then reverses.Starvation: Avoids starvation. All requests will eventually be serviced as the head sweeps across the disk.Suitability: Good for interactive systems where fairness and preventing starvation are important. Provides a more uniform wait time.Key Trade-off: SSTF prioritizes efficiency (lower average seek time) at the risk of fairness (starvation), while SCAN prioritizes fairness (no starvation) at the cost of slightly higher average seek time."
       }
     ]
+  },
+  "2026-10-31_All_daily_10": {
+    "date": "2026-10-31",
+    "source": "Syllabus Knowledge Base (PRNG Rotation)",
+    "aiGenerated": false,
+    "seed": "2026-10-31_gate_cse_deck",
+    "subject": "All",
+    "total": 10,
+    "availablePool": 17,
+    "flashcards": [
+      {
+        "id": "fc_algo_02",
+        "subject": "Algorithms",
+        "topic_id": "algo_graphs_mst_shortest_paths",
+        "type": "complexity",
+        "front": "Dijkstra vs Bellman-Ford vs Floyd-Warshall Comparison",
+        "back": "• Dijkstra: Single source, non-negative weights only. Min-Heap time: O((V + E) log V).\n• Bellman-Ford: Single source, handles negative weights & detects negative cycles. Time: O(V · E).\n• Floyd-Warshall: All-pairs shortest path, DP dynamic matrix. Time: Θ(V³).\n• DAG Shortest Path: Topological Sort + Edge relaxation. Time: O(V + E) (handles negative weights!)."
+      },
+      {
+        "id": "fc_os_04",
+        "subject": "Operating Systems",
+        "topic_id": "os_virtual_mem",
+        "type": "trap",
+        "front": "Belady's Anomaly & Effective Memory Access Time (EMAT)",
+        "back": "• Belady's Anomaly: Increasing allocated frames causes MORE page faults (occurs in FIFO, NEVER in LRU or OPT stack algorithms).\n• EMAT with TLB:\n  EMAT = h · (t_TLB + t_RAM) + (1 - h) · (t_TLB + (k + 1) · t_RAM)\n  where h = TLB hit ratio, k = number of page table levels."
+      },
+      {
+        "id": "fc_dbms_02",
+        "subject": "Databases",
+        "topic_id": "dbms_transactions",
+        "type": "protocol",
+        "front": "Conflict Serializability & Two-Phase Locking (2PL Variants)",
+        "back": "• Conflict Serializable ⟺ Precedence Graph has NO directed cycles.\n• Basic 2PL: Growing Phase (acquire locks) + Shrinking Phase (release locks). Guarantees Serializability; prone to cascading aborts and deadlocks.\n• Strict 2PL: Holds Exclusive (write) locks until COMMIT/ABORT. Guarantees conflict serializability + Avoids Cascading Aborts (ACA).\n• Rigorous 2PL: Holds ALL locks until Commit."
+      },
+      {
+        "id": "fc_dbms_03",
+        "subject": "Databases",
+        "topic_id": "dbms_indexing",
+        "type": "formula",
+        "front": "B-Tree & B+ Tree Node Capacity and Fanout Calculations",
+        "back": "For node size P bytes, block pointer B bytes, record pointer R bytes, key size K bytes:\n• B+ Tree Internal Node: n · K + (n + 1) · B ≤ P ⟹ Max keys = n\n• B+ Tree Leaf Node: m · (K + R) + B ≤ P (leaf nodes contain record pointers & next-leaf pointer)\n• Min keys in B+ Tree Internal node = ⌈(n+1)/2⌉ - 1; Root has at least 1 key."
+      },
+      {
+        "id": "fc_compiler_01",
+        "subject": "Compiler Design",
+        "topic_id": "compiler_parsing",
+        "type": "hierarchy",
+        "front": "Parser Expressive Power & Table Size Hierarchy",
+        "back": "• Expressive Power Hierarchy:\n  LR(0) ⊂ SLR(1) ⊂ LALR(1) ⊂ CLR(1) / LR(1)\n  Top-down: LL(1) ⊂ LR(1)\n• Number of Parsing States in Tables:\n  State Count: LR(0) = SLR(1) = LALR(1) < CLR(1)\n• LALR(1) merges states with identical core items in CLR(1). Merging NEVER creates Shift-Reduce conflicts, but CAN create Reduce-Reduce conflicts!"
+      },
+      {
+        "id": "fc_cn_03",
+        "subject": "Computer Networks",
+        "topic_id": "cn_transport_tcp",
+        "type": "protocol",
+        "front": "TCP Congestion Control Phases: Slow Start, AIMD & Fast Recovery",
+        "back": "• Slow Start: Congestion Window (cwnd) doubles every RTT (exponential growth) until cwnd reaches ssthresh.\n• Congestion Avoidance: cwnd increases by 1 MSS per RTT (linear additive increase, AIMD).\n• Timeout Occurs: ssthresh = cwnd / 2, cwnd resets to 1 MSS (Slow start restarts).\n• 3 Duplicate ACKs (Fast Retransmit): ssthresh = cwnd / 2, cwnd = ssthresh + 3 MSS (Fast Recovery, avoids dropping to 1)."
+      },
+      {
+        "id": "fc_cn_02",
+        "subject": "Computer Networks",
+        "topic_id": "cn_network_ipv4",
+        "type": "formula",
+        "front": "IPv4 Subnetting, CIDR & Fragmentation Offset Rules",
+        "back": "• CIDR /n notation: Subnet Mask has n leading 1s. Usable host IPs = 2^(32 - n) - 2 (subtract Network ID and Broadcast ID).\n• IPv4 Fragmentation Offset: Measured in 8-byte units! Offset = (Original Byte Position) / 8.\n• More Fragments (MF) flag = 1 for all fragments except the last one (MF = 0)."
+      },
+      {
+        "id": "fc_compiler_03",
+        "subject": "Compiler Design",
+        "topic_id": "compiler_optimization_dataflow",
+        "type": "definition",
+        "front": "Data Flow Analysis: Constant Propagation & Liveness Analysis",
+        "back": "• Constant Propagation: Forward data-flow analysis finding variables with constant values at compile time.\n• Liveness Analysis: Backward data-flow analysis checking if variable x is used before being redefined along some execution path (used in register allocation).\n• Common Subexpression Elimination: Removes duplicate evaluations of identical expressions using DAGs."
+      },
+      {
+        "id": "fc_os_01",
+        "subject": "Operating Systems",
+        "topic_id": "os_scheduling",
+        "type": "formula",
+        "front": "Turnaround Time, Waiting Time & Preemption Invariants",
+        "back": "• Turnaround Time (TAT) = Completion Time - Arrival Time (CT - AT)\n• Waiting Time (WT) = Turnaround Time - Burst Time (TAT - BT)\n• Response Time (RT) = Time when process first gets CPU - AT\n• In SRTF (Preemptive SJF), ties in remaining burst are broken by arrival time/PID.\n• Round Robin with quantum q → ∞ degenerates to FCFS."
+      },
+      {
+        "id": "fc_compiler_02",
+        "subject": "Compiler Design",
+        "topic_id": "compiler_sdt_codegen",
+        "type": "definition",
+        "front": "S-Attributed vs L-Attributed Syntax-Directed Definitions (SDDs)",
+        "back": "• S-Attributed Definition:\n  - Uses ONLY Synthesized attributes (computed from children in parse tree).\n  - Evaluated Bottom-Up during LR parsing.\n• L-Attributed Definition:\n  - Allows Synthesized AND restricted Inherited attributes.\n  - An inherited attribute of node X_j can depend ONLY on: Parent attribute, or left siblings (X_1, ..., X_{j-1}).\n  - Evaluated in a single Top-Down Depth-First left-to-right pass."
+      }
+    ]
+  },
+  "2026-10-31_All_fresh_1793458419676_0.3970882872557153_10": {
+    "date": "2026-10-31",
+    "source": "Syllabus Knowledge Base (PRNG Rotation)",
+    "aiGenerated": false,
+    "seed": "fresh_1793458419676_0.3970882872557153",
+    "subject": "All",
+    "total": 10,
+    "availablePool": 17,
+    "flashcards": [
+      {
+        "id": "fc_dbms_01",
+        "subject": "Databases",
+        "topic_id": "dbms_normalization",
+        "type": "hierarchy",
+        "front": "Relational Normal Forms (1NF → BCNF) & Lossless Decompositions",
+        "back": "For functional dependency X → Y in relation R:\n• 1NF: Atomic attribute values.\n• 2NF: 1NF + No partial dependency (non-prime depends on subset of candidate key).\n• 3NF: 2NF + For every X → Y, X is Superkey OR Y is Prime attribute.\n• BCNF: For every non-trivial X → Y, X MUST be a Superkey.\n• Lossless Join Condition: (R1 ∩ R2) → R1 OR (R1 ∩ R2) → R2 (Common attribute is a superkey of R1 or R2)."
+      },
+      {
+        "id": "fc_os_01",
+        "subject": "Operating Systems",
+        "topic_id": "os_scheduling",
+        "type": "formula",
+        "front": "Turnaround Time, Waiting Time & Preemption Invariants",
+        "back": "• Turnaround Time (TAT) = Completion Time - Arrival Time (CT - AT)\n• Waiting Time (WT) = Turnaround Time - Burst Time (TAT - BT)\n• Response Time (RT) = Time when process first gets CPU - AT\n• In SRTF (Preemptive SJF), ties in remaining burst are broken by arrival time/PID.\n• Round Robin with quantum q → ∞ degenerates to FCFS."
+      },
+      {
+        "id": "fc_os_03",
+        "subject": "Operating Systems",
+        "topic_id": "os_deadlock",
+        "type": "formula",
+        "front": "Banker's Algorithm & Deadlock Freedom Condition",
+        "back": "• 4 Coffman Conditions: Mutual Exclusion, Hold & Wait, No Preemption, Circular Wait.\n• Deadlock-Free Guarantee: For n processes each needing at most k resource instances from m total resources, system is deadlock-free if:\n  m ≥ n · (k - 1) + 1\n• Safe State ⟹ No Deadlock. Unsafe State ⇏ Deadlock (only potential deadlock)."
+      },
+      {
+        "id": "fc_dbms_02",
+        "subject": "Databases",
+        "topic_id": "dbms_transactions",
+        "type": "protocol",
+        "front": "Conflict Serializability & Two-Phase Locking (2PL Variants)",
+        "back": "• Conflict Serializable ⟺ Precedence Graph has NO directed cycles.\n• Basic 2PL: Growing Phase (acquire locks) + Shrinking Phase (release locks). Guarantees Serializability; prone to cascading aborts and deadlocks.\n• Strict 2PL: Holds Exclusive (write) locks until COMMIT/ABORT. Guarantees conflict serializability + Avoids Cascading Aborts (ACA).\n• Rigorous 2PL: Holds ALL locks until Commit."
+      },
+      {
+        "id": "fc_cn_01",
+        "subject": "Computer Networks",
+        "topic_id": "cn_datalink_mac",
+        "type": "formula",
+        "front": "CSMA/CD Minimum Frame Size & Sliding Window Efficiency",
+        "back": "• CSMA/CD Minimum Frame Length: L ≥ 2 · T_prop · Bandwidth = 2 · (Distance / v) · B\n• Stop-and-Wait Efficiency: η = 1 / (1 + 2a) where a = T_prop / T_trans\n• Go-Back-N Efficiency: η = N / (1 + 2a) (Sender Window = N, Receiver Window = 1)\n• Selective Repeat Efficiency: η = N / (1 + 2a) (Sender Window = N, Receiver Window = N; Max N = 2^(k-1) for k sequence bits)."
+      },
+      {
+        "id": "fc_algo_04",
+        "subject": "Algorithms",
+        "topic_id": "algo_searching_sorting_hashing",
+        "type": "complexity",
+        "front": "Comparison-Based Sorting Theoretical Bounds & Hashing Collisions",
+        "back": "• Any comparison sort requires Ω(n log n) comparisons in the worst case (decision tree height log2(n!) ≈ n log2(n)).\n• QuickSort: Best/Avg O(n log n), Worst O(n²) (already sorted with extremal pivot).\n• Open Addressing with Linear Probing suffers from Primary Clustering."
+      },
+      {
+        "id": "fc_cn_02",
+        "subject": "Computer Networks",
+        "topic_id": "cn_network_ipv4",
+        "type": "formula",
+        "front": "IPv4 Subnetting, CIDR & Fragmentation Offset Rules",
+        "back": "• CIDR /n notation: Subnet Mask has n leading 1s. Usable host IPs = 2^(32 - n) - 2 (subtract Network ID and Broadcast ID).\n• IPv4 Fragmentation Offset: Measured in 8-byte units! Offset = (Original Byte Position) / 8.\n• More Fragments (MF) flag = 1 for all fragments except the last one (MF = 0)."
+      },
+      {
+        "id": "fc_algo_03",
+        "subject": "Algorithms",
+        "topic_id": "algo_dp",
+        "type": "definition",
+        "front": "0/1 Knapsack vs Fractional Knapsack Algorithmic Paradigms",
+        "back": "• Fractional Knapsack: Solved via GREEDY strategy (sort by Value/Weight ratio). Time: O(n log n).\n• 0/1 Knapsack: Items cannot be split. Solved via DYNAMIC PROGRAMMING. Time: O(n · W) (Pseudo-polynomial; NP-Complete in general).\n• Longest Common Subsequence (LCS): DP time O(m · n), space O(min(m, n))."
+      },
+      {
+        "id": "fc_compiler_03",
+        "subject": "Compiler Design",
+        "topic_id": "compiler_optimization_dataflow",
+        "type": "definition",
+        "front": "Data Flow Analysis: Constant Propagation & Liveness Analysis",
+        "back": "• Constant Propagation: Forward data-flow analysis finding variables with constant values at compile time.\n• Liveness Analysis: Backward data-flow analysis checking if variable x is used before being redefined along some execution path (used in register allocation).\n• Common Subexpression Elimination: Removes duplicate evaluations of identical expressions using DAGs."
+      },
+      {
+        "id": "fc_compiler_02",
+        "subject": "Compiler Design",
+        "topic_id": "compiler_sdt_codegen",
+        "type": "definition",
+        "front": "S-Attributed vs L-Attributed Syntax-Directed Definitions (SDDs)",
+        "back": "• S-Attributed Definition:\n  - Uses ONLY Synthesized attributes (computed from children in parse tree).\n  - Evaluated Bottom-Up during LR parsing.\n• L-Attributed Definition:\n  - Allows Synthesized AND restricted Inherited attributes.\n  - An inherited attribute of node X_j can depend ONLY on: Parent attribute, or left siblings (X_1, ..., X_{j-1}).\n  - Evaluated in a single Top-Down Depth-First left-to-right pass."
+      }
+    ]
+  },
+  "2026-10-31_Operating Systems_daily_10": {
+    "date": "2026-10-31",
+    "source": "Syllabus Knowledge Base (PRNG Rotation)",
+    "aiGenerated": false,
+    "seed": "2026-10-31_gate_cse_deck",
+    "subject": "Operating Systems",
+    "total": 4,
+    "availablePool": 4,
+    "flashcards": [
+      {
+        "id": "fc_os_02",
+        "subject": "Operating Systems",
+        "topic_id": "os_sync",
+        "type": "condition",
+        "front": "Critical Section 3 Gold Invariants & Peterson's Solution",
+        "back": "1. Mutual Exclusion (Mandatory): Only 1 process inside CS at a time.\n2. Progress (Mandatory): Selection of who enters next is decided only by processes not in remainder.\n3. Bounded Waiting (Fairness): Finite bound on entries allowed to others after request.\n• Peterson's uses flag[i]=true and turn=j (courtesy variable) to satisfy all 3 for 2 processes."
+      },
+      {
+        "id": "fc_os_03",
+        "subject": "Operating Systems",
+        "topic_id": "os_deadlock",
+        "type": "formula",
+        "front": "Banker's Algorithm & Deadlock Freedom Condition",
+        "back": "• 4 Coffman Conditions: Mutual Exclusion, Hold & Wait, No Preemption, Circular Wait.\n• Deadlock-Free Guarantee: For n processes each needing at most k resource instances from m total resources, system is deadlock-free if:\n  m ≥ n · (k - 1) + 1\n• Safe State ⟹ No Deadlock. Unsafe State ⇏ Deadlock (only potential deadlock)."
+      },
+      {
+        "id": "fc_os_01",
+        "subject": "Operating Systems",
+        "topic_id": "os_scheduling",
+        "type": "formula",
+        "front": "Turnaround Time, Waiting Time & Preemption Invariants",
+        "back": "• Turnaround Time (TAT) = Completion Time - Arrival Time (CT - AT)\n• Waiting Time (WT) = Turnaround Time - Burst Time (TAT - BT)\n• Response Time (RT) = Time when process first gets CPU - AT\n• In SRTF (Preemptive SJF), ties in remaining burst are broken by arrival time/PID.\n• Round Robin with quantum q → ∞ degenerates to FCFS."
+      },
+      {
+        "id": "fc_os_04",
+        "subject": "Operating Systems",
+        "topic_id": "os_virtual_mem",
+        "type": "trap",
+        "front": "Belady's Anomaly & Effective Memory Access Time (EMAT)",
+        "back": "• Belady's Anomaly: Increasing allocated frames causes MORE page faults (occurs in FIFO, NEVER in LRU or OPT stack algorithms).\n• EMAT with TLB:\n  EMAT = h · (t_TLB + t_RAM) + (1 - h) · (t_TLB + (k + 1) · t_RAM)\n  where h = TLB hit ratio, k = number of page table levels."
+      }
+    ]
+  },
+  "2026-10-31_Databases_daily_10": {
+    "date": "2026-10-31",
+    "source": "Syllabus Knowledge Base (PRNG Rotation)",
+    "aiGenerated": false,
+    "seed": "2026-10-31_gate_cse_deck",
+    "subject": "Databases",
+    "total": 3,
+    "availablePool": 3,
+    "flashcards": [
+      {
+        "id": "fc_dbms_02",
+        "subject": "Databases",
+        "topic_id": "dbms_transactions",
+        "type": "protocol",
+        "front": "Conflict Serializability & Two-Phase Locking (2PL Variants)",
+        "back": "• Conflict Serializable ⟺ Precedence Graph has NO directed cycles.\n• Basic 2PL: Growing Phase (acquire locks) + Shrinking Phase (release locks). Guarantees Serializability; prone to cascading aborts and deadlocks.\n• Strict 2PL: Holds Exclusive (write) locks until COMMIT/ABORT. Guarantees conflict serializability + Avoids Cascading Aborts (ACA).\n• Rigorous 2PL: Holds ALL locks until Commit."
+      },
+      {
+        "id": "fc_dbms_03",
+        "subject": "Databases",
+        "topic_id": "dbms_indexing",
+        "type": "formula",
+        "front": "B-Tree & B+ Tree Node Capacity and Fanout Calculations",
+        "back": "For node size P bytes, block pointer B bytes, record pointer R bytes, key size K bytes:\n• B+ Tree Internal Node: n · K + (n + 1) · B ≤ P ⟹ Max keys = n\n• B+ Tree Leaf Node: m · (K + R) + B ≤ P (leaf nodes contain record pointers & next-leaf pointer)\n• Min keys in B+ Tree Internal node = ⌈(n+1)/2⌉ - 1; Root has at least 1 key."
+      },
+      {
+        "id": "fc_dbms_01",
+        "subject": "Databases",
+        "topic_id": "dbms_normalization",
+        "type": "hierarchy",
+        "front": "Relational Normal Forms (1NF → BCNF) & Lossless Decompositions",
+        "back": "For functional dependency X → Y in relation R:\n• 1NF: Atomic attribute values.\n• 2NF: 1NF + No partial dependency (non-prime depends on subset of candidate key).\n• 3NF: 2NF + For every X → Y, X is Superkey OR Y is Prime attribute.\n• BCNF: For every non-trivial X → Y, X MUST be a Superkey.\n• Lossless Join Condition: (R1 ∩ R2) → R1 OR (R1 ∩ R2) → R2 (Common attribute is a superkey of R1 or R2)."
+      }
+    ]
+  },
+  "2026-10-31_Algorithms_daily_10": {
+    "date": "2026-10-31",
+    "source": "Syllabus Knowledge Base (PRNG Rotation)",
+    "aiGenerated": false,
+    "seed": "2026-10-31_gate_cse_deck",
+    "subject": "Algorithms",
+    "total": 4,
+    "availablePool": 4,
+    "flashcards": [
+      {
+        "id": "fc_algo_02",
+        "subject": "Algorithms",
+        "topic_id": "algo_graphs_mst_shortest_paths",
+        "type": "complexity",
+        "front": "Dijkstra vs Bellman-Ford vs Floyd-Warshall Comparison",
+        "back": "• Dijkstra: Single source, non-negative weights only. Min-Heap time: O((V + E) log V).\n• Bellman-Ford: Single source, handles negative weights & detects negative cycles. Time: O(V · E).\n• Floyd-Warshall: All-pairs shortest path, DP dynamic matrix. Time: Θ(V³).\n• DAG Shortest Path: Topological Sort + Edge relaxation. Time: O(V + E) (handles negative weights!)."
+      },
+      {
+        "id": "fc_algo_03",
+        "subject": "Algorithms",
+        "topic_id": "algo_dp",
+        "type": "definition",
+        "front": "0/1 Knapsack vs Fractional Knapsack Algorithmic Paradigms",
+        "back": "• Fractional Knapsack: Solved via GREEDY strategy (sort by Value/Weight ratio). Time: O(n log n).\n• 0/1 Knapsack: Items cannot be split. Solved via DYNAMIC PROGRAMMING. Time: O(n · W) (Pseudo-polynomial; NP-Complete in general).\n• Longest Common Subsequence (LCS): DP time O(m · n), space O(min(m, n))."
+      },
+      {
+        "id": "fc_algo_01",
+        "subject": "Algorithms",
+        "topic_id": "algo_asymptotic",
+        "type": "formula",
+        "front": "Master Theorem for Divide & Conquer Recurrences: T(n) = a·T(n/b) + f(n)",
+        "back": "Let c = log_b(a). Compare f(n) with n^c:\n• Case 1: f(n) = O(n^(c - ε)) for ε > 0 ⟹ T(n) = Θ(n^c)\n• Case 2: f(n) = Θ(n^c · log^k n) for k ≥ 0 ⟹ T(n) = Θ(n^c · log^(k+1) n)\n• Case 3: f(n) = Ω(n^(c + ε)) for ε > 0 and regularity holds ⟹ T(n) = Θ(f(n))\n> ⚠️ IIT Trap: Master theorem fails if a is not constant or gap is non-polynomial (e.g. 2^n)."
+      },
+      {
+        "id": "fc_algo_04",
+        "subject": "Algorithms",
+        "topic_id": "algo_searching_sorting_hashing",
+        "type": "complexity",
+        "front": "Comparison-Based Sorting Theoretical Bounds & Hashing Collisions",
+        "back": "• Any comparison sort requires Ω(n log n) comparisons in the worst case (decision tree height log2(n!) ≈ n log2(n)).\n• QuickSort: Best/Avg O(n log n), Worst O(n²) (already sorted with extremal pivot).\n• Open Addressing with Linear Probing suffers from Primary Clustering."
+      }
+    ]
   }
 }

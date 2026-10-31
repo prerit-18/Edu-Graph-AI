@@ -69,3 +69,36 @@ CREATE TABLE IF NOT EXISTS recall_prompts (
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (topic_id) REFERENCES topics(id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS smart_fc_sessions (
+  id TEXT PRIMARY KEY,
+  user_id TEXT,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  strong_count INTEGER DEFAULT 3,
+  weak_count INTEGER DEFAULT 2,
+  completed INTEGER DEFAULT 0,
+  summary_json TEXT,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS smart_fc_session_cards (
+  id TEXT PRIMARY KEY,
+  session_id TEXT NOT NULL,
+  flashcard_id TEXT NOT NULL,
+  topic_id TEXT,
+  subject TEXT,
+  card_label TEXT CHECK(card_label IN ('strong','weak')) DEFAULT 'strong',
+  position INTEGER,
+  FOREIGN KEY (session_id) REFERENCES smart_fc_sessions(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS smart_fc_feedback (
+  id TEXT PRIMARY KEY,
+  session_id TEXT NOT NULL,
+  flashcard_id TEXT NOT NULL,
+  user_id TEXT,
+  topic_id TEXT,
+  response TEXT CHECK(response IN ('got_it','need_practice')),
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (session_id) REFERENCES smart_fc_sessions(id) ON DELETE CASCADE
+);

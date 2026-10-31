@@ -136,6 +136,19 @@
           <textarea id="student-response" class="input-field" rows="5" placeholder="Explain the concept in your own words. Focus on key mechanisms, conditions, formulas, or trade-offs..." style="resize: vertical; font-family: inherit; font-size: 0.92rem; line-height: 1.55;" oninput="updateWordCount(this.value)" required></textarea>
         </div>
 
+        <!-- Attempt counter (shown after first wrong answer) -->
+        <div id="attempt-counter" style="display: none; margin-bottom: 0.75rem;">
+          <div id="attempt-counter-inner" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0.85rem; border-radius: var(--radius-xs); font-size: 0.82rem; font-weight: 600; background: var(--accent-rose-subtle); color: var(--accent-rose); border: 1px solid rgba(168, 40, 40, 0.25);">
+            <span id="attempt-counter-icon">⚠</span>
+            <span id="attempt-counter-text">2 attempts remaining</span>
+          </div>
+        </div>
+
+        <!-- Inline wrong-answer feedback (shown between attempts, not the full panel) -->
+        <div id="inline-feedback" style="display: none; margin-bottom: 0.85rem; padding: 0.85rem 1.1rem; border-radius: var(--radius-sm); font-size: 0.9rem; line-height: 1.5; background: var(--accent-rose-subtle); border: 1px solid rgba(168, 40, 40, 0.25); color: var(--accent-rose);">
+          <strong>✗ Incorrect answer.</strong> <span id="inline-feedback-text">Review your response and try again.</span>
+        </div>
+
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
           <div style="font-size: 0.8rem; color: var(--text-muted);">
             Evaluated against standard GATE CSE reference rubrics.
@@ -223,6 +236,12 @@
     const urlParams = new URLSearchParams(window.location.search);
     const initialTopic = urlParams.get('topic');
 
+    // ── Attempt tracking (resets on each new question) ──────────────────────
+    const MAX_ATTEMPTS = 3;
+    let incorrectAttempts = 0;   // count of wrong submissions for this question
+    let questionAnswered = false; // true once correct OR all attempts exhausted
+    let isEvaluating = false;     // guard against double-submit during API call
+
     // Load available topics into dropdown
     async function initTopicDropdown() {
       try {
@@ -261,10 +280,19 @@
     }
 
     async function loadNextPrompt(explicitTopicId = null) {
+      // Reset attempt state for the new question
+      incorrectAttempts = 0;
+      questionAnswered = false;
+      isEvaluating = false;
+      document.getElementById('attempt-counter').style.display = 'none';
+      document.getElementById('inline-feedback').style.display = 'none';
       document.getElementById('feedback-section').style.display = 'none';
       document.getElementById('student-response').value = '';
+      document.getElementById('student-response').disabled = false;
       document.getElementById('char-count').textContent = '0 words';
-      document.getElementById('btn-submit-recall').disabled = false;
+      const submitBtn = document.getElementById('btn-submit-recall');
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Submit Response';
       document.getElementById('prompt-question').textContent = 'Loading active recall challenge from knowledge base...';
 
       const subject = document.getElementById('select-subject').value;
@@ -298,10 +326,14 @@
       e.preventDefault();
       if (!currentPrompt) return;
 
+      // Guard: already answered or mid-evaluation
+      if (questionAnswered || isEvaluating) return;
+
       const studentAns = document.getElementById('student-response').value.trim();
       if (!studentAns) return;
 
       const submitBtn = document.getElementById('btn-submit-recall');
+      isEvaluating = true;
       submitBtn.disabled = true;
       submitBtn.textContent = 'Evaluating Response...';
 
@@ -310,21 +342,95 @@
           promptId: currentPrompt.promptId,
           topicId: currentPrompt.topicId,
           studentAnswer: studentAns,
-          idempotencyKey: `attempt_${currentPrompt.promptId}_${Date.now()}`
+          attemptNumber: incorrectAttempts + 1,
+          idempotencyKey: `attempt_${currentPrompt.promptId}_${incorrectAttempts + 1}_${Date.now()}`
         });
 
-        // Display results
-        const fbSection = document.getElementById('feedback-section');
-        const fbMsg = document.getElementById('feedback-msg');
-        const scoreBadge = document.getElementById('score-badge');
-        const correctnessBadge = document.getElementById('correctness-badge');
-        const refSol = document.getElementById('reference-solution');
-        const bktBanner = document.getElementById('bkt-outcome-banner');
+        const isCorrect = evalResult.correctness === 'correct';
 
-        fbSection.style.display = 'block';
+        if (isCorrect) {
+          // ── Correct answer ────────────────────────────────────────────────
+          questionAnswered = true;
+          document.getElementById('attempt-counter').style.display = 'none';
+          document.getElementById('inline-feedback').style.display = 'none';
+          renderFullFeedback(evalResult, false);
+          loadRecallHistory();
+        } else {
+          // ── Wrong answer ──────────────────────────────────────────────────
+          incorrectAttempts++;
+
+          if (incorrectAttempts >= MAX_ATTEMPTS) {
+            // All 3 attempts used — reveal answer
+            questionAnswered = true;
+            document.getElementById('attempt-counter').style.display = 'none';
+            document.getElementById('inline-feedback').style.display = 'none';
+            renderFullFeedback(evalResult, true);
+            loadRecallHistory();
+          } else {
+            // Still have attempts left — show inline feedback only
+            const remaining = MAX_ATTEMPTS - incorrectAttempts;
+
+            // Update inline feedback strip
+            const inlineFb = document.getElementById('inline-feedback');
+            const inlineFbText = document.getElementById('inline-feedback-text');
+            inlineFbText.textContent = evalResult.feedback || 'Review your response and try again.';
+            inlineFb.style.display = 'block';
+
+            // Update attempt counter badge
+            const counterEl = document.getElementById('attempt-counter');
+            const counterText = document.getElementById('attempt-counter-text');
+            const counterIcon = document.getElementById('attempt-counter-icon');
+            counterEl.style.display = 'block';
+            counterText.textContent = `${remaining} attempt${remaining === 1 ? '' : 's'} remaining`;
+            counterIcon.textContent = remaining === 1 ? '🚨' : '⚠';
+
+            // Re-enable for retry (keep their text so they can refine it)
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Submit Response';
+          }
+        }
+      } catch (err) {
+        alert('Evaluation failed: ' + err.message);
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit Response';
+      } finally {
+        isEvaluating = false;
+      }
+    }
+
+    /**
+     * Render the full feedback panel.
+     * @param {object} evalResult  - grading response from API
+     * @param {boolean} exhausted  - true when all 3 attempts were wrong
+     */
+    function renderFullFeedback(evalResult, exhausted) {
+      const fbSection = document.getElementById('feedback-section');
+      const fbMsg = document.getElementById('feedback-msg');
+      const scoreBadge = document.getElementById('score-badge');
+      const correctnessBadge = document.getElementById('correctness-badge');
+      const refSol = document.getElementById('reference-solution');
+      const bktBanner = document.getElementById('bkt-outcome-banner');
+
+      fbSection.style.display = 'block';
+
+      // Disable textarea and button since question is done
+      document.getElementById('student-response').disabled = true;
+      const submitBtn = document.getElementById('btn-submit-recall');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Answer Revealed';
+
+      if (exhausted) {
+        // Override correctness display for exhausted state
+        scoreBadge.textContent = `Accuracy: ${evalResult.score}%`;
+        correctnessBadge.className = 'badge-pill nat';
+        correctnessBadge.textContent = 'All Attempts Used';
+        fbMsg.style.background = 'var(--accent-rose-subtle)';
+        fbMsg.style.border = '1px solid rgba(168, 40, 40, 0.3)';
+        fbMsg.style.color = 'var(--accent-rose)';
+        fbMsg.innerHTML = `<strong>You've used all ${MAX_ATTEMPTS} attempts.</strong> Here's the correct answer and explanation below.`;
+      } else {
         scoreBadge.textContent = `Accuracy: ${evalResult.score}%`;
 
-        // Correctness badge & feedback styling
         if (evalResult.correctness === 'correct') {
           correctnessBadge.className = 'badge-pill mcq';
           correctnessBadge.textContent = 'Correct';
@@ -344,72 +450,64 @@
           fbMsg.style.border = '1px solid rgba(168, 40, 40, 0.3)';
           fbMsg.style.color = 'var(--accent-rose)';
         }
-
         fbMsg.innerHTML = `<strong>${evalResult.correctness.toUpperCase()}:</strong> ${evalResult.feedback}`;
-        refSol.textContent = evalResult.referenceAnswer || 'Standard GATE solution.';
-
-        // Points breakdown
-        const pointsBox = document.getElementById('points-breakdown');
-        const correctList = document.getElementById('correct-points-list');
-        const missingContainer = document.getElementById('missing-points-container');
-        const missingList = document.getElementById('missing-points-list');
-
-        if (evalResult.correctPoints && evalResult.correctPoints.length > 0) {
-          pointsBox.style.display = 'block';
-          correctList.innerHTML = evalResult.correctPoints.map(p => `<span class="point-tag success">✓ ${p}</span>`).join('');
-        } else {
-          correctList.innerHTML = '<span style="font-size: 0.82rem; color: var(--text-muted);">None identified</span>';
-        }
-
-        if (evalResult.missingPoints && evalResult.missingPoints.length > 0) {
-          missingContainer.style.display = 'block';
-          missingList.innerHTML = evalResult.missingPoints.map(p => `<span class="point-tag warning">⚠ ${p}</span>`).join('');
-        } else {
-          missingContainer.style.display = 'none';
-        }
-
-        // Citations
-        if (evalResult.sourceReferences && evalResult.sourceReferences.length > 0) {
-          document.getElementById('citation-tag').textContent = evalResult.sourceReferences.map(c => c.source || c.topic).join(' • ');
-        }
-
-        // BKT outcome banner
-        if (evalResult.bktUpdate) {
-          const prev = (evalResult.bktUpdate.previousPKnow * 100).toFixed(1);
-          const next = (evalResult.bktUpdate.newPKnow * 100).toFixed(1);
-          bktBanner.innerHTML = `<strong>Bayesian Knowledge Tracing (BKT) Updated:</strong> Topic mastery shifted from <strong>${prev}%</strong> → <strong style="color: var(--accent-primary); font-size: 1rem;">${next}% P(Know)</strong>. Spaced repetition priority recalculated.`;
-        } else {
-          bktBanner.innerHTML = 'Sign in to persist your BKT mastery and attempt logs to SQLite.';
-        }
-
-        // Adaptive Follow-up Buttons
-        if (evalResult.nextAction) {
-          document.getElementById('adaptive-reason').textContent = evalResult.nextAction.reason;
-          const btnBox = document.getElementById('adaptive-buttons');
-          btnBox.innerHTML = `
-            <a href="${evalResult.nextAction.url}" class="btn btn-primary btn-sm">
-              ${evalResult.nextAction.label} →
-            </a>
-            <button class="btn btn-secondary btn-sm" onclick="loadNextPrompt('${currentPrompt.topicId}')">
-              Another Question on ${currentPrompt.topicName}
-            </button>
-            <button class="btn btn-secondary btn-sm" onclick="loadNextPrompt()">
-              Next Due Topic
-            </button>
-          `;
-        }
-
-        // Refresh attempt history
-        loadRecallHistory();
-
-        // Scroll to feedback
-        fbSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      } catch (err) {
-        alert('Evaluation failed: ' + err.message);
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Submit Response';
       }
+
+      refSol.textContent = evalResult.referenceAnswer || 'Standard GATE solution.';
+
+      // Points breakdown
+      const pointsBox = document.getElementById('points-breakdown');
+      const correctList = document.getElementById('correct-points-list');
+      const missingContainer = document.getElementById('missing-points-container');
+      const missingList = document.getElementById('missing-points-list');
+
+      if (evalResult.correctPoints && evalResult.correctPoints.length > 0) {
+        pointsBox.style.display = 'block';
+        correctList.innerHTML = evalResult.correctPoints.map(p => `<span class="point-tag success">✓ ${p}</span>`).join('');
+      } else {
+        correctList.innerHTML = '<span style="font-size: 0.82rem; color: var(--text-muted);">None identified</span>';
+      }
+
+      if (evalResult.missingPoints && evalResult.missingPoints.length > 0) {
+        missingContainer.style.display = 'block';
+        missingList.innerHTML = evalResult.missingPoints.map(p => `<span class="point-tag warning">⚠ ${p}</span>`).join('');
+      } else {
+        missingContainer.style.display = 'none';
+      }
+
+      // Citations
+      if (evalResult.sourceReferences && evalResult.sourceReferences.length > 0) {
+        document.getElementById('citation-tag').textContent = evalResult.sourceReferences.map(c => c.source || c.topic).join(' • ');
+      }
+
+      // BKT outcome banner
+      if (evalResult.bktUpdate) {
+        const prev = (evalResult.bktUpdate.previousPKnow * 100).toFixed(1);
+        const next = (evalResult.bktUpdate.newPKnow * 100).toFixed(1);
+        bktBanner.innerHTML = `<strong>Bayesian Knowledge Tracing (BKT) Updated:</strong> Topic mastery shifted from <strong>${prev}%</strong> → <strong style="color: var(--accent-primary); font-size: 1rem;">${next}% P(Know)</strong>. Spaced repetition priority recalculated.`;
+      } else {
+        bktBanner.innerHTML = 'Sign in to persist your BKT mastery and attempt logs to SQLite.';
+      }
+
+      // Adaptive Follow-up Buttons
+      if (evalResult.nextAction) {
+        document.getElementById('adaptive-reason').textContent = evalResult.nextAction.reason;
+        const btnBox = document.getElementById('adaptive-buttons');
+        btnBox.innerHTML = `
+          <a href="${evalResult.nextAction.url}" class="btn btn-primary btn-sm">
+            ${evalResult.nextAction.label} →
+          </a>
+          <button class="btn btn-secondary btn-sm" onclick="loadNextPrompt('${currentPrompt.topicId}')">
+            Another Question on ${currentPrompt.topicName}
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="loadNextPrompt()">
+            Next Due Topic
+          </button>
+        `;
+      }
+
+      // Scroll to feedback
+      fbSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     async function loadRecallHistory() {

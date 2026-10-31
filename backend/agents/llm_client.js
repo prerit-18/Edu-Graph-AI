@@ -1,4 +1,5 @@
 require('dotenv').config();
+const tokenMonitor = require('../services/token_monitor');
 
 /**
  * Provider-Independent Multi-LLM Client
@@ -40,10 +41,22 @@ class LLMClient {
     return false;
   }
 
-  async generate({ systemPrompt, userPrompt, temperature = 0.3, jsonMode = false, responseSchema = null }) {
+  async generate({
+    systemPrompt = '',
+    userPrompt = '',
+    temperature = 0.3,
+    jsonMode = false,
+    responseSchema = null,
+    maxOutputTokens = 2048,
+    agentLabel = 'Unknown',
+    featureLabel = 'general'
+  } = {}) {
     if (!this.hasValidKey()) {
       return null; // Signals fallback to local domain grounding engine
     }
+
+    const startTime = Date.now();
+    const inputText = `${systemPrompt || ''}\n\n${userPrompt || ''}`;
 
     try {
       // 1. Google Gemini API
@@ -53,7 +66,7 @@ class LLMClient {
 
         const genConfig = {
           temperature,
-          maxOutputTokens: 8192
+          maxOutputTokens: maxOutputTokens || 2048
         };
         if (jsonMode || responseSchema) {
           genConfig.responseMimeType = 'application/json';
@@ -83,7 +96,19 @@ class LLMClient {
         }
 
         const data = await res.json();
-        return data.candidates?.[0]?.content?.parts?.[0]?.text || null;
+        const outputText = data.candidates?.[0]?.content?.parts?.[0]?.text || null;
+        if (outputText) {
+          const latencyMs = Date.now() - startTime;
+          tokenMonitor.recordCall({
+            agent: agentLabel,
+            feature: featureLabel,
+            inputText,
+            outputText,
+            model: geminiModel,
+            latencyMs
+          });
+        }
+        return outputText;
       }
 
       // 2. Groq API (High-speed Llama 3)
@@ -101,7 +126,8 @@ class LLMClient {
               { role: 'system', content: systemPrompt },
               { role: 'user', content: userPrompt }
             ],
-            temperature
+            temperature,
+            max_tokens: maxOutputTokens || 2048
           })
         });
 
@@ -111,7 +137,19 @@ class LLMClient {
         }
 
         const data = await res.json();
-        return data.choices?.[0]?.message?.content || null;
+        const outputText = data.choices?.[0]?.message?.content || null;
+        if (outputText) {
+          const latencyMs = Date.now() - startTime;
+          tokenMonitor.recordCall({
+            agent: agentLabel,
+            feature: featureLabel,
+            inputText,
+            outputText,
+            model: groqModel,
+            latencyMs
+          });
+        }
+        return outputText;
       }
 
       // 3. OpenAI API
@@ -129,7 +167,8 @@ class LLMClient {
               { role: 'system', content: systemPrompt },
               { role: 'user', content: userPrompt }
             ],
-            temperature
+            temperature,
+            max_tokens: maxOutputTokens || 2048
           })
         });
 
@@ -139,7 +178,19 @@ class LLMClient {
         }
 
         const data = await res.json();
-        return data.choices?.[0]?.message?.content || null;
+        const outputText = data.choices?.[0]?.message?.content || null;
+        if (outputText) {
+          const latencyMs = Date.now() - startTime;
+          tokenMonitor.recordCall({
+            agent: agentLabel,
+            feature: featureLabel,
+            inputText,
+            outputText,
+            model: openaiModel,
+            latencyMs
+          });
+        }
+        return outputText;
       }
 
       // 4. OpenRouter API
@@ -159,7 +210,8 @@ class LLMClient {
               { role: 'system', content: systemPrompt },
               { role: 'user', content: userPrompt }
             ],
-            temperature
+            temperature,
+            max_tokens: maxOutputTokens || 2048
           })
         });
 
@@ -169,7 +221,19 @@ class LLMClient {
         }
 
         const data = await response.json();
-        return data.choices?.[0]?.message?.content || null;
+        const outputText = data.choices?.[0]?.message?.content || null;
+        if (outputText) {
+          const latencyMs = Date.now() - startTime;
+          tokenMonitor.recordCall({
+            agent: agentLabel,
+            feature: featureLabel,
+            inputText,
+            outputText,
+            model: orModel,
+            latencyMs
+          });
+        }
+        return outputText;
       }
     } catch (err) {
       console.warn('External LLM call failed:', err.message);

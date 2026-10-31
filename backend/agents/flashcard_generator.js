@@ -152,6 +152,88 @@ const SYLLABUS_KNOWLEDGE_BANK = [
     type: 'protocol',
     front: 'TCP Congestion Control Phases: Slow Start, AIMD & Fast Recovery',
     back: '• Slow Start: Congestion Window (cwnd) doubles every RTT (exponential growth) until cwnd reaches ssthresh.\n• Congestion Avoidance: cwnd increases by 1 MSS per RTT (linear additive increase, AIMD).\n• Timeout Occurs: ssthresh = cwnd / 2, cwnd resets to 1 MSS (Slow start restarts).\n• 3 Duplicate ACKs (Fast Retransmit): ssthresh = cwnd / 2, cwnd = ssthresh + 3 MSS (Fast Recovery, avoids dropping to 1).'
+  },
+
+  // 6. EXPANDED CURATED SYLLABUS CARDS (ALL 27 TOPICS COVERAGE)
+  {
+    id: 'fc_algo_05',
+    subject: 'Algorithms',
+    topic_id: 'algo_divide_conquer',
+    type: 'formula',
+    front: 'Divide & Conquer Recurrences: QuickSort vs MergeSort & Inversion Count',
+    back: '• MergeSort: T(n) = 2T(n/2) + Θ(n) ⟹ Θ(n log n) in all cases (Best, Avg, Worst). Stable sort.\n• QuickSort: Best/Avg T(n) = 2T(n/2) + Θ(n) ⟹ Θ(n log n). Worst case (sorted input + extremal pivot): T(n) = T(n-1) + Θ(n) ⟹ Θ(n²).\n• Inversion Count: Counting pairs (i, j) with i < j and A[i] > A[j] solved via modified MergeSort in O(n log n).'
+  },
+  {
+    id: 'fc_algo_06',
+    subject: 'Algorithms',
+    topic_id: 'algo_greedy',
+    type: 'definition',
+    front: 'Huffman Coding Optimal Prefix Codes & Greedy Choice Property',
+    back: '• Huffman Coding creates optimal prefix-free variable-length binary codes based on symbol frequencies.\n• Tree Construction: Uses a Min-Heap. Extracts 2 minimum frequency nodes repeatedly and merges them (Time: O(n log n)).\n• If symbol frequencies are powers of 2 or Fibonacci numbers, tree shape degenerates into a linear skewed chain.\n• Greedy Choice: Local optimal symbol pairing yields global optimal weighted path length (WPL).'
+  },
+  {
+    id: 'fc_compiler_04',
+    subject: 'Compiler Design',
+    topic_id: 'compiler_lexical',
+    type: 'trap',
+    front: 'Lexical Analysis: Maximal Munch Rule & DFA State Minimization',
+    back: '• Maximal Munch (Longest Match): The lexer always consumes the longest prefix matching any valid token regular expression.\n• Priority Rule: If two token regexes match the exact same longest prefix, the rule declared first takes precedence (e.g. keyword "if" vs identifier "if").\n• Hopcroft\'s DFA Minimization: Partitions states into equivalence classes. Time complexity O(k · n log n).'
+  },
+  {
+    id: 'fc_os_05',
+    subject: 'Operating Systems',
+    topic_id: 'os_process_ipc',
+    type: 'formula',
+    front: 'fork() System Call Process Tree Formula & PCB vs TCB State',
+    back: '• For n consecutive unconditional fork() calls: Total processes created = 2ⁿ (1 parent + (2ⁿ - 1) child processes).\n• Process vs Thread:\n  - Processes share no memory by default; separate address spaces and PCB.\n  - Threads of the same process share: Code segment, Data segment, Open file descriptors, Heap.\n  - Threads have private: Thread Control Block (TCB), Program Counter (PC), Register set, and Stack.'
+  },
+  {
+    id: 'fc_os_06',
+    subject: 'Operating Systems',
+    topic_id: 'os_storage',
+    type: 'complexity',
+    front: 'Disk Scheduling (SCAN / C-SCAN / LOOK) & UNIX Inode File Addressing',
+    back: '• SCAN (Elevator): Head moves in one direction servicing requests until boundary, then reverses.\n• C-SCAN (Circular SCAN): Moves in one direction servicing requests; jumps back to opposite end without servicing on return trip (provides uniform waiting time).\n• UNIX Inode: Contains direct block pointers (usually 12), single indirect, double indirect, and triple indirect pointers. Max file size = (Direct + (Block/Ptr) + (Block/Ptr)² + (Block/Ptr)³) × Block Size.'
+  },
+  {
+    id: 'fc_dbms_04',
+    subject: 'Databases',
+    topic_id: 'dbms_er_relational',
+    type: 'definition',
+    front: 'Weak Entity Sets, Partial Keys & Relational Schema Reduction',
+    back: '• Weak Entity: An entity set lacking sufficient attributes to form a primary key on its own. Depends on an Identifying (Owner) Entity via an Identifying Relationship.\n• Primary Key of Weak Entity = (Primary Key of Owner Entity) + (Partial Key / Discriminator of Weak Entity).\n• Table Reduction: A 1:N relationship can be merged into the N-side entity table by adding the 1-side primary key as a foreign key.'
+  },
+  {
+    id: 'fc_dbms_05',
+    subject: 'Databases',
+    topic_id: 'dbms_rel_algebra_sql',
+    type: 'trap',
+    front: 'Relational Algebra Division Operator (R ÷ S) & NULL Traps in SQL',
+    back: '• Division Operator (R ÷ S): Expresses "FOR ALL" queries (e.g. students enrolled in ALL courses).\n  Formally: R ÷ S = π_{R-S}(R) - π_{R-S}((π_{R-S}(R) × S) - R).\n• NULL in SQL:\n  - WHERE condition = NULL evaluates to UNKNOWN (treated as FALSE in WHERE clause filters).\n  - COUNT(*) counts all rows including NULLs; COUNT(column) ignores NULL values.\n  - Arithmetic operations with NULL (e.g. salary + NULL) yield NULL.'
+  },
+  {
+    id: 'fc_cn_04',
+    subject: 'Computer Networks',
+    topic_id: 'cn_layering_switching',
+    type: 'formula',
+    front: 'Transmission Delay vs Propagation Delay & Bandwidth-Delay Product (BDP)',
+    back: '• Transmission Delay (T_tx): Time to push all bits of packet onto physical wire = L / B (Packet Length / Bandwidth).\n• Propagation Delay (T_prop): Time for 1 bit to travel across physical medium = d / v (Distance / Propagation Speed).\n• Bandwidth-Delay Product (BDP): BDP = Bandwidth × T_prop (measures maximum bits in transit in the pipe).\n• Queueing Delay & Processing Delay depend on router congestion and header parsing.'
+  },
+  {
+    id: 'fc_cn_05',
+    subject: 'Computer Networks',
+    topic_id: 'cn_routing',
+    type: 'trap',
+    front: 'Distance Vector Routing (Count-to-Infinity) vs Link State Routing (OSPF)',
+    back: '• Distance Vector (Bellman-Ford / RIP): Routers exchange vectors only with direct neighbors. Prone to Count-to-Infinity on link failures. Mitigated by Split Horizon, Poison Reverse, and Hop Count Cap (16 in RIP).\n• Link State (Dijkstra / OSPF): Every router floods link state advertisements (LSA) to entire network, then independently runs Dijkstra algorithm to compute shortest path tree. Faster convergence, no count-to-infinity.'
+  },
+  {
+    id: 'fc_cn_06',
+    subject: 'Computer Networks',
+    topic_id: 'cn_application_dns_http',
+    type: 'protocol',
+    front: 'Recursive vs Iterative DNS Resolution & HTTP/1.1 vs HTTP/2',
+    back: '• DNS Resolution:\n  - Recursive: Contacted server assumes full burden of fetching mapping by querying next servers.\n  - Iterative: Contacted server replies with IP address of next authority server; local resolver continues queries.\n• HTTP Evolutions:\n  - HTTP/1.0: 1 TCP connection per object (non-persistent).\n  - HTTP/1.1: Persistent connections + Pipelining (suffers from Head-of-Line blocking at application layer).\n  - HTTP/2: Binary framing, full multiplexing over a single TCP stream, header compression (HPACK).'
   }
 ];
 
@@ -488,6 +570,10 @@ Generate ${count} crisp, high-yield, engaging flashcards for the GATE CSE syllab
     }
 
     return this.getProceduralDeck({ todayStr: new Date().toISOString().slice(0, 10), subject, count });
+  }
+
+  getKnowledgeBank() {
+    return [...SYLLABUS_KNOWLEDGE_BANK];
   }
 }
 

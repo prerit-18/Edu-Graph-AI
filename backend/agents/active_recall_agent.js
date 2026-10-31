@@ -5,6 +5,7 @@ const learnerStateTool = require('../tools/learner_state_tool');
 const llmClient = require('./llm_client');
 const db = require('../database/db');
 const crypto = require('crypto');
+const agentPrompts = require('../services/agent_prompts');
 const { runCrewAITask } = require('./crewai_bridge');
 
 /**
@@ -401,17 +402,7 @@ class ActiveRecallAgent {
       ragContext = '';
     }
 
-    const systemPrompt = `You are the GATE CSE Active Recall Generator in EduGraph AI.
-Your role is to formulate deep, high-yield active recall retrieval probes for GATE Computer Science aspirants.
-
-Rules:
-1. Target Subject: ${subject || 'Computer Science'}
-2. Target Topic: ${topicName} (ID: ${topicId})
-3. Recall Mode: ${type || 'concept_recall'}
-4. Do NOT generate multiple choice options.
-5. Create a challenging, open-ended question that forces the student to retrieve core invariants, formulas, algorithms, trade-offs, state transitions, or definitions from memory.
-6. Provide an authoritative reference solution, 3-5 crucial technical keyConcepts for automated scoring, a clear rubric, and difficulty level.
-7. Return strictly valid JSON adhering to the required schema.`;
+    const systemPrompt = agentPrompts.ACTIVE_RECALL_GENERATOR;
 
     const userPrompt = `Generate 1 novel, rigorous GATE CSE Active Recall question.
 Context Material:
@@ -456,7 +447,10 @@ Required Output Format in strict JSON:
         userPrompt,
         temperature: 0.7,
         jsonMode: true,
-        responseSchema: promptSchema
+        responseSchema: promptSchema,
+        maxOutputTokens: agentPrompts.LIMITS.active_recall,
+        agentLabel: 'Active Recall Agent',
+        featureLabel: 'active_recall'
       });
 
       if (!responseText) return null;
@@ -702,9 +696,16 @@ Required Output Format in strict JSON:
   }
 
   /**
-   * Grade student active recall response, update BKT, and recommend next actions
+   * Grade student active recall response, update BKT, and recommend next actions.
+   * @param {object} opts
+   * @param {string}  opts.promptId
+   * @param {string}  opts.topicId
+   * @param {string}  opts.studentAnswer
+   * @param {string}  [opts.userId]
+   * @param {string}  [opts.idempotencyKey]
+   * @param {number}  [opts.attemptNumber=1]  - which attempt this is (1-based)
    */
-  async gradeResponse({ promptId, topicId, studentAnswer, userId, idempotencyKey }) {
+  async gradeResponse({ promptId, topicId, studentAnswer, userId, idempotencyKey, attemptNumber = 1 }) {
     if (!studentAnswer || studentAnswer.trim() === '') {
       return {
         agent: this.role,
@@ -763,9 +764,16 @@ Required Output Format in strict JSON:
     // BKT binary mapping rule: score >= 60 maps to correct attempt
     const isCorrect = score >= 60;
 
-    // 3. Deterministic BKT Update (Idempotent per user & prompt)
+    // 3. Deterministic BKT Update
+    // Only update BKT on:
+    //   (a) a correct answer (any attempt), OR
+    //   (b) the final (3rd) incorrect attempt — i.e., attemptNumber >= 3 AND not correct
+    // Intermediate wrong attempts (attempt 1 or 2) skip BKT to avoid penalising the
+    // student multiple times for the same question.
+    const MAX_ATTEMPTS = 3;
+    const isFinalAttempt = isCorrect || (attemptNumber >= MAX_ATTEMPTS);
     let bktResult = null;
-    if (userId) {
+    if (userId && isFinalAttempt) {
       // Verify idempotency
       const existingAttempt = db.prepare(`
         SELECT id FROM attempts
@@ -854,17 +862,7 @@ Required Output Format in strict JSON:
     // Try CrewAI / LLM semantic evaluation first if configured
     if (llmClient.hasValidKey()) {
       try {
-        const systemPrompt = `You are a strict and helpful GATE Computer Science evaluator.
-Evaluate the student's active recall answer against the reference solution and rubric.
-Output strictly JSON matching this schema:
-{
-  "score": integer (0 to 100),
-  "correctness": "correct" | "partial" | "incorrect",
-  "feedback": "2-3 concise, constructive sentences explaining accuracy and missing items",
-  "correctPoints": ["point 1 correctly recalled", ...],
-  "missingPoints": ["missing item 1", ...],
-  "misconceptions": ["any wrong assumption", ...]
-}`;
+        const systemPrompt = agentPrompts.ACTIVE_RECALL_EVALUATOR;
 
         const userPrompt = `Question: ${question}
 Reference Answer: ${referenceAnswer}
@@ -876,7 +874,10 @@ Student Answer: ${studentAnswer}`;
           systemPrompt,
           userPrompt,
           temperature: 0.2,
-          jsonMode: true
+          jsonMode: true,
+          maxOutputTokens: agentPrompts.LIMITS.active_recall,
+          agentLabel: 'Active Recall Agent',
+          featureLabel: 'active_recall'
         });
 
         if (llmResult) {

@@ -2,6 +2,9 @@ const ragTool = require('../tools/rag_tool');
 const llmClient = require('./llm_client');
 const db = require('../database/db');
 const crypto = require('crypto');
+const agentPrompts = require('../services/agent_prompts');
+const tokenMonitor = require('../services/token_monitor');
+const responseCache = require('../services/response_cache');
 
 /**
  * Concept Teacher Agent
@@ -516,11 +519,20 @@ When solving problems on this concept in examination conditions:
 *Quick Test:* Formulate the primary invariant of **${cleanQuery}** in one sentence, and identify under what boundary condition that invariant would be violated.`;
   }
 
-  async run({ query, userId, subject, topicId }) {
+  async run({ query, userId, subject, topicId, maxOutputTokens, featureLabel }) {
+    // Check response cache
+    const cacheKey = responseCache.makeKey('Concept Teacher', topicId || subject || 'general', query, userId);
+    if (cacheKey) {
+      const cached = responseCache.get(cacheKey);
+      if (cached) {
+        return cached;
+      }
+    }
+
     // 1. Invoke RAG Tool to retrieve verified knowledge base evidence
     const retrieval = ragTool.execute({
       query,
-      filters: { subject, topic_id: topicId, topK: 3 }
+      filters: { subject, topic_id: topicId, topK: 2 }
     });
 
     const isGrounded = retrieval.isGrounded;
@@ -557,47 +569,16 @@ When solving problems on this concept in examination conditions:
     // 3. Evidence is sufficient - generate grounded explanation
     const contextSnippets = retrieval.results.map(r => r.text).join('\n---\n');
 
-    const systemPrompt = `You are the Senior GATE CSE Concept Professor & Pedagogical Specialist.
-Your mission is to deliver deeply engaging, mathematically rigorous, crystal-clear, and beautifully structured explanations of Computer Science concepts for GATE aspirants.
-
-FORMATTING REQUIREMENTS:
-Structure your response into these engaging, high-impact sections:
-
-### 📘 [Subject Area] ➔ [Concept Name]
-*A concise, 1-sentence executive overview defining the concept.*
-
----
-
-### 🎯 1. Intuition & Mental Model: "The Analogy / Big Picture"
-- Provide an intuitive, real-world or architectural analogy explaining WHY this concept exists and what fundamental problem it solves.
-- Explain the key idea in clear, engaging language before presenting formal mathematics.
-
-### ⚡ 2. Core Mechanics, Rules & Mathematical Invariants
-- Provide precise definitions and formal mathematical equations/theorems (e.g. state transitions, cost formulas, asymptotic relations, normal form rules).
-- Present key invariants that MUST hold true in the system.
-
-### 🔍 3. Step-by-Step Architectural / Execution Walkthrough
-- Provide a concrete mini-example or trace (e.g., timeline, ASCII Gantt chart, tree/graph traversal, or locking order).
-- Walk through the state transitions clearly step-by-step.
-
-### 🧠 4. High-Yield GATE Exam Insights & Traps
-> ⚠️ **IIT Paper-Setter Trap:** Highlight subtle edge cases, common calculation traps, or negative marking pitfalls.
-> 💡 **Exam Pro-Tip:** State quick shortcuts or decision rules to save time during the exam.
-
-### 📊 5. Quick-Recall Comparison Matrix
-- Provide a clean Markdown table comparing variants, edge cases, trade-offs, or time/space complexities.
-
-### 🎯 6. Active Socratic Checkpoint
-- Provide one quick, thought-provoking Socratic question for the student to test their retention.
-
-Strict Grounding Rules:
-- Ground all facts strictly in the verified context chunks.
-- Do NOT hallucinate unverified information.
-- Always include citations for syllabus topics referenced.`;
-
+    const systemPrompt = agentPrompts.CONCEPT_TEACHER;
     const userPrompt = `Student Question: ${query}\n\nVerified Context Chunks:\n${contextSnippets}`;
 
-    let explanation = await llmClient.generate({ systemPrompt, userPrompt });
+    let explanation = await llmClient.generate({
+      systemPrompt,
+      userPrompt,
+      maxOutputTokens: maxOutputTokens || agentPrompts.LIMITS.concept_explain,
+      agentLabel: 'Concept Teacher',
+      featureLabel: featureLabel || 'concept_explain'
+    });
 
     if (!explanation) {
       // Dynamic masterclass query-grounded synthesis
@@ -609,13 +590,19 @@ Strict Grounding Rules:
       explanation = this.generateCuratedExplanation(query, assignedTopic, assignedSubject, topMatch.text);
     }
 
-    return {
+    const result = {
       agent: this.role,
       grounded: true,
       confidence: retrieval.confidence,
       explanation,
       citations: retrieval.citations
     };
+
+    if (cacheKey && result.grounded) {
+      responseCache.set(cacheKey, 'Concept Teacher', topicId || 'general', result);
+    }
+
+    return result;
   }
 }
 

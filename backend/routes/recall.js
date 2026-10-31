@@ -26,15 +26,17 @@ router.get('/prompt', optionalAuth, async (req, res) => {
 /**
  * POST /api/recall/grade
  * Evaluates student answer against server-side rubric, updates BKT, and returns feedback.
+ * Body: { promptId, topicId, studentAnswer, idempotencyKey, attemptNumber? }
  */
 router.post('/grade', optionalAuth, async (req, res) => {
   try {
-    const { promptId, topicId, studentAnswer, idempotencyKey } = req.body;
+    const { promptId, topicId, studentAnswer, idempotencyKey, attemptNumber } = req.body;
     const evaluation = await orchestrator.gradeActiveRecall({
       promptId,
       topicId,
       studentAnswer,
       idempotencyKey,
+      attemptNumber: parseInt(attemptNumber, 10) || 1,
       userId: req.user?.id
     });
     res.json(evaluation);
@@ -49,12 +51,13 @@ router.post('/grade', optionalAuth, async (req, res) => {
  */
 router.post('/submit', optionalAuth, async (req, res) => {
   try {
-    const { promptId, topicId, studentAnswer, idempotencyKey } = req.body;
+    const { promptId, topicId, studentAnswer, idempotencyKey, attemptNumber } = req.body;
     const evaluation = await orchestrator.gradeActiveRecall({
       promptId,
       topicId,
       studentAnswer,
       idempotencyKey,
+      attemptNumber: parseInt(attemptNumber, 10) || 1,
       userId: req.user?.id
     });
     res.json(evaluation);
