@@ -1,7 +1,10 @@
 # EduGraph AI 🎓
 ### Multi-Agent Adaptive Learning Platform for GATE CSE
 
-<<<<<<< HEAD
+EduGraph AI is an AI-powered, multi-agent adaptive learning platform designed to transform GATE Computer Science & Engineering preparation through personalized learning, intelligent assessments, knowledge tracking, and AI-driven academic assistance.
+
+Built using **CrewAI, Retrieval-Augmented Generation (RAG), Vector Search, Bayesian Knowledge Tracing (BKT), and AI-powered learning tools**, EduGraph AI provides students with an integrated environment to study concepts, practice previous-year questions, identify knowledge gaps, and improve their preparation through adaptive learning.
+
 Minor-project scope: **7 active agents**; 2 further agents (Doubt Debugger, Interview) are **reserved for the Major Project** and are deliberately not implemented.
 
 | Agent | Implementation | CrewAI? |
@@ -23,15 +26,6 @@ npm run embed                                        # optional: Gemini embeddin
 npm test                                             # 14 suites, throw-away DBs, stubbed Gemini, no network
 ```
 GATE paper data: see [docs/GATE_DATA.md](docs/GATE_DATA.md). Full change log and verification results: [docs/CHANGES.md](docs/CHANGES.md).
-
----
-
-EduGraph AI is a multi-agent educational platform for GATE Computer Science & Engineering preparation. It combines CrewAI-backed explanation agents, hybrid retrieval (BM25 + character n-grams, optionally blended with Gemini embeddings, over the syllabus and a structured GATE question bank; retrieval only - no model is fine-tuned), Bayesian Knowledge Tracing (BKT), Active Recall self-testing, and an AI Speaking Tutor.
-=======
-EduGraph AI is an AI-powered, multi-agent adaptive learning platform designed to transform GATE Computer Science & Engineering preparation through personalized learning, intelligent assessments, knowledge tracking, and AI-driven academic assistance.
-
-Built using **CrewAI, Retrieval-Augmented Generation (RAG), Vector Search, Bayesian Knowledge Tracing (BKT), and AI-powered learning tools**, EduGraph AI provides students with an integrated environment to study concepts, practice previous-year questions, identify knowledge gaps, and improve their preparation through adaptive learning.
->>>>>>> a0cc0e129cde851b4ee65ca8963613a0674be646
 
 ---
 
@@ -321,7 +315,6 @@ cd backend
 npm test
 ```
 
-<<<<<<< HEAD
 ### Test Suites Included:
 - `tests/speaking_tutor.test.js`: Validates TTS config, educational LaTeX/Markdown normalization, chunking, question security, and zero BKT side-effects.
 - `tests/active_recall.test.js`: Validates question generation, answer evaluation, rubric parsing, and mastery updates.
@@ -331,7 +324,7 @@ npm test
 - `tests/api_flow.test.js`: auth, PYQ practice, mock tests, revision, flashcards, concept study.
 - `tests/gate_pipeline.test.js`: PDF ingestion pipeline on synthetic fixture PDFs (temp directories).
 - `tests/e2e.test.js`: Full end-to-end integration workflows.
-=======
+
 ---
 
 ## 🎯 Project Objectives
@@ -344,7 +337,6 @@ npm test
 - Provide context-aware responses through RAG.
 - Identify learning gaps and support targeted revision.
 - Make learning more accessible through an AI speaking tutor.
->>>>>>> a0cc0e129cde851b4ee65ca8963613a0674be646
 
 ---
 
