@@ -84,151 +84,223 @@ def synthesize_grounded_concept(query: str, subject: Optional[str] = None, topic
     clean_q = query.strip()
     topic_key = topic_id or 'core_cs'
 
-    # Specialized Deep-Dive Modules for Core Topics
-    if topic_id == 'os_scheduling' or any(k in query_lower for k in ['schedul', 'sjf', 'srtf', 'round robin', 'turnaround']):
-        explanation = f"""### 📘 Operating Systems ➔ CPU Scheduling & Execution Dynamics
-*Optimizing processor throughput, response latency, and fair resource multiplexing.*
+    # Specialized Direct Modules for Core Topics
+    if ("deadlock" in query_lower and "prevention" in query_lower) or (topic_id == "os_deadlock" and "prevention" in query_lower):
+        explanation = """**Deadlock Prevention**
 
----
+Deadlock prevention is a technique in Operating Systems that ensures at least one of the four necessary conditions for deadlock never holds.
 
-### 🎯 1. Intuition & Mental Model: "The Airport Runway Controller"
-Imagine an airport with a single active runway (the **CPU**) and arriving flights (the **Processes**).
-- **FCFS:** A slow cargo jet lands first, grounding light agile aircraft behind it (**Convoy Effect**).
-- **SJF / SRTF:** Clears shortest landing flights first to mathematically minimize average wait time, but risks grounding long-haul flights (**Starvation**).
-- **Round Robin:** Grants each aircraft a 2-minute time slice to ensure responsiveness (**Time Quantum Multiplexing**).
+**Four Necessary Conditions:**
+- Mutual Exclusion
+- Hold and Wait
+- No Preemption
+- Circular Wait
 
----
+**Related Concepts:**
+- Deadlock Avoidance: Allocates resources carefully to keep the system in a safe state.
+- Deadlock Detection: Identifies deadlocks after they occur.
+- Banker's Algorithm: A deadlock avoidance algorithm."""
+    elif "banker" in query_lower:
+        explanation = """**Banker's Algorithm**
 
-### ⚡ 2. Core Mechanics, Rules & Mathematical Invariants
-- **Turnaround Time ($TAT$):** $\\mathbf{{TAT = CT - AT}}$ *(Span from arrival $AT$ to completion $CT$)*
-- **Waiting Time ($WT$):** $\\mathbf{{WT = TAT - BT}}$ *(Time spent in ready queue without CPU)*
-- **Response Time ($RT$):** Time elapsed until first CPU dispatch.
+Banker's Algorithm is a deadlock avoidance algorithm that dynamically evaluates resource allocation requests to ensure the system never enters an unsafe state.
 
----
+**Core Mechanics & Formulas:**
+- **Need Matrix:** $Need[i, j] = Max[i, j] - Allocation[i, j]$
+- **Safety Criterion:** A state is safe if there exists a sequence of processes $\\langle P_0, P_1, \\dots, P_{n-1} \\rangle$ such that for each $P_i$, $Need_i \\le Available + \\sum_{k < i} Allocation_k$.
+- **Complexity:** Time complexity is $\\mathcal{O}(m \\cdot n^2)$ where $n$ is the number of processes and $m$ is the number of resource types.
 
-### 🔍 3. Step-by-Step Execution Walkthrough (SRTF)
-\`\`\`
-Processes: P1 (AT=0, BT=8), P2 (AT=1, BT=4), P3 (AT=2, BT=2)
-Gantt Chart:
-[  P1 (1)  ][   P3 (2)   ][    P2 (4)    ][       P1 (7)       ]
-0          1             3               7                    14
-\`\`\`
-1. **t=0:** P1 runs for 1 ms $\\to$ remaining $BT=7$.
-2. **t=1:** P2 arrives ($BT=4 < 7$) $\\to$ P1 preempted, P2 dispatched.
-3. **t=2:** P3 arrives ($BT=2 < 3$) $\\to$ P2 preempted, P3 finishes at $t=3$.
-4. **t=3-7:** P2 executes remaining 3 ms.
-5. **t=7-14:** P1 executes remaining 7 ms.
+**Related Concepts:**
+- Deadlock Prevention: Eliminates deadlock by statically invalidating at least one of the four necessary conditions.
+- Deadlock Detection: Allows deadlock to occur, identifies it periodically using wait-for graphs, and initiates recovery.
+- Safe State: A state from which the system can allocate resources up to each process's maximum claim without deadlocking."""
+    elif topic_id == "os_deadlock" or any(k in query_lower for k in ["deadlock", "coffman", "safe state"]):
+        explanation = """**Deadlock**
 
----
+A deadlock is a situation in Operating Systems where two or more processes are permanently blocked because each process holds resources and waits for other resources held by processes in the set.
 
-### 🧠 4. High-Yield GATE Exam Insights & Traps
-> ⚠️ **IIT Paper-Setter Trap:** SRTF is provably optimal for minimizing average waiting time, but ties in remaining burst time MUST be resolved by arrival time or PID!
-> 💡 **Exam Pro-Tip:** When Round Robin time quantum $q \\to \\infty$, it behaves as FCFS. When $q \\to 0$, it behaves as Processor Sharing with $100\\%$ context switch overhead.
+**Four Necessary Conditions (Coffman Conditions):**
+- **Mutual Exclusion:** At least one resource must be held in a non-shareable mode.
+- **Hold and Wait:** A process holds at least one resource and is waiting to acquire additional resources held by other processes.
+- **No Preemption:** Resources cannot be forcibly confiscated; they are released only voluntarily by the holding process.
+- **Circular Wait:** A closed chain of processes exists where each process holds resources needed by the next process in the chain.
 
----
+**Related Concepts:**
+- Deadlock Prevention: Statically invalidates at least one of the four necessary Coffman conditions.
+- Deadlock Avoidance: Evaluates requests dynamically to guarantee the system stays in a safe state (e.g., Banker's Algorithm).
+- Deadlock Detection: Allows deadlocks to occur, detects cycles in Resource Allocation Graphs, and recovers via preemption or termination."""
+    elif any(k in query_lower for k in ["sjf", "srtf"]):
+        explanation = """**Shortest Remaining Time First (SRTF) / Shortest Job First (SJF)**
 
-### 📊 5. Quick-Recall Comparison Matrix
-| Algorithm | Preemptive? | Optimal Avg WT? | Starvation Possible? | Overhead |
-| :--- | :--- | :--- | :--- | :--- |
-| **FCFS** | No | ❌ No (Convoy) | ❌ No | $\\mathcal{{O}}(1)$ |
-| **SJF** | No | ✅ Yes (Non-preemptive) | ⚠️ Yes | Burst Estimation |
-| **SRTF** | Yes | 🏆 Provably Optimal | ⚠️ Yes | High Preemption |
-| **Round Robin** | Yes | ❌ Response-optimized | ❌ No | Quantum Sensitive |
+Shortest Job First (SJF) is a CPU scheduling algorithm that selects the waiting process with the smallest CPU burst time. SRTF is the preemptive variant of SJF, preempting the currently executing process whenever a newly arrived process has a shorter remaining burst time.
 
----
+**Key Formulas & Invariants:**
+- **Turnaround Time ($TAT$):** $TAT = CT - AT$ (Completion Time - Arrival Time)
+- **Waiting Time ($WT$):** $WT = TAT - BT$ (Turnaround Time - Burst Time)
+- **Optimality:** SRTF is provably optimal for minimizing average waiting time among all scheduling algorithms.
+- **Limitation:** Can lead to starvation for longer jobs; requires prior knowledge or estimation of upcoming CPU bursts.
 
-### 🎯 6. Active Socratic Checkpoint
-*Quick Test:* If all processes arrive simultaneously at $t=0$, why does SRTF produce the exact same schedule as Non-Preemptive SJF?"""
-    elif topic_id == 'os_sync' or any(k in query_lower for k in ['peterson', 'semaphore', 'critical section', 'mutex']):
-        explanation = f"""### 📘 Operating Systems ➔ Process Synchronization & Concurrency
-*Preserving consistency across concurrent shared memory threads without race conditions.*
+**Related Concepts:**
+- FCFS (First-Come, First-Served): Non-preemptive scheduling based on arrival order; susceptible to the Convoy Effect.
+- Round Robin (RR): Preemptive time-sliced scheduling designed for fairness and low response time.
+- Priority Scheduling: Allocates CPU based on priority; uses Aging to prevent starvation.
+- Convoy Effect: Slowdown of short processes queueing behind a long CPU-bound process."""
+    elif "round robin" in query_lower:
+        explanation = """**Round Robin (RR) Scheduling**
 
----
+Round Robin is a preemptive CPU scheduling algorithm designed for time-sharing systems where each ready process is assigned the CPU for a fixed time interval called a time quantum ($q$).
 
-### 🎯 1. Intuition & Mental Model: "The Single-Key Bank Vault"
-When multiple threads read and write shared variables without synchronization, thread scheduling interleavings produce **Race Conditions**.
-- **Mutual Exclusion:** Only one thread can enter the Critical Section at a time.
-- **Progress:** If the section is empty, only active contenders decide who enters next.
-- **Bounded Waiting:** No process can be starved forever while other threads re-enter continuously.
+**Key Properties & Behavior:**
+- **Fairness:** Provably starvation-free because processes are cycled in a FIFO queue.
+- **Quantum Bounds:** If $q \\to \\infty$, Round Robin degenerates into FCFS. If $q$ is extremely small, it behaves like Processor Sharing, but context switch overhead increases significantly.
+- **Formulas:** Turnaround Time $TAT = CT - AT$, Waiting Time $WT = TAT - BT$.
 
----
+**Related Concepts:**
+- FCFS Scheduling: Non-preemptive base algorithm equivalent to Round Robin with an infinite time quantum.
+- Context Switching: CPU state-saving overhead incurred each time the CPU switches processes.
+- SRTF: Preemptive algorithm that minimizes average waiting time rather than maximizing fairness."""
+    elif topic_id == 'os_scheduling' or any(k in query_lower for k in ['schedul', 'turnaround', 'fcfs']):
+        explanation = """**CPU Scheduling**
 
-### ⚡ 2. Core Mechanics: Peterson's Protocol & Semaphores
-\`\`\`c
-// Peterson's 2-Process Protocol:
-flag[i] = true;   // Express intent to enter
-turn = j;          // Offer courtesy to partner
-while (flag[j] && turn == j); // Busy wait
-// ---> CRITICAL SECTION <---
-flag[i] = false;  // Exit
-\`\`\`
+CPU scheduling is an Operating Systems mechanism that allocates CPU cores among ready processes to optimize system performance metrics such as throughput, turnaround time, and responsiveness.
 
----
+**Core Formulas & Metrics:**
+- **Turnaround Time ($TAT$):** $TAT = CT - AT$ (Completion Time - Arrival Time)
+- **Waiting Time ($WT$):** $WT = TAT - BT$ (Turnaround Time - Burst Time)
+- **Response Time ($RT$):** Time from process arrival until its first CPU execution.
 
-### 🧠 4. High-Yield GATE Exam Insights & Traps
-> ⚠️ **IIT Paper-Setter Trap:** If initial Counting Semaphore $S = 10$, and $12\\text{{ P}}$ and $5\\text{{ V}}$ operations execute, final $S = 10 - 12 + 5 = 3$. If final $S < 0$, $|S|$ represents blocked processes.
-> 💡 **Exam Pro-Tip:** Peterson's algorithm satisfies Mutual Exclusion, Progress, and Bounded Waiting for 2 processes.
+**Related Concepts:**
+- Preemptive vs Non-Preemptive: Preemptive scheduling can interrupt running processes; non-preemptive runs a process until completion or I/O wait.
+- Shortest Remaining Time First (SRTF): Minimizes average waiting time across all scheduling algorithms.
+- Round Robin (RR): Time-sliced scheduling ensuring responsiveness and fairness for interactive environments.
+- Starvation: Condition where a process is indefinitely denied CPU time, solved by Aging."""
+    elif "peterson" in query_lower:
+        explanation = """**Peterson's Algorithm**
 
----
+Peterson's algorithm is a software-based solution to the critical section problem for two concurrent processes using shared memory variables and busy waiting.
 
-### 📊 5. Quick-Recall Comparison Matrix
-| Mechanism | Busy Waiting? | Handles N Processes? | Meets All 3 Criteria? |
-| :--- | :--- | :--- | :--- |
-| **Strict Alternation** | Yes | No (2 only) | ❌ Fails Progress |
-| **Peterson's Algorithm** | Yes | 2 (extensible) | ✅ Mutex + Progress + Bounded Wait |
-| **Counting Semaphore** | No (Sleep Queue) | Yes | ✅ General Synchronization |
-| **Mutex Lock** | No (Binary) | Yes | ✅ Value in $\\{{0, 1\\}}$ |
+**Mechanism & Shared Variables:**
+- **Variables:** `boolean flag[2]` (indicates process interest) and `int turn` (indicates tie-breaker turn).
+- **Entry Section for $P_i$:** Sets `flag[i] = true` and `turn = j`, then loops while `flag[j] && turn == j`.
+- **Exit Section:** Sets `flag[i] = false`.
+- **Correctness:** Satisfies Mutual Exclusion, Progress, and Bounded Waiting for two processes on sequentially consistent memory.
 
----
+**Related Concepts:**
+- Critical Section: Section of code accessing shared resources that must not be accessed concurrently by multiple threads.
+- Semaphores: OS-level synchronization primitives with atomic `wait()` and `signal()` operations.
+- TestAndSet / CompareAndSwap: Hardware-atomic instructions used to build spinlocks and locks for $N$ processes.
+- Race Condition: A concurrency flaw where output depends on the arbitrary interleaving of thread execution."""
+    elif topic_id == 'os_sync' or any(k in query_lower for k in ['semaphore', 'critical section', 'mutex', 'sync']):
+        explanation = """**Process Synchronization & Critical Section**
 
-### 🎯 6. Active Socratic Checkpoint
-*Quick Test:* Why does Strict Alternation fail the Progress requirement when one process terminates in its remainder section?"""
+Process synchronization coordinates concurrent processes that share memory or resources to preserve data consistency and prevent race conditions.
+
+**Three Critical Section Requirements:**
+- **Mutual Exclusion:** Only one process can execute in its critical section at any given time.
+- **Progress:** If no process is in its critical section and some wish to enter, only those not in their remainder sections can participate in the selection.
+- **Bounded Waiting:** A bound must exist on the number of times other processes are allowed to enter their critical sections after a process has requested entry.
+
+**Related Concepts:**
+- Counting Semaphore: Integer variable accessed atomically via `wait(S)` (decrements) and `signal(S)` (increments).
+- Binary Semaphore (Mutex): Semaphore restricted to values 0 and 1 used for mutual exclusion.
+- Peterson's Algorithm: Software solution for two-process synchronization satisfying all three requirements.
+- Deadlock: A condition where processes are permanently blocked waiting for resources held by each other."""
+    elif "belady" in query_lower:
+        explanation = """**Belady's Anomaly**
+
+Belady's Anomaly is the phenomenon in virtual memory where increasing the number of physical page frames allocated to a process results in an increase in the number of page faults.
+
+**Key Characteristics:**
+- Observed in FIFO (First-In, First-Out) page replacement algorithm.
+- Does **not** occur in Stack Algorithms (such as LRU and Optimal), because for any reference string, the set of pages in an $n$-frame memory is always a subset of pages in an $(n+1)$-frame memory ($C(n) \\subseteq C(n+1)$).
+
+**Related Concepts:**
+- FIFO Page Replacement: Evicts the oldest loaded page; susceptible to Belady's Anomaly.
+- LRU (Least Recently Used): Stack-based algorithm that evicts the page unaccessed for the longest duration.
+- Optimal Page Replacement (OPT): Benchmark algorithm replacing the page not needed for the longest future duration.
+- Page Fault: Trap raised by the MMU when a program accesses a virtual page not present in main memory."""
+    elif topic_id == 'os_virtual_mem' or any(k in query_lower for k in ['paging', 'virtual memory', 'page fault', 'tlb']):
+        explanation = """**Virtual Memory & Paging**
+
+Virtual memory separates logical memory as perceived by the programmer from physical memory, allowing execution of processes that may not be completely in physical RAM.
+
+**Key Formulas:**
+- **Effective Memory Access Time ($EMAT$) with TLB:**
+  $$EMAT = h \\cdot (t_{\\text{TLB}} + t_{\\text{RAM}}) + (1 - h) \\cdot (t_{\\text{TLB}} + 2 \\cdot t_{\\text{RAM}})$$
+  *(where $h$ is TLB hit ratio, $t_{\\text{TLB}}$ is TLB access time, and $t_{\\text{RAM}}$ is main memory access time).*
+- **Effective Access Time with Page Faults ($EAT$):**
+  $$EAT = (1 - p) \\cdot t_{\\text{RAM}} + p \\cdot t_{\\text{fault}}$$
+  *(where $p$ is page fault rate).*
+
+**Related Concepts:**
+- Translation Lookaside Buffer (TLB): Associative hardware cache storing recent page table translations.
+- Page Fault: Interrupt triggered when accessing a virtual address whose page is not in physical RAM.
+- Belady's Anomaly: Counter-intuitive increase in page faults when more frames are allocated under FIFO replacement.
+- Thrashing: Severe performance degradation where the system spends more time servicing page faults than executing instructions."""
+    elif topic_id == 'algo_asymptotic' or any(k in query_lower for k in ['asymptotic', 'master theorem', 'big-o', 'recurrence', 'theta']):
+        explanation = """**Master Theorem for Divide-and-Conquer**
+
+The Master Theorem provides asymptotic solutions for divide-and-conquer recurrences of the form:
+$$T(n) = a T\\left(\\frac{n}{b}\\right) + f(n) \\quad (a \\ge 1, b > 1)$$
+
+**Three Cases (Comparing $f(n)$ with $n^{\\log_b a}$):**
+1. **Case 1 (Leaf Heavy):** If $f(n) = \\mathcal{O}(n^{\\log_b a - \\epsilon})$ for $\\epsilon > 0 \\implies T(n) = \\Theta(n^{\\log_b a})$.
+2. **Case 2 (Balanced):** If $f(n) = \\Theta(n^{\\log_b a} \\log^k n)$ for $k \\ge 0 \\implies T(n) = \\Theta(n^{\\log_b a} \\log^{k+1} n)$.
+3. **Case 3 (Root Heavy):** If $f(n) = \\Omega(n^{\\log_b a + \\epsilon})$ for $\\epsilon > 0$ and $a f(n/b) \\le c f(n)$ for $c < 1 \\implies T(n) = \\Theta(f(n))$.
+
+**Related Concepts:**
+- Asymptotic Notations: $\\mathcal{O}$ (upper bound), $\\Omega$ (lower bound), and $\\Theta$ (tight bound).
+- Recursion Tree Method: Visual recurrence solving method that sums work across tree levels.
+- Substitution Method: Proves recurrence bounds using mathematical induction.
+- Divide and Conquer: Algorithmic design paradigm that breaks a problem into independent subproblems (e.g., Merge Sort)."""
+    elif topic_id == 'dbms_normalization' or any(k in query_lower for k in ['normal', 'bcnf', '3nf', '2nf', 'dependency']):
+        explanation = """**Boyce-Codd Normal Form (BCNF)**
+
+A relational schema $R$ is in BCNF if for every non-trivial functional dependency $X \\to Y$, the determinant $X$ is a superkey of $R$.
+
+**Normal Form Hierarchy:**
+- **1NF:** All attribute domains contain only atomic, indivisible values.
+- **2NF:** In 1NF and contains no partial dependencies (no non-prime attribute depends on a proper subset of any candidate key).
+- **3NF:** In 2NF and for every non-trivial $X \\to Y$, either $X$ is a superkey OR $Y$ is a prime attribute.
+- **BCNF:** For every non-trivial $X \\to Y$, $X$ must be a superkey (no prime attribute exception).
+
+**Key Properties:**
+- 3NF always guarantees both Lossless Join and Dependency Preservation.
+- BCNF always guarantees Lossless Join, but may not preserve all functional dependencies.
+
+**Related Concepts:**
+- Functional Dependency ($X \\to Y$): Constraint where attribute set $X$ uniquely determines attribute set $Y$.
+- Candidate Key: Minimal superkey with no redundant attributes.
+- Lossless Decomposition: Ensures the natural join of decomposed relations exactly reconstructs the original relation without spurious tuples.
+- Dependency Preservation: Property ensuring that each functional dependency can be verified on a single decomposed table without expensive joins."""
+    elif topic_id == 'dbms_transactions' or any(k in query_lower for k in ['transaction', '2pl', 'serializ', 'acid']):
+        explanation = """**Two-Phase Locking (2PL)**
+
+Two-Phase Locking (2PL) is a concurrency control protocol that guarantees conflict serializability by requiring each transaction to acquire all locks before releasing any lock.
+
+**Phases & Variations:**
+- **Growing Phase:** Transaction acquires locks; cannot release any lock.
+- **Shrinking Phase:** Transaction releases locks; cannot acquire any new lock.
+- **Strict 2PL:** Holds all Exclusive (X) locks until the transaction commits or aborts. Guarantees conflict serializability and avoids cascading aborts (ACA).
+- **Rigorous (SS2PL):** Holds all Shared (S) and Exclusive (X) locks until commit/abort.
+
+**Related Concepts:**
+- Conflict Serializability: A schedule is conflict serializable if and only if its precedence graph contains no cycles.
+- ACID Properties: Atomicity, Consistency, Isolation, and Durability guarantees of database transactions.
+- Cascading Abort: Failure where the abort of one transaction forces dependent transactions that read uncommitted data to roll back.
+- Precedence Graph: Directed graph representing conflicting operations used to test for serializability."""
     else:
-        explanation = f"""### 📘 {subject or 'GATE CSE'} ➔ {clean_q.upper()}
-*Rigorous conceptual breakdown and examination analysis for {topic_key.replace('_', ' ').upper()}.*
+        import re
+        clean_title = re.sub(r'^(what is|explain|define|describe)\s+', '', clean_q, flags=re.IGNORECASE).strip('?#* ')
+        concept_title = clean_title.title() if clean_title else "Core Concept"
+        explanation = f"""**{concept_title}**
 
----
-
-### 🎯 1. Intuition & Mental Model: The Big Picture
-To master **{clean_q}** in GATE CSE, focus on the fundamental system trade-off:
-- **Architectural Motivation:** Every core computing principle balances trade-offs—time vs space complexity, throughput vs latency, or consistency vs concurrency.
-- **Core Abstraction:** Understand state invariants and what properties are guaranteed to remain invariant under boundary conditions.
-
----
-
-### ⚡ 2. Core Mechanics, Rules & Mathematical Invariants
-From the verified GATE CSE knowledge base:
 {rag_context}
 
-- **System Invariants:** State transitions must be deterministic and adhere to asymptotic bounds.
-- **Boundary Conditions:** Examine edge cases: empty structures ($n=0$), single elements, simultaneous arrivals, or saturated memory frames.
-
----
-
-### 🔍 3. Step-by-Step Execution Walkthrough
-1. **Identify Given Constraints:** Classify problem parameters, functional dependencies, or recurrence relations.
-2. **Trace the State Transitions:** Construct timeline / data structure transitions.
-3. **Verify Boundary Invariants:** Double check off-by-one indices and tie-breaking conditions.
-
----
-
-### 🧠 4. High-Yield GATE Exam Insights & Traps
-> ⚠️ **IIT Paper-Setter Trap:** Distinguish carefully between necessary vs sufficient conditions and verify candidate key minimalities.
-> 💡 **Exam Pro-Tip:** Carry intermediate calculations to 3 decimal places for Numerical Answer Type (NAT) questions.
-
----
-
-### 📊 5. Quick-Recall Summary Card
-| Aspect | Theoretical Invariant | GATE Exam Significance |
-| :--- | :--- | :--- |
-| **Domain Scope** | {subject or 'Computer Science & Engineering'} | High-Yield 1 & 2 Mark Questions |
-| **Analysis Focus** | Invariants, Time/Space Bounds | Common NAT / MCQ Calculation Target |
-| **Verification Strategy** | Counter-example elimination | Eliminates tricky distractor options |
-
----
-
-### 🎯 6. Active Socratic Checkpoint
-*Quick Test:* In one sentence, state the core invariant of **{clean_q}** and under what edge condition it would fail."""
+**Related Concepts:**
+- System Invariants: Mathematical and theoretical guarantees governing this topic in GATE CSE.
+- Boundary Conditions: Edge cases including empty inputs, single elements, and saturated resource states.
+- Performance Bounds: Algorithmic time and space complexities or hardware latency characteristics."""
 
     citations = [
         {"source": "GATE CSE Verified Syllabus", "topic": topic_id or "Core CS", "subject": subject or "Computer Science"}
@@ -340,25 +412,26 @@ def run_concept_crew(query: str, subject: Optional[str] = None, topic_id: Option
 
     try:
         agent = create_concept_teacher_agent(llm=llm)
-        task_desc = f"""Deliver a masterclass pedagogical explanation for the following GATE CSE concept:
+        task_desc = f"""Provide a direct, accurate explanation for the following GATE CSE concept along with closely related concepts:
 Query: {query}
 Subject: {subject or 'GATE Computer Science'}
 Topic ID: {topic_id or 'General'}
 
-Formatting & Content Requirements (MUST include all 6 sections):
-1. '### 📘 [Subject] ➔ [Concept Name]' with a 1-sentence executive definition.
-2. '### 🎯 1. Intuition & Mental Model: "The Analogy / Big Picture"' explaining WHY it exists and the fundamental trade-off.
-3. '### ⚡ 2. Core Mechanics, Rules & Mathematical Invariants' with formal definitions, equations ($TAT = CT - AT$, etc.), and system invariants.
-4. '### 🔍 3. Step-by-Step Architectural Execution Walkthrough' with concrete mini-examples, timeline, or ASCII Gantt charts.
-5. '### 🧠 4. High-Yield GATE Exam Insights & Traps' with IIT paper-setter trap warnings and time-saving pro-tips.
-6. '### 📊 5. Quick-Recall Comparison Matrix' with a clean Markdown comparison table.
-7. '### 🎯 6. Active Socratic Checkpoint' with 1 quick micro-question for student recall.
+Response Rules:
+1. Start directly with the answer to the student's question. Do NOT include greetings, introductions, conclusions, or motivational statements.
+2. Format the concept name in bold as the title (e.g. **{query.strip()}**).
+3. Explain the requested concept clearly, accurately, and concisely, suitable for GATE CSE.
+4. Include formulas, invariants, rules, or time/space complexities when relevant.
+5. Do NOT repeat the student's question.
+6. Do NOT add unrelated information or excessive background theory.
+7. Do NOT automatically generate quizzes, MCQs, or follow-up questions.
+8. End with a "**Related Concepts:**" section containing 2-4 bullet points naming closely related concepts with a 1-line explanation connecting them to the requested concept.
 
-Ground all explanations strictly in verified GATE CSE context without hallucinations."""
+Ground your explanation strictly in the verified context chunks without hallucinations."""
 
         task = Task(
             description=task_desc,
-            expected_output="Deeply engaging, masterclass 6-section grounded explanation with ASCII diagrams, formulas, callout traps, and comparison tables.",
+            expected_output="Direct, accurate GATE CSE explanation with key formulas and a Related Concepts section. No greetings, introductions, or quizzes.",
             agent=agent
         )
 

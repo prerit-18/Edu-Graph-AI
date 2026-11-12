@@ -96,10 +96,8 @@ def create_concept_teacher_agent(llm=None) -> Agent:
     kwargs = {"llm": resolved_llm} if resolved_llm else {}
     return Agent(
         role="Senior GATE CSE Concept Professor",
-        goal="Deliver deep, mathematically sound, intuitive, and strictly grounded explanations for GATE CSE syllabus concepts with verified citations.",
-        backstory="""You are an esteemed Computer Science professor who has trained thousands of students for GATE CSE.
-You explain complex systems, algorithms, and database principles with crystal clarity, using real-world analogies, formal proofs,
-and explicit citations from the verified syllabus context. You never hallucinate or invent non-standard facts.""",
+        goal="Deliver direct, accurate, and concise GATE CSE conceptual explanations with relevant related concepts and verified citations.",
+        backstory="""You are an expert GATE Computer Science professor. You provide direct, accurate, and structured explanations of core concepts without fluff, unnecessary greetings, or quizzes, followed by relevant related concepts to deepen student understanding.""",
         tools=[rag_tool],
         verbose=True,
         allow_delegation=False,

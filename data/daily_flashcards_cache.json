@@ -481,5 +481,96 @@
         "back": "• Any comparison sort requires Ω(n log n) comparisons in the worst case (decision tree height log2(n!) ≈ n log2(n)).\n• QuickSort: Best/Avg O(n log n), Worst O(n²) (already sorted with extremal pivot).\n• Open Addressing with Linear Probing suffers from Primary Clustering."
       }
     ]
+  },
+  "2026-11-12_All_daily_10": {
+    "date": "2026-11-12",
+    "source": "Syllabus Knowledge Base (PRNG Rotation)",
+    "aiGenerated": false,
+    "seed": "2026-11-12_gate_cse_deck",
+    "subject": "All",
+    "total": 10,
+    "availablePool": 27,
+    "flashcards": [
+      {
+        "id": "fc_os_05",
+        "subject": "Operating Systems",
+        "topic_id": "os_process_ipc",
+        "type": "formula",
+        "front": "fork() System Call Process Tree Formula & PCB vs TCB State",
+        "back": "• For n consecutive unconditional fork() calls: Total processes created = 2ⁿ (1 parent + (2ⁿ - 1) child processes).\n• Process vs Thread:\n  - Processes share no memory by default; separate address spaces and PCB.\n  - Threads of the same process share: Code segment, Data segment, Open file descriptors, Heap.\n  - Threads have private: Thread Control Block (TCB), Program Counter (PC), Register set, and Stack."
+      },
+      {
+        "id": "fc_compiler_04",
+        "subject": "Compiler Design",
+        "topic_id": "compiler_lexical",
+        "type": "trap",
+        "front": "Lexical Analysis: Maximal Munch Rule & DFA State Minimization",
+        "back": "• Maximal Munch (Longest Match): The lexer always consumes the longest prefix matching any valid token regular expression.\n• Priority Rule: If two token regexes match the exact same longest prefix, the rule declared first takes precedence (e.g. keyword \"if\" vs identifier \"if\").\n• Hopcroft's DFA Minimization: Partitions states into equivalence classes. Time complexity O(k · n log n)."
+      },
+      {
+        "id": "fc_algo_01",
+        "subject": "Algorithms",
+        "topic_id": "algo_asymptotic",
+        "type": "formula",
+        "front": "Master Theorem for Divide & Conquer Recurrences: T(n) = a·T(n/b) + f(n)",
+        "back": "Let c = log_b(a). Compare f(n) with n^c:\n• Case 1: f(n) = O(n^(c - ε)) for ε > 0 ⟹ T(n) = Θ(n^c)\n• Case 2: f(n) = Θ(n^c · log^k n) for k ≥ 0 ⟹ T(n) = Θ(n^c · log^(k+1) n)\n• Case 3: f(n) = Ω(n^(c + ε)) for ε > 0 and regularity holds ⟹ T(n) = Θ(f(n))\n> ⚠️ IIT Trap: Master theorem fails if a is not constant or gap is non-polynomial (e.g. 2^n)."
+      },
+      {
+        "id": "fc_compiler_03",
+        "subject": "Compiler Design",
+        "topic_id": "compiler_optimization_dataflow",
+        "type": "definition",
+        "front": "Data Flow Analysis: Constant Propagation & Liveness Analysis",
+        "back": "• Constant Propagation: Forward data-flow analysis finding variables with constant values at compile time.\n• Liveness Analysis: Backward data-flow analysis checking if variable x is used before being redefined along some execution path (used in register allocation).\n• Common Subexpression Elimination: Removes duplicate evaluations of identical expressions using DAGs."
+      },
+      {
+        "id": "fc_os_06",
+        "subject": "Operating Systems",
+        "topic_id": "os_storage",
+        "type": "complexity",
+        "front": "Disk Scheduling (SCAN / C-SCAN / LOOK) & UNIX Inode File Addressing",
+        "back": "• SCAN (Elevator): Head moves in one direction servicing requests until boundary, then reverses.\n• C-SCAN (Circular SCAN): Moves in one direction servicing requests; jumps back to opposite end without servicing on return trip (provides uniform waiting time).\n• UNIX Inode: Contains direct block pointers (usually 12), single indirect, double indirect, and triple indirect pointers. Max file size = (Direct + (Block/Ptr) + (Block/Ptr)² + (Block/Ptr)³) × Block Size."
+      },
+      {
+        "id": "fc_dbms_02",
+        "subject": "Databases",
+        "topic_id": "dbms_transactions",
+        "type": "protocol",
+        "front": "Conflict Serializability & Two-Phase Locking (2PL Variants)",
+        "back": "• Conflict Serializable ⟺ Precedence Graph has NO directed cycles.\n• Basic 2PL: Growing Phase (acquire locks) + Shrinking Phase (release locks). Guarantees Serializability; prone to cascading aborts and deadlocks.\n• Strict 2PL: Holds Exclusive (write) locks until COMMIT/ABORT. Guarantees conflict serializability + Avoids Cascading Aborts (ACA).\n• Rigorous 2PL: Holds ALL locks until Commit."
+      },
+      {
+        "id": "fc_dbms_03",
+        "subject": "Databases",
+        "topic_id": "dbms_indexing",
+        "type": "formula",
+        "front": "B-Tree & B+ Tree Node Capacity and Fanout Calculations",
+        "back": "For node size P bytes, block pointer B bytes, record pointer R bytes, key size K bytes:\n• B+ Tree Internal Node: n · K + (n + 1) · B ≤ P ⟹ Max keys = n\n• B+ Tree Leaf Node: m · (K + R) + B ≤ P (leaf nodes contain record pointers & next-leaf pointer)\n• Min keys in B+ Tree Internal node = ⌈(n+1)/2⌉ - 1; Root has at least 1 key."
+      },
+      {
+        "id": "fc_cn_03",
+        "subject": "Computer Networks",
+        "topic_id": "cn_transport_tcp",
+        "type": "protocol",
+        "front": "TCP Congestion Control Phases: Slow Start, AIMD & Fast Recovery",
+        "back": "• Slow Start: Congestion Window (cwnd) doubles every RTT (exponential growth) until cwnd reaches ssthresh.\n• Congestion Avoidance: cwnd increases by 1 MSS per RTT (linear additive increase, AIMD).\n• Timeout Occurs: ssthresh = cwnd / 2, cwnd resets to 1 MSS (Slow start restarts).\n• 3 Duplicate ACKs (Fast Retransmit): ssthresh = cwnd / 2, cwnd = ssthresh + 3 MSS (Fast Recovery, avoids dropping to 1)."
+      },
+      {
+        "id": "fc_dbms_01",
+        "subject": "Databases",
+        "topic_id": "dbms_normalization",
+        "type": "hierarchy",
+        "front": "Relational Normal Forms (1NF → BCNF) & Lossless Decompositions",
+        "back": "For functional dependency X → Y in relation R:\n• 1NF: Atomic attribute values.\n• 2NF: 1NF + No partial dependency (non-prime depends on subset of candidate key).\n• 3NF: 2NF + For every X → Y, X is Superkey OR Y is Prime attribute.\n• BCNF: For every non-trivial X → Y, X MUST be a Superkey.\n• Lossless Join Condition: (R1 ∩ R2) → R1 OR (R1 ∩ R2) → R2 (Common attribute is a superkey of R1 or R2)."
+      },
+      {
+        "id": "fc_os_02",
+        "subject": "Operating Systems",
+        "topic_id": "os_sync",
+        "type": "condition",
+        "front": "Critical Section 3 Gold Invariants & Peterson's Solution",
+        "back": "1. Mutual Exclusion (Mandatory): Only 1 process inside CS at a time.\n2. Progress (Mandatory): Selection of who enters next is decided only by processes not in remainder.\n3. Bounded Waiting (Fairness): Finite bound on entries allowed to others after request.\n• Peterson's uses flag[i]=true and turn=j (courtesy variable) to satisfy all 3 for 2 processes."
+      }
+    ]
   }
 }

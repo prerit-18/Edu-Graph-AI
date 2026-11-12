@@ -109,7 +109,7 @@ class Crew {
 const agents = {
   conceptTeacher: new Agent({
     role: 'Concept Teacher',
-    goal: 'Deliver grounded GATE CSE explanations with citations',
+    goal: 'Deliver direct, accurate GATE CSE explanations with relevant related concepts and citations',
     backstory: conceptTeacherAgent.backstory,
     tools: conceptTeacherAgent.tools,
     runner: conceptTeacherAgent,
