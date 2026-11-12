@@ -358,9 +358,19 @@ select.input-field {
 
 @media (max-width: 768px) {
   .grid-4, .grid-3, .grid-2 { grid-template-columns: 1fr; }
-  .header-nav { padding: 0.75rem 1rem; }
-  .nav-links { display: none; }
+  .header-nav { padding: 0.6rem 1rem; flex-wrap: wrap; row-gap: 0.4rem; }
+  /* keep navigation reachable on phones: second row, horizontally scrollable */
+  .nav-links { display: flex; order: 3; width: 100%; overflow-x: auto; gap: 0.25rem; padding-bottom: 0.2rem; -webkit-overflow-scrolling: touch; }
+  .nav-links a { white-space: nowrap; padding: 0.4rem 0.7rem; font-size: 0.85rem; }
   .container { padding: 1.25rem 1rem 3rem; }
+  .agent-tabs, .tab-row { overflow-x: auto; }
+  table { display: block; overflow-x: auto; }
+  input, select, textarea { font-size: 16px; }   /* avoids iOS zoom-on-focus */
+  .user-pill span:not(.streak-badge) { display: none; }
+}
+@media (max-width: 480px) {
+  .btn { padding-left: 0.8rem; padding-right: 0.8rem; }
+  h2 { font-size: 1.3rem; }
 }
 
 /* ==========================================================================

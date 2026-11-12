@@ -30,7 +30,9 @@ async function runAgentTests() {
     userId: testUserId
   });
   assert.strictEqual(refuseResult.grounded, false, 'Should NOT be grounded');
-  assert(refuseResult.explanation.includes('Concept Grounding Notice'), 'Must display refusal notice');
+  assert(refuseResult.explanation.includes('Not covered'), 'Must display refusal notice');
+  const nn = await orchestrator.askConcept({ query: 'explain neural networks backpropagation', userId: testUserId });
+  assert.strictEqual(nn.grounded, false, 'ML topics outside GATE CSE must be refused');
   console.log('✓ Concept Teacher Refusal OK');
 
   // 3. PYQ Analyst
@@ -59,8 +61,12 @@ async function runAgentTests() {
   console.log('Testing Revision Agent...');
   const revResult = await orchestrator.getRevisionSchedule({ userId: testUserId });
   assert(Array.isArray(revResult.allTopicsRanked), 'Should rank all topics');
-  assert(revResult.topActionTopic !== undefined, 'Should recommend a focus topic');
-  console.log(`✓ Revision Agent OK (Top Focus: ${revResult.topActionTopic.topic_name})`);
+  assert.strictEqual(revResult.allTopicsRanked.length, 1, 'only attempted topics are ranked');
+  assert.strictEqual(revResult.topActionTopic, null, 'one attempt is insufficient data - no recommendation');
+  assert(revResult.needsMoreData.some(t => t.topic_id === 'os_scheduling'), 'topic flagged as needing more data');
+  const fresh = await orchestrator.getRevisionSchedule({ userId: 'nobody_ever_attempted_' + Date.now() });
+  assert.strictEqual(fresh.insufficientData, true, 'a learner with no attempts gets an explicit insufficient-data answer');
+  console.log('✓ Revision Agent OK (uses real data, handles insufficient data)');
 
   // 6. Active Recall Agent
   console.log('Testing Active Recall Agent...');
@@ -79,22 +85,23 @@ async function runAgentTests() {
     userId: testUserId
   });
   assert.strictEqual(gradeResult.isCorrect, true, 'Recall with key concepts should be correct');
-  assert(gradeResult.bktUpdate !== null, 'Should update BKT');
+  assert(gradeResult.bktUpdate !== null, 'Should update BKT on completion');
   console.log(`✓ Active Recall OK (Grade score: ${gradeResult.score}%, BKT: ${gradeResult.bktUpdate.newPKnow})`);
 
   // 7. Mock Test Agent
   console.log('Testing Mock Test Agent...');
-  const testExam = orchestrator.generateMockTest({ subject: 'All', count: 5 });
+  const testExam = orchestrator.generateMockTest({ userId: testUserId, subject: 'All', count: 5 });
   assert.strictEqual(testExam.questions.length, 5, 'Should generate 5 questions');
-
+  assert.strictEqual(new Set(testExam.questions.map(q => q.id)).size, 5, 'no duplicate questions');
+  testExam.questions.forEach(q => { assert.strictEqual(q.answer, undefined, 'key must not be served'); });
   const evalResult = orchestrator.evaluateMockTest({
     testId: testExam.testId,
-    submissions: [
-      { questionId: testExam.questions[0].id, answer: 'B' }
-    ],
+    submissions: [{ questionId: testExam.questions[0].id, answer: 'B' }, { questionId: 'not_in_this_test', answer: 'A' }],
     userId: testUserId
   });
-  assert(evalResult.totalQuestions === 1, 'Evaluated submissions count');
+  assert.strictEqual(evalResult.totalQuestions, 5);
+  assert.strictEqual(evalResult.ignoredSubmissions, 1, 'questions outside the test are ignored');
+  assert.throws(() => orchestrator.evaluateMockTest({ testId: testExam.testId, submissions: [], userId: testUserId }), /already been submitted/);
   console.log('✓ Mock Test Agent OK');
 
   console.log('All Agent tests passed successfully!');

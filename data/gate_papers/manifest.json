@@ -1,0 +1,103 @@
+{
+  "papers": [
+    {
+      "year": 2026,
+      "session": "",
+      "paper_code": "CS1",
+      "paper_pdf": "GATE2026_CS1.pdf",
+      "key_pdf": "GATE2026_CS1_key.pdf",
+      "source_url": "https://gate2027.iitm.ac.in/static/doc/download/2026/QPs/CS1.pdf",
+      "key_url": "https://gate2027.iitm.ac.in/static/doc/download/2026/Keys/CS1_Keys.pdf",
+      "retrieved": "2026-11-12",
+      "license": "(c) IIT Madras, all rights reserved; the download page states no reuse licence. Personal study use only; not redistributed (raw/ and processed/ are git-ignored)."
+    },
+    {
+      "year": 2026,
+      "session": "",
+      "paper_code": "CS2",
+      "paper_pdf": "GATE2026_CS2.pdf",
+      "key_pdf": "GATE2026_CS2_key.pdf",
+      "source_url": "https://gate2027.iitm.ac.in/static/doc/download/2026/QPs/CS2.pdf",
+      "key_url": "https://gate2027.iitm.ac.in/static/doc/download/2026/Keys/CS2_Keys.pdf",
+      "retrieved": "2026-11-12",
+      "license": "(c) IIT Madras, all rights reserved; the download page states no reuse licence. Personal study use only; not redistributed (raw/ and processed/ are git-ignored)."
+    },
+    {
+      "year": 2025,
+      "session": "",
+      "paper_code": "CS1",
+      "paper_pdf": "GATE2025_CS1.pdf",
+      "key_pdf": "GATE2025_CS1_key.pdf",
+      "source_url": "https://gate2027.iitm.ac.in/static/doc/download/2025/CS12025.pdf",
+      "key_url": "https://gate2027.iitm.ac.in/static/doc/download/2025_Key/CS1_Keys.pdf",
+      "retrieved": "2026-11-12",
+      "license": "(c) IIT Madras, all rights reserved; the download page states no reuse licence. Personal study use only; not redistributed (raw/ and processed/ are git-ignored)."
+    },
+    {
+      "year": 2025,
+      "session": "",
+      "paper_code": "CS2",
+      "paper_pdf": "GATE2025_CS2.pdf",
+      "key_pdf": "GATE2025_CS2_key.pdf",
+      "source_url": "https://gate2027.iitm.ac.in/static/doc/download/2025/CS22025.pdf",
+      "key_url": "https://gate2027.iitm.ac.in/static/doc/download/2025_Key/CS2_Keys.pdf",
+      "retrieved": "2026-11-12",
+      "license": "(c) IIT Madras, all rights reserved; the download page states no reuse licence. Personal study use only; not redistributed (raw/ and processed/ are git-ignored)."
+    },
+    {
+      "year": 2024,
+      "session": "",
+      "paper_code": "CS1",
+      "paper_pdf": "GATE2024_CS1.pdf",
+      "key_pdf": "GATE2024_CS1_key.pdf",
+      "source_url": "https://gate2027.iitm.ac.in/static/doc/download/2024/CS124S5.pdf",
+      "key_url": "https://gate2027.iitm.ac.in/static/doc/download/2024/CS1FinalAnswerKey.pdf",
+      "retrieved": "2026-11-12",
+      "license": "(c) IIT Madras, all rights reserved; the download page states no reuse licence. Personal study use only; not redistributed (raw/ and processed/ are git-ignored)."
+    },
+    {
+      "year": 2024,
+      "session": "",
+      "paper_code": "CS2",
+      "paper_pdf": "GATE2024_CS2.pdf",
+      "key_pdf": "GATE2024_CS2_key.pdf",
+      "source_url": "https://gate2027.iitm.ac.in/static/doc/download/2024/CS224S6.pdf",
+      "key_url": "https://gate2027.iitm.ac.in/static/doc/download/2024/CS2FinalAnswerKey.pdf",
+      "retrieved": "2026-11-12",
+      "license": "(c) IIT Madras, all rights reserved; the download page states no reuse licence. Personal study use only; not redistributed (raw/ and processed/ are git-ignored)."
+    },
+    {
+      "year": 2023,
+      "session": "",
+      "paper_code": "CS",
+      "paper_pdf": "GATE2023_CS.pdf",
+      "key_pdf": "GATE2023_CS_key.pdf",
+      "source_url": "https://gate2027.iitm.ac.in/static/doc/download/2023/cs_2023.pdf",
+      "key_url": "https://gate2027.iitm.ac.in/static/doc/download/Answer_keys2023/CS_ANS_GATE2023.pdf",
+      "retrieved": "2026-11-12",
+      "license": "(c) IIT Madras, all rights reserved; the download page states no reuse licence. Personal study use only; not redistributed (raw/ and processed/ are git-ignored)."
+    },
+    {
+      "year": 2022,
+      "session": "",
+      "paper_code": "CS",
+      "paper_pdf": "GATE2022_CS.pdf",
+      "key_pdf": "GATE2022_CS_key.pdf",
+      "source_url": "https://gate2027.iitm.ac.in/static/doc/download/2022/cs_2022.pdf",
+      "key_url": "https://gate2027.iitm.ac.in/static/doc/download/Answer_keys2022/cs_2022.pdf",
+      "retrieved": "2026-11-12",
+      "license": "(c) IIT Madras, all rights reserved; the download page states no reuse licence. Personal study use only; not redistributed (raw/ and processed/ are git-ignored)."
+    },
+    {
+      "year": 2021,
+      "session": "",
+      "paper_code": "CS",
+      "paper_pdf": "GATE2021_CS.pdf",
+      "key_pdf": "GATE2021_CS_key.pdf",
+      "source_url": "https://gate2027.iitm.ac.in/static/doc/download/2021/cs_2021.pdf",
+      "key_url": "https://gate2027.iitm.ac.in/static/doc/download/Answer_keys2021/cs_merged_2021.pdf",
+      "retrieved": "2026-11-12",
+      "license": "(c) IIT Madras, all rights reserved; the download page states no reuse licence. Personal study use only; not redistributed (raw/ and processed/ are git-ignored)."
+    }
+  ]
+}

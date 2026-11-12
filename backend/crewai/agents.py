@@ -1,158 +1,90 @@
+"""CrewAI agent factory for the EduGraph Minor Project.
+
+Active CrewAI roles: concept_teacher, pyq_analyst, problem_solver. (Syllabus, Revision, Mock Test
+and Active Recall are deterministic/BKT-driven services in Node and use the LLM directly.)
+Two further roles are reserved for the Major Project and intentionally NOT defined here.
+"""
 import os
 import sys
-from typing import Optional, Any
+from typing import Any, Optional
 from dotenv import load_dotenv
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
-if CURRENT_DIR not in sys.path:
-    sys.path.insert(0, CURRENT_DIR)
-
-# Load env variables from backend/.env
-ENV_PATH = os.path.abspath(os.path.join(CURRENT_DIR, '..', '.env'))
-load_dotenv(ENV_PATH)
-
-try:
-    from .tools import rag_tool, pyq_tool, calculator_tool, bkt_tool
-except ImportError:
-    from tools import rag_tool, pyq_tool, calculator_tool, bkt_tool
+load_dotenv(os.path.abspath(os.path.join(CURRENT_DIR, "..", ".env")))  # never overrides real env vars
 
 try:
     from crewai import Agent, LLM
     HAS_CREWAI = True
-except ImportError:
+except ImportError:  # pragma: no cover
     HAS_CREWAI = False
-    class Agent:
-        def __init__(self, role, goal, backstory, tools=None, verbose=True, allow_delegation=False, llm=None):
-            self.role = role
-            self.goal = goal
-            self.backstory = backstory
-            self.tools = tools or []
-            self.verbose = verbose
-            self.allow_delegation = allow_delegation
-            self.llm = llm
 
-def get_configured_llm() -> Optional[Any]:
-    """
-    Dynamically configures CrewAI LLM based on environment configuration:
-    - Gemini (GEMINI_API_KEY)
-    - Groq (GROQ_API_KEY)
-    - OpenAI (OPENAI_API_KEY)
-    - OpenRouter (OPENROUTER_API_KEY)
-    - Ollama (OLLAMA_BASE_URL or OLLAMA_MODEL)
-    """
+try:
+    from tools import calculator_tool
+except ImportError:  # pragma: no cover
+    from .tools import calculator_tool
+
+
+def _usable(key: Optional[str]) -> bool:
+    return bool(key) and "your_" not in key and key.strip() not in ("", "your_key")
+
+
+def get_configured_llm(fast: bool = False) -> Optional[Any]:
+    """Build a CrewAI LLM from the same env vars the Node client uses. Returns None if no key."""
     if not HAS_CREWAI:
         return None
-
     provider = os.getenv("LLM_PROVIDER", "").lower()
-    gemini_key = os.getenv("GEMINI_API_KEY")
-    groq_key = os.getenv("GROQ_API_KEY")
-    openai_key = os.getenv("OPENAI_API_KEY")
-    openrouter_key = os.getenv("OPENROUTER_API_KEY")
-    ollama_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-
+    model_env = os.getenv("LLM_MODEL_FAST") if fast and os.getenv("LLM_MODEL_FAST") else os.getenv("LLM_MODEL")
+    gem, groq, oai, orr = (os.getenv(k) for k in ("GEMINI_API_KEY", "GROQ_API_KEY", "OPENAI_API_KEY", "OPENROUTER_API_KEY"))
     try:
-        # 1. Gemini
-        if (provider == 'gemini' or gemini_key) and gemini_key and gemini_key != 'your_key':
-            model_name = os.getenv("LLM_MODEL", "gemini/gemini-1.5-flash")
-            if not model_name.startswith("gemini/"):
-                model_name = f"gemini/{model_name}"
-            return LLM(model=model_name, api_key=gemini_key, temperature=0.3)
-
-        # 2. Groq
-        if (provider == 'groq' or groq_key) and groq_key and groq_key != 'your_key':
-            model_name = os.getenv("LLM_MODEL", "groq/llama-3.3-70b-versatile")
-            if not model_name.startswith("groq/"):
-                model_name = f"groq/{model_name}"
-            return LLM(model=model_name, api_key=groq_key, temperature=0.3)
-
-        # 3. OpenAI
-        if (provider == 'openai' or openai_key) and openai_key and openai_key != 'your_key':
-            model_name = os.getenv("LLM_MODEL", "gpt-4o-mini")
-            return LLM(model=model_name, api_key=openai_key, temperature=0.3)
-
-        # 4. OpenRouter
-        if (provider == 'openrouter' or openrouter_key) and openrouter_key and openrouter_key != 'your_key':
-            model_name = os.getenv("LLM_MODEL", "openrouter/meta-llama/llama-3.3-70b-instruct")
-            if not model_name.startswith("openrouter/"):
-                model_name = f"openrouter/{model_name}"
-            return LLM(model=model_name, api_key=openrouter_key, temperature=0.3)
-
-        # 5. Ollama
-        if provider == 'ollama':
-            model_name = os.getenv("LLM_MODEL", "ollama/llama3.2")
-            return LLM(model=model_name, base_url=ollama_url, temperature=0.3)
-
-    except Exception as e:
-        print(f"Warning: Could not initialize CrewAI LLM: {e}", file=sys.stderr)
-        return None
-
+        if provider in ("", "gemini") and _usable(gem):
+            m = (model_env or "gemini-2.5-flash").replace("gemini/", "")
+            # CrewAI 1.x needs an extra native Google package for `gemini/...` models; Gemini's
+            # OpenAI-compatible endpoint works with the stock install, so we use that.
+            return LLM(model=f"openai/{m}", api_key=gem, temperature=0.3,
+                       base_url="https://generativelanguage.googleapis.com/v1beta/openai/")
+        if provider in ("", "groq") and _usable(groq):
+            m = model_env or "llama-3.3-70b-versatile"
+            return LLM(model=m if m.startswith("groq/") else f"groq/{m}", api_key=groq, temperature=0.3)
+        if provider in ("", "openai") and _usable(oai):
+            return LLM(model=model_env or "gpt-4o-mini", api_key=oai, temperature=0.3)
+        if provider in ("", "openrouter") and _usable(orr):
+            m = model_env or "meta-llama/llama-3.3-70b-instruct"
+            return LLM(model=m if m.startswith("openrouter/") else f"openrouter/{m}", api_key=orr, temperature=0.3)
+        if provider == "ollama":
+            m = model_env or "ollama/llama3.2"
+            return LLM(model=m, base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"), temperature=0.3)
+    except Exception as e:  # noqa: BLE001
+        print(f"Could not initialise CrewAI LLM: {e}", file=sys.stderr)
     return None
 
-def create_concept_teacher_agent(llm=None) -> Agent:
-    """
-    Senior GATE CSE Professor & Concept Specialist
-    """
-    resolved_llm = llm or get_configured_llm()
-    kwargs = {"llm": resolved_llm} if resolved_llm else {}
-    return Agent(
-        role="Senior GATE CSE Concept Professor",
-        goal="Deliver direct, accurate, and concise GATE CSE conceptual explanations with relevant related concepts and verified citations.",
-        backstory="""You are an expert GATE Computer Science professor. You provide direct, accurate, and structured explanations of core concepts without fluff, unnecessary greetings, or quizzes, followed by relevant related concepts to deepen student understanding.""",
-        tools=[rag_tool],
-        verbose=True,
-        allow_delegation=False,
-        **kwargs
-    )
 
-def create_pyq_analyst_agent(llm=None) -> Agent:
-    """
-    GATE CSE Historical Trends & Pattern Specialist
-    """
-    resolved_llm = llm or get_configured_llm()
-    kwargs = {"llm": resolved_llm} if resolved_llm else {}
-    return Agent(
-        role="GATE CSE PYQ Analyst & Trend Specialist",
-        goal="Analyze 2021-2025 previous year GATE examination patterns, mark distributions, recurring trick questions, and common distractor pitfalls.",
-        backstory="""You are a veteran exam strategist who analyzes previous GATE Computer Science papers.
-You identify repeated question templates, calculate topic frequency distributions, and reveal subtle traps placed by IIT question setters
-to help students avoid negative marking.""",
-        tools=[pyq_tool, rag_tool],
-        verbose=True,
-        allow_delegation=False,
-        **kwargs
-    )
+ROLES = {
+    "concept_teacher": dict(
+        role="GATE CSE Concept Teacher",
+        goal="Explain exactly the concept the student asked about, correctly and concisely, using only the provided context.",
+        backstory="You are a senior GATE CSE instructor. You answer directly with no greeting or conclusion, "
+                  "give the formulas/invariants that matter for the exam, and finish with 2-4 closely related concepts. "
+                  "You never invent facts, years or question numbers that are not in the context.",
+        tools=[]),
+    "pyq_analyst": dict(
+        role="GATE CSE PYQ Analyst",
+        goal="Summarise what the supplied previous-year-question statistics actually show about a topic.",
+        backstory="You analyse only the statistics and sample questions you are given. You state counts, years and "
+                  "question types exactly as provided, call a concept 'recurring' only if the data shows it in 2+ "
+                  "different years, and say so plainly when the data is too small to conclude anything.",
+        tools=[]),
+    "problem_solver": dict(
+        role="GATE CSE Problem Solver",
+        goal="Produce a correct, step-by-step solution and verify every numeric step with the calculator.",
+        backstory="You solve GATE problems carefully: list given data, state the formula, compute each step with the "
+                  "calculator tool, and end with the final answer. When an official answer is supplied, your derivation "
+                  "must agree with it; if it does not, you say that you could not reproduce it instead of forcing it.",
+        tools=["calculator"]),
+}
 
-def create_problem_solver_agent(llm=None) -> Agent:
-    """
-    Step-by-Step Rigorous Mathematical & Logical Solver
-    """
-    resolved_llm = llm or get_configured_llm()
-    kwargs = {"llm": resolved_llm} if resolved_llm else {}
-    return Agent(
-        role="GATE CSE Problem Solver & Mathematical Verifier",
-        goal="Derive complete, step-by-step verified solutions to GATE numerical and conceptual problems, verify calculations via calculator tool, and grade student attempts.",
-        backstory="""You are a precision-driven problem solver specializing in GATE CSE problem sets.
-You write clear execution timelines (e.g. Gantt charts, recursion trees, schedule serializability graphs), double-check all arithmetic using the calculator tool,
-and clearly point out where a student's derivation was right or wrong.""",
-        tools=[calculator_tool, pyq_tool, rag_tool],
-        verbose=True,
-        allow_delegation=False,
-        **kwargs
-    )
 
-def create_active_recall_agent(llm=None) -> Agent:
-    """
-    Conceptual Retrieval & Socratic Grader
-    """
-    resolved_llm = llm or get_configured_llm()
-    kwargs = {"llm": resolved_llm} if resolved_llm else {}
-    return Agent(
-        role="GATE CSE Socratic Recall Evaluator",
-        goal="Challenge student memory with active recall cloze and free-response questions, evaluate understanding semantically, and trace mastery.",
-        backstory="""You are an expert in cognitive learning science who creates active recall challenges rather than passive recognition tests.
-You evaluate student answers for core conceptual understanding, semantic depth, and essential keywords, providing supportive corrective feedback.""",
-        tools=[rag_tool],
-        verbose=True,
-        allow_delegation=False,
-        **kwargs
-    )
+def make_agent(role_key: str, llm: Any) -> Any:
+    spec = ROLES[role_key]
+    tools = [calculator_tool] if "calculator" in spec["tools"] and calculator_tool is not None else []
+    return Agent(role=spec["role"], goal=spec["goal"], backstory=spec["backstory"], tools=tools,
+                 llm=llm, verbose=False, allow_delegation=False, max_iter=6)

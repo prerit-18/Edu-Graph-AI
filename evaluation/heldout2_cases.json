@@ -1,0 +1,112 @@
+[
+  {
+    "id": "fresh_01",
+    "query": "which scheduling policy minimizes average waiting time",
+    "should_be_grounded": true,
+    "expected_topic": "os_scheduling"
+  },
+  {
+    "id": "fresh_02",
+    "query": "how are page tables organised in two levels",
+    "should_be_grounded": true,
+    "expected_topic": "os_virtual_mem"
+  },
+  {
+    "id": "fresh_03",
+    "query": "what is a deadlock and how can the system avoid it",
+    "should_be_grounded": true,
+    "expected_topic": "os_deadlock"
+  },
+  {
+    "id": "fresh_04",
+    "query": "explain the pumping lemma idea",
+    "should_be_grounded": true,
+    "expected_topic": "toc_regular"
+  },
+  {
+    "id": "fresh_05",
+    "query": "how does binary search work on a sorted array",
+    "should_be_grounded": true,
+    "expected_topic": "algo_searching_sorting_hashing"
+  },
+  {
+    "id": "fresh_06",
+    "query": "what is a foreign key and referential integrity",
+    "should_be_grounded": true,
+    "expected_topic": "dbms_er_relational"
+  },
+  {
+    "id": "fresh_07",
+    "query": "how does a flip flop store one bit",
+    "should_be_grounded": true,
+    "expected_topic": "dl_combinational_sequential"
+  },
+  {
+    "id": "fresh_08",
+    "query": "how does the ethernet protocol avoid collisions",
+    "should_be_grounded": true,
+    "expected_topic": "cn_datalink_mac"
+  },
+  {
+    "id": "fresh_09",
+    "query": "what is dynamic programming and optimal substructure",
+    "should_be_grounded": true,
+    "expected_topic": "algo_dp"
+  },
+  {
+    "id": "fresh_10",
+    "query": "how is a pipeline stall caused by data hazards",
+    "should_be_grounded": true,
+    "expected_topic": "coa_pipelining"
+  },
+  {
+    "id": "fresh_11",
+    "query": "how to cook biryani at home",
+    "should_be_grounded": false
+  },
+  {
+    "id": "fresh_12",
+    "query": "what are the side effects of paracetamol",
+    "should_be_grounded": false
+  },
+  {
+    "id": "fresh_13",
+    "query": "explain the transformer attention mechanism in deep learning",
+    "should_be_grounded": false
+  },
+  {
+    "id": "fresh_14",
+    "query": "how to invest in mutual funds",
+    "should_be_grounded": false
+  },
+  {
+    "id": "fresh_15",
+    "query": "tips to improve my chess openings",
+    "should_be_grounded": false
+  },
+  {
+    "id": "fresh_16",
+    "query": "what is the capital of australia",
+    "should_be_grounded": false
+  },
+  {
+    "id": "fresh_17",
+    "query": "how to design a logo in photoshop",
+    "should_be_grounded": false
+  },
+  {
+    "id": "fresh_18",
+    "query": "summarize the french revolution",
+    "should_be_grounded": false
+  },
+  {
+    "id": "fresh_19",
+    "query": "write a python script to scrape a website",
+    "should_be_grounded": false
+  },
+  {
+    "id": "fresh_20",
+    "query": "how does a convolutional layer extract features from images",
+    "should_be_grounded": false
+  }
+]

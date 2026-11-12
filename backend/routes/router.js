@@ -11,6 +11,7 @@ const mockRoutes = require('./mock');
 const flashcardRoutes = require('./flashcards');
 const ttsRoutes = require('./tts');
 const quickActionsRoutes = require('./quick_actions');
+const pyqRoutes = require('./pyq');
 
 // Mount routes
 router.use('/auth', authRoutes);
@@ -23,5 +24,6 @@ router.use('/mock', mockRoutes);
 router.use('/flashcards', flashcardRoutes);
 router.use('/tts', ttsRoutes);
 router.use('/quick-actions', quickActionsRoutes);
+router.use('/pyq', pyqRoutes);
 
 module.exports = router;

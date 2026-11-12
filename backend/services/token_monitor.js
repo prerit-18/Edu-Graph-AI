@@ -36,6 +36,10 @@ try {
     CREATE INDEX IF NOT EXISTS idx_token_logs_agent ON token_logs(agent);
     CREATE INDEX IF NOT EXISTS idx_token_logs_feature ON token_logs(feature);
   `);
+  for (const [col, ddl] of [['usage_source', "TEXT DEFAULT 'estimated'"], ['via', "TEXT DEFAULT 'direct'"]]) {
+    const has = db.prepare('PRAGMA table_info(token_logs)').all().some(c => c.name === col);
+    if (!has) db.exec(`ALTER TABLE token_logs ADD COLUMN ${col} ${ddl}`);
+  }
 } catch (err) {
   console.warn('[TokenMonitor] Failed to ensure token_logs table:', err.message);
 }
@@ -53,9 +57,11 @@ function estimateTokens(text) {
 /**
  * Record an LLM call into in-memory ring-buffer and SQLite
  */
-function recordCall({ agent = 'Unknown', feature = 'general', inputText = '', outputText = '', model = 'unknown', latencyMs = 0 }) {
-  const inputTokens = estimateTokens(inputText);
-  const outputTokens = estimateTokens(outputText);
+function recordCall({ agent = 'Unknown', feature = 'general', inputText = '', outputText = '', model = 'unknown', latencyMs = 0, usage = null, via = 'direct' }) {
+  // Prefer token counts reported by the provider; fall back to a chars/4 estimate and say so.
+  const reported = usage && Number.isFinite(usage.input) && Number.isFinite(usage.output);
+  const inputTokens = reported ? usage.input : estimateTokens(inputText);
+  const outputTokens = reported ? usage.output : estimateTokens(outputText);
   const estimatedCostUsd = Number(
     ((inputTokens * INPUT_COST_PER_MILLION + outputTokens * OUTPUT_COST_PER_MILLION) / 1000000).toFixed(8)
   );
@@ -69,7 +75,9 @@ function recordCall({ agent = 'Unknown', feature = 'general', inputText = '', ou
     input_tokens: inputTokens,
     output_tokens: outputTokens,
     latency_ms: Math.max(0, Math.round(latencyMs)),
-    estimated_cost_usd: estimatedCostUsd
+    estimated_cost_usd: estimatedCostUsd,
+    usage_source: reported ? 'provider' : 'estimated',
+    via
   };
 
   // 1. Maintain in-memory ring buffer (max 500)
@@ -81,8 +89,8 @@ function recordCall({ agent = 'Unknown', feature = 'general', inputText = '', ou
   // 2. Persist to SQLite table
   try {
     const insertStmt = db.prepare(`
-      INSERT INTO token_logs (id, agent, feature, model, input_tokens, output_tokens, latency_ms, estimated_cost_usd)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO token_logs (id, agent, feature, model, input_tokens, output_tokens, latency_ms, estimated_cost_usd, usage_source, via)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     insertStmt.run(
       record.id,
@@ -92,7 +100,9 @@ function recordCall({ agent = 'Unknown', feature = 'general', inputText = '', ou
       record.input_tokens,
       record.output_tokens,
       record.latency_ms,
-      record.estimated_cost_usd
+      record.estimated_cost_usd,
+      record.usage_source,
+      record.via
     );
   } catch (err) {
     console.warn('[TokenMonitor] Error saving to SQLite token_logs:', err.message);

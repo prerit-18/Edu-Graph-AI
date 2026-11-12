@@ -6,45 +6,52 @@
         "id": "algo_asymptotic",
         "name": "Asymptotic Analysis and Recurrences",
         "prerequisite": null,
-        "pyq_weight": 0.90,
-        "description": "Big-O, Omega, Theta notations, Master Theorem for divide-and-conquer recurrences, recursion tree method, substitution method."
+        "pyq_weight": 0.9,
+        "description": "Big-O, Omega, Theta notations, Master Theorem for divide-and-conquer recurrences, recursion tree method, substitution method.",
+        "keywords": "asymptotic big-o theta omega recurrence master theorem complexity growth"
       },
       {
         "id": "algo_searching_sorting_hashing",
         "name": "Searching, Sorting and Hashing",
         "prerequisite": "algo_asymptotic",
-        "pyq_weight": 0.90,
-        "description": "Linear and binary search, comparison sort bounds, Quick Sort, Merge Sort, Heap Sort, Counting Sort, open addressing and chaining hashing collision resolution."
+        "pyq_weight": 0.9,
+        "description": "Linear and binary search, comparison sort bounds, Quick Sort, Merge Sort, Heap Sort, Counting Sort, open addressing and chaining hashing collision resolution.",
+        "keywords": "sorting quicksort mergesort heapsort hashing hash table collision binary search"
       },
       {
         "id": "algo_divide_conquer",
         "name": "Divide and Conquer Technique",
         "prerequisite": "algo_asymptotic",
-        "pyq_weight": 0.80,
-        "description": "Merge sort, quick sort partitioning, counting inversions, Strassen matrix multiplication, finding median and order statistics."
+        "pyq_weight": 0.8,
+        "description": "Merge sort, quick sort partitioning, counting inversions, Strassen matrix multiplication, finding median and order statistics.",
+        "keywords": "divide conquer strassen inversion merge"
       },
       {
         "id": "algo_greedy",
         "name": "Greedy Algorithm Design",
         "prerequisite": "algo_asymptotic",
         "pyq_weight": 0.85,
-        "description": "Greedy-choice property, optimal substructure, Fractional Knapsack, Activity Selection, Huffman Coding prefix codes, optimal merge patterns."
+        "description": "Greedy-choice property, optimal substructure, Fractional Knapsack, Activity Selection, Huffman Coding prefix codes, optimal merge patterns.",
+        "keywords": "greedy huffman activity selection knapsack fractional job scheduling"
       },
       {
         "id": "algo_dp",
         "name": "Dynamic Programming",
         "prerequisite": "algo_asymptotic",
         "pyq_weight": 0.95,
-        "description": "Overlapping subproblems, 0/1 Knapsack, Longest Common Subsequence (LCS), Matrix Chain Multiplication, Subset Sum, Bellman equation."
+        "description": "Overlapping subproblems, 0/1 Knapsack, Longest Common Subsequence (LCS), Matrix Chain Multiplication, Subset Sum, Bellman equation.",
+        "keywords": "dynamic programming lcs longest common subsequence matrix chain knapsack memoization optimal substructure"
       },
       {
         "id": "algo_graphs_mst_shortest_paths",
         "name": "Graph Algorithms: MST and Shortest Paths",
         "prerequisite": "algo_asymptotic",
         "pyq_weight": 0.95,
-        "description": "Dijkstra's single-source shortest path, Bellman-Ford, Floyd-Warshall all-pairs, Prim's and Kruskal's Minimum Spanning Tree algorithms, topological sorting."
+        "description": "Dijkstra's single-source shortest path, Bellman-Ford, Floyd-Warshall all-pairs, Prim's and Kruskal's Minimum Spanning Tree algorithms, topological sorting.",
+        "keywords": "graph bfs dfs dijkstra bellman-ford floyd kruskal prim spanning tree shortest path topological"
       }
-    ]
+    ],
+    "official_syllabus": "Searching, sorting, hashing. Asymptotic worst case time and space complexity. Algorithm design techniques: greedy, dynamic programming and divide-and-conquer. Graph traversals, minimum spanning trees, shortest paths."
   },
   {
     "subject": "Compiler Design",
@@ -53,31 +60,36 @@
         "id": "compiler_lexical",
         "name": "Lexical Analysis",
         "prerequisite": null,
-        "pyq_weight": 0.80,
-        "description": "Role of lexical analyzer, tokens, patterns, lexemes, regular definitions, transition diagrams, recognition of tokens, lookahead buffer."
+        "pyq_weight": 0.8,
+        "description": "Role of lexical analyzer, tokens, patterns, lexemes, regular definitions, transition diagrams, recognition of tokens, lookahead buffer.",
+        "keywords": "lexical analysis token lexeme regular expression scanner lex"
       },
       {
         "id": "compiler_parsing",
         "name": "Parsing: LL(1), LR(0), SLR, LALR and CLR",
         "prerequisite": "compiler_lexical",
         "pyq_weight": 0.98,
-        "description": "Top-down parsing (LL(1), FIRST and FOLLOW sets), bottom-up parsing (shift-reduce, LR(0), SLR(1), LALR(1), CLR(1) item sets and parsing tables), operator precedence."
+        "description": "Top-down parsing (LL(1), FIRST and FOLLOW sets), bottom-up parsing (shift-reduce, LR(0), SLR(1), LALR(1), CLR(1) item sets and parsing tables), operator precedence.",
+        "keywords": "parsing parser ll(1) lr slr lalr clr first follow shift reduce grammar parse table"
       },
       {
         "id": "compiler_sdt_codegen",
         "name": "Syntax-Directed Translation and Intermediate Code",
         "prerequisite": "compiler_parsing",
-        "pyq_weight": 0.90,
-        "description": "Syntax-Directed Definitions (SDD), synthesized and inherited attributes, S-attributed and L-attributed definitions, three-address code (quadruples, triples), runtime storage organization and activation records."
+        "pyq_weight": 0.9,
+        "description": "Syntax-Directed Definitions (SDD), synthesized and inherited attributes, S-attributed and L-attributed definitions, three-address code (quadruples, triples), runtime storage organization and activation records.",
+        "keywords": "syntax directed translation attribute synthesized inherited three address code intermediate code"
       },
       {
         "id": "compiler_optimization_dataflow",
         "name": "Code Optimization and Data Flow Analysis",
         "prerequisite": "compiler_sdt_codegen",
-        "pyq_weight": 0.90,
-        "description": "Basic blocks and flow graphs, local optimization (DAG representation, common subexpression elimination, dead code elimination), data flow analyses (constant propagation, liveness analysis, reaching definitions)."
+        "pyq_weight": 0.9,
+        "description": "Basic blocks and flow graphs, local optimization (DAG representation, common subexpression elimination, dead code elimination), data flow analyses (constant propagation, liveness analysis, reaching definitions).",
+        "keywords": "optimization basic block liveness data flow constant propagation common subexpression register allocation"
       }
-    ]
+    ],
+    "official_syllabus": "Lexical analysis, parsing, syntax-directed translation. Runtime environments. Intermediate code generation. Local optimisation, data flow analyses: constant propagation, liveness analysis, common subexpression elimination."
   },
   {
     "subject": "Operating Systems",
@@ -87,44 +99,51 @@
         "name": "System Calls, Processes, Threads and IPC",
         "prerequisite": null,
         "pyq_weight": 0.85,
-        "description": "System calls, process states, fork() execution trees, user vs kernel threads, Inter-Process Communication (shared memory, message passing, pipes)."
+        "description": "System calls, process states, fork() execution trees, user vs kernel threads, Inter-Process Communication (shared memory, message passing, pipes).",
+        "keywords": "process thread pcb fork pipe ipc message passing system call context switch"
       },
       {
         "id": "os_scheduling",
         "name": "CPU and I/O Scheduling",
         "prerequisite": "os_process_ipc",
         "pyq_weight": 0.95,
-        "description": "Preemptive and non-preemptive scheduling, FCFS, SJF, SRTF, Round Robin, Priority, Multi-level queue scheduling, turnaround time, waiting time, Gantt charts."
+        "description": "Preemptive and non-preemptive scheduling, FCFS, SJF, SRTF, Round Robin, Priority, Multi-level queue scheduling, turnaround time, waiting time, Gantt charts.",
+        "keywords": "scheduling fcfs sjf srtf round robin quantum turnaround waiting time burst gantt priority"
       },
       {
         "id": "os_sync",
         "name": "Concurrency and Process Synchronization",
         "prerequisite": "os_process_ipc",
         "pyq_weight": 0.98,
-        "description": "Critical section problem, Peterson's algorithm, TestAndSet atomic hardware instructions, Counting and Binary Semaphores, Mutex locks, classical problems (Producer-Consumer, Readers-Writers)."
+        "description": "Critical section problem, Peterson's algorithm, TestAndSet atomic hardware instructions, Counting and Binary Semaphores, Mutex locks, classical problems (Producer-Consumer, Readers-Writers).",
+        "keywords": "semaphore mutex critical section peterson race condition monitor producer consumer wait signal"
       },
       {
         "id": "os_deadlock",
         "name": "Deadlock Characterization and Banker's Algorithm",
         "prerequisite": "os_sync",
-        "pyq_weight": 0.90,
-        "description": "Coffman four conditions, Resource Allocation Graphs, Banker's Safety Algorithm for avoidance, prevention vs avoidance vs detection and recovery."
+        "pyq_weight": 0.9,
+        "description": "Coffman four conditions, Resource Allocation Graphs, Banker's Safety Algorithm for avoidance, prevention vs avoidance vs detection and recovery.",
+        "keywords": "deadlock banker safe state resource allocation graph coffman circular wait"
       },
       {
         "id": "os_virtual_mem",
         "name": "Memory Management and Virtual Memory",
         "prerequisite": "os_process_ipc",
         "pyq_weight": 0.95,
-        "description": "Paging, segmentation, Translation Lookaside Buffer (TLB), effective memory access time, demand paging, page fault handling, Belady's anomaly in FIFO, Optimal and LRU page replacement."
+        "description": "Paging, segmentation, Translation Lookaside Buffer (TLB), effective memory access time, demand paging, page fault handling, Belady's anomaly in FIFO, Optimal and LRU page replacement.",
+        "keywords": "paging page fault tlb virtual memory page replacement lru fifo thrashing segmentation frame belady"
       },
       {
         "id": "os_storage",
         "name": "File Systems and Disk Scheduling",
         "prerequisite": "os_process_ipc",
-        "pyq_weight": 0.80,
-        "description": "File allocation methods, UNIX inode indexing, disk seek time, disk scheduling algorithms (FCFS, SSTF, SCAN, C-SCAN, LOOK, C-LOOK)."
+        "pyq_weight": 0.8,
+        "description": "File allocation methods, UNIX inode indexing, disk seek time, disk scheduling algorithms (FCFS, SSTF, SCAN, C-SCAN, LOOK, C-LOOK).",
+        "keywords": "file system inode disk scheduling sstf scan cylinder block allocation fat directory raid"
       }
-    ]
+    ],
+    "official_syllabus": "System calls, processes, threads, inter-process communication, concurrency and synchronization. Deadlock. CPU and I/O scheduling. Memory management and virtual memory. File systems."
   },
   {
     "subject": "Databases",
@@ -133,38 +152,44 @@
         "id": "dbms_er_relational",
         "name": "ER Model, Relational Model and Constraints",
         "prerequisite": null,
-        "pyq_weight": 0.80,
-        "description": "Entity-Relationship diagrams, weak entities, mapping ER to relational schemas, super, candidate, primary and foreign keys, integrity constraints."
+        "pyq_weight": 0.8,
+        "description": "Entity-Relationship diagrams, weak entities, mapping ER to relational schemas, super, candidate, primary and foreign keys, integrity constraints.",
+        "keywords": "er model entity relationship weak entity key relational schema"
       },
       {
         "id": "dbms_rel_algebra_sql",
         "name": "Relational Algebra, Tuple Calculus and SQL",
         "prerequisite": "dbms_er_relational",
         "pyq_weight": 0.95,
-        "description": "Relational algebra operators (Select, Project, Join variants, Set operations), Tuple Relational Calculus, complex SQL queries, nested subqueries, aggregations, GROUP BY and HAVING."
+        "description": "Relational algebra operators (Select, Project, Join variants, Set operations), Tuple Relational Calculus, complex SQL queries, nested subqueries, aggregations, GROUP BY and HAVING.",
+        "keywords": "sql select join relational algebra tuple calculus query group by having nested"
       },
       {
         "id": "dbms_normalization",
         "name": "Functional Dependencies and Normal Forms",
         "prerequisite": "dbms_er_relational",
         "pyq_weight": 0.98,
-        "description": "Closure of attributes, minimal covers, 1NF, 2NF, 3NF, BCNF, lossless join decomposition condition, dependency preservation."
+        "description": "Closure of attributes, minimal covers, 1NF, 2NF, 3NF, BCNF, lossless join decomposition condition, dependency preservation.",
+        "keywords": "normal form functional dependency bcnf 3nf 2nf lossless decomposition candidate key"
       },
       {
         "id": "dbms_indexing",
         "name": "File Organization and B/B+ Tree Indexing",
         "prerequisite": "dbms_er_relational",
         "pyq_weight": 0.88,
-        "description": "Primary, secondary, clustering indexing, dense vs sparse indexes, B-Trees and B+ Trees node capacity, insertion, deletion, height and block access calculations."
+        "description": "Primary, secondary, clustering indexing, dense vs sparse indexes, B-Trees and B+ Trees node capacity, insertion, deletion, height and block access calculations.",
+        "keywords": "index b-tree b+ tree file organization block record hashing disk"
       },
       {
         "id": "dbms_transactions",
         "name": "Transactions and Concurrency Control",
         "prerequisite": "dbms_rel_algebra_sql",
         "pyq_weight": 0.98,
-        "description": "ACID properties, conflict and view serializability, precedence graphs, Two-Phase Locking (2PL, Strict 2PL, Rigorous 2PL), timestamp ordering, recoverability and cascading rollbacks."
+        "description": "ACID properties, conflict and view serializability, precedence graphs, Two-Phase Locking (2PL, Strict 2PL, Rigorous 2PL), timestamp ordering, recoverability and cascading rollbacks.",
+        "keywords": "transaction serializability 2pl two-phase locking schedule recovery concurrency timestamp acid"
       }
-    ]
+    ],
+    "official_syllabus": "ER-model. Relational model: relational algebra, tuple calculus, SQL. Integrity constraints, normal forms. File organization, indexing (e.g., B and B+ trees). Transactions and concurrency control."
   },
   {
     "subject": "Computer Networks",
@@ -174,42 +199,237 @@
         "name": "Principles of Layering, Switching and Metrics",
         "prerequisite": null,
         "pyq_weight": 0.85,
-        "description": "OSI and TCP/IP protocol stack, circuit switching vs packet switching vs virtual circuit, propagation delay, transmission delay, bandwidth-delay product."
+        "description": "OSI and TCP/IP protocol stack, circuit switching vs packet switching vs virtual circuit, propagation delay, transmission delay, bandwidth-delay product.",
+        "keywords": "osi tcp/ip layer packet switching circuit switching throughput delay bandwidth"
       },
       {
         "id": "cn_datalink_mac",
         "name": "Data Link Layer, MAC and Ethernet",
         "prerequisite": "cn_layering_switching",
         "pyq_weight": 0.95,
-        "description": "Framing, error detection (CRC, checksum, parity), flow control (Stop-and-Wait, Go-Back-N, Selective Repeat efficiency), CSMA/CD, minimum frame size in Ethernet."
+        "description": "Framing, error detection (CRC, checksum, parity), flow control (Stop-and-Wait, Go-Back-N, Selective Repeat efficiency), CSMA/CD, minimum frame size in Ethernet.",
+        "keywords": "framing crc hamming csma/cd ethernet sliding window stop-and-wait go-back-n selective repeat mac"
       },
       {
         "id": "cn_routing",
         "name": "Routing Algorithms: Distance Vector and Link State",
         "prerequisite": "cn_layering_switching",
-        "pyq_weight": 0.90,
-        "description": "Distance Vector Routing (Bellman-Ford, Count-to-Infinity problem), Link State Routing (Dijkstra's algorithm), RIP, OSPF, BGP concepts."
+        "pyq_weight": 0.9,
+        "description": "Distance Vector Routing (Bellman-Ford, Count-to-Infinity problem), Link State Routing (Dijkstra's algorithm), RIP, OSPF, BGP concepts.",
+        "keywords": "routing distance vector link state ospf rip bgp router shortest path flooding"
       },
       {
         "id": "cn_network_ipv4",
         "name": "IPv4 Header, Fragmentation, CIDR and NAT",
         "prerequisite": "cn_routing",
         "pyq_weight": 0.98,
-        "description": "IPv4 datagram header fields, packet fragmentation offset calculations, classless addressing (CIDR subnetting, supernetting, longest prefix match), Network Address Translation (NAT)."
+        "description": "IPv4 datagram header fields, packet fragmentation offset calculations, classless addressing (CIDR subnetting, supernetting, longest prefix match), Network Address Translation (NAT).",
+        "keywords": "ip address subnet cidr ipv4 fragmentation arp dhcp icmp nat netmask"
       },
       {
         "id": "cn_transport_tcp",
         "name": "TCP Flow Control, Congestion Control and Sockets",
         "prerequisite": "cn_network_ipv4",
         "pyq_weight": 0.98,
-        "description": "TCP segment structure, 3-way handshake, sliding window flow control, congestion control (Slow Start, Congestion Avoidance, Fast Retransmit, Fast Recovery, AIMD, timeout calculations), socket API."
+        "description": "TCP segment structure, 3-way handshake, sliding window flow control, congestion control (Slow Start, Congestion Avoidance, Fast Retransmit, Fast Recovery, AIMD, timeout calculations), socket API.",
+        "keywords": "tcp udp congestion window slow start flow control socket port handshake segment"
       },
       {
         "id": "cn_application_dns_http",
         "name": "Application Layer Protocols: DNS and HTTP",
         "prerequisite": "cn_transport_tcp",
         "pyq_weight": 0.85,
-        "description": "Domain Name System (DNS iterative vs recursive resolution, record types), HTTP (persistent vs non-persistent connections, HTTP methods, response codes, caching)."
+        "description": "Domain Name System (DNS iterative vs recursive resolution, record types), HTTP (persistent vs non-persistent connections, HTTP methods, response codes, caching).",
+        "keywords": "dns http smtp ftp email url cookie web server"
+      }
+    ],
+    "official_syllabus": "Concept of layering: OSI and TCP/IP protocol stacks; basics of packet, circuit and virtual circuit-switching; data link layer: framing, error detection, medium access control, Ethernet bridging; routing protocols: shortest path, flooding, distance vector and link state routing; fragmentation and IP addressing, IPv4, CIDR notation, basics of IP support protocols (ARP, DHCP, ICMP), network address translation (NAT); transport layer: flow control and congestion control, UDP, TCP, sockets; application layer protocols: DNS, SMTP, HTTP, FTP, email."
+  },
+  {
+    "subject": "Engineering Mathematics",
+    "official_syllabus": "Discrete Mathematics: propositional and first-order logic; sets, relations, functions, partial orders and lattices; monoids, groups; graphs: connectivity, matching, coloring; combinatorics: counting, recurrence relations, generating functions. Linear Algebra: matrices, determinants, system of linear equations, eigenvalues and eigenvectors, LU decomposition. Calculus: limits, continuity and differentiability; maxima and minima; mean value theorem; integration. Probability and Statistics: random variables; uniform, normal, exponential, Poisson and binomial distributions; mean, median, mode and standard deviation; conditional probability and Bayes theorem.",
+    "topics": [
+      {
+        "id": "em_logic_sets_relations",
+        "name": "Propositional and First-Order Logic, Sets, Relations, Functions",
+        "prerequisite": null,
+        "pyq_weight": 0.5,
+        "description": "Propositional and first-order logic, sets, relations, functions, partial orders and lattices, monoids and groups.",
+        "keywords": "propositional logic first-order predicate set relation function lattice poset group monoid equivalence relation"
+      },
+      {
+        "id": "em_graph_theory_combinatorics",
+        "name": "Graph Theory and Combinatorics",
+        "prerequisite": "em_logic_sets_relations",
+        "pyq_weight": 0.5,
+        "description": "Graph connectivity, matching, coloring; counting, recurrence relations, generating functions.",
+        "keywords": "graph vertices edges planar chromatic matching combinatorics counting permutation combination generating function recurrence pigeonhole"
+      },
+      {
+        "id": "em_linear_algebra",
+        "name": "Linear Algebra",
+        "prerequisite": null,
+        "pyq_weight": 0.5,
+        "description": "Matrices, determinants, systems of linear equations, eigenvalues and eigenvectors, LU decomposition.",
+        "keywords": "matrix determinant eigenvalue eigenvector rank linear equations lu decomposition vector space"
+      },
+      {
+        "id": "em_calculus",
+        "name": "Calculus",
+        "prerequisite": null,
+        "pyq_weight": 0.5,
+        "description": "Limits, continuity and differentiability, maxima and minima, mean value theorem, integration.",
+        "keywords": "limit continuity derivative integral maxima minima differentiable mean value theorem"
+      },
+      {
+        "id": "em_probability_statistics",
+        "name": "Probability and Statistics",
+        "prerequisite": null,
+        "pyq_weight": 0.5,
+        "description": "Random variables, uniform, normal, exponential, Poisson and binomial distributions, mean, median, mode, standard deviation, conditional probability and Bayes theorem.",
+        "keywords": "probability random variable distribution binomial poisson normal expectation variance bayes conditional"
+      }
+    ]
+  },
+  {
+    "subject": "Digital Logic",
+    "official_syllabus": "Boolean algebra. Combinational and sequential circuits. Minimization. Number representations and computer arithmetic (fixed and floating point).",
+    "topics": [
+      {
+        "id": "dl_boolean_minimization",
+        "name": "Boolean Algebra and Minimization",
+        "prerequisite": null,
+        "pyq_weight": 0.5,
+        "description": "Boolean algebra, canonical forms, Karnaugh map minimization.",
+        "keywords": "boolean algebra karnaugh k-map minimization sop pos minterm maxterm gate nand nor"
+      },
+      {
+        "id": "dl_combinational_sequential",
+        "name": "Combinational and Sequential Circuits",
+        "prerequisite": "dl_boolean_minimization",
+        "pyq_weight": 0.5,
+        "description": "Combinational circuits (adders, multiplexers, decoders), sequential circuits (latches, flip-flops, counters, registers).",
+        "keywords": "multiplexer decoder adder flip-flop latch counter register sequential circuit state machine"
+      },
+      {
+        "id": "dl_number_representation",
+        "name": "Number Representation and Computer Arithmetic",
+        "prerequisite": null,
+        "pyq_weight": 0.5,
+        "description": "Fixed-point and floating-point representation, two's complement, IEEE 754.",
+        "keywords": "twos complement ieee 754 floating point binary representation overflow bcd"
+      }
+    ]
+  },
+  {
+    "subject": "Computer Organization and Architecture",
+    "official_syllabus": "Machine instructions and addressing modes. ALU, data-path and control unit. Instruction pipelining, pipeline hazards. Memory hierarchy: cache, main memory and secondary storage; I/O interface (interrupt and DMA mode).",
+    "topics": [
+      {
+        "id": "coa_instructions_datapath",
+        "name": "Machine Instructions, Addressing Modes and Data-path",
+        "prerequisite": "dl_combinational_sequential",
+        "pyq_weight": 0.5,
+        "description": "Instruction formats, addressing modes, ALU, data-path and control unit.",
+        "keywords": "instruction set addressing mode opcode alu data path control unit microprogram cpu register"
+      },
+      {
+        "id": "coa_pipelining",
+        "name": "Instruction Pipelining and Hazards",
+        "prerequisite": "coa_instructions_datapath",
+        "pyq_weight": 0.5,
+        "description": "Pipeline stages, structural, data and control hazards, speedup.",
+        "keywords": "pipeline hazard stall forwarding speedup cpi stage branch"
+      },
+      {
+        "id": "coa_memory_io",
+        "name": "Memory Hierarchy and I/O",
+        "prerequisite": "coa_instructions_datapath",
+        "pyq_weight": 0.5,
+        "description": "Cache mapping and performance, main memory, secondary storage, interrupt-driven I/O and DMA.",
+        "keywords": "cache hit ratio miss direct mapped associative main memory dma interrupt io disk access time"
+      }
+    ]
+  },
+  {
+    "subject": "Programming and Data Structures",
+    "official_syllabus": "Programming in C. Recursion. Arrays, stacks, queues, linked lists, trees, binary search trees, binary heaps, graphs.",
+    "topics": [
+      {
+        "id": "pds_c_recursion",
+        "name": "Programming in C and Recursion",
+        "prerequisite": null,
+        "pyq_weight": 0.5,
+        "description": "C programming, pointers, recursion, program output tracing.",
+        "keywords": "c program pointer recursion output printf function array static"
+      },
+      {
+        "id": "pds_linear_structures",
+        "name": "Arrays, Stacks, Queues and Linked Lists",
+        "prerequisite": "pds_c_recursion",
+        "pyq_weight": 0.5,
+        "description": "Array, stack, queue and linked list operations and applications.",
+        "keywords": "stack queue linked list array circular queue push pop"
+      },
+      {
+        "id": "pds_trees_heaps_graphs",
+        "name": "Trees, Binary Search Trees, Heaps and Graphs",
+        "prerequisite": "pds_linear_structures",
+        "pyq_weight": 0.5,
+        "description": "Binary trees, BST operations, binary heaps, graph representations.",
+        "keywords": "binary tree bst heap traversal inorder preorder postorder height avl"
+      }
+    ]
+  },
+  {
+    "subject": "Theory of Computation",
+    "official_syllabus": "Regular expressions and finite automata. Context-free grammars and push-down automata. Regular and context-free languages, pumping lemma. Turing machines and undecidability.",
+    "topics": [
+      {
+        "id": "toc_regular",
+        "name": "Regular Languages and Finite Automata",
+        "prerequisite": null,
+        "pyq_weight": 0.5,
+        "description": "Regular expressions, DFA, NFA, closure properties, pumping lemma for regular languages.",
+        "keywords": "regular expression dfa nfa finite automata regular language pumping lemma minimal dfa"
+      },
+      {
+        "id": "toc_cfg_pda",
+        "name": "Context-Free Languages and Push-Down Automata",
+        "prerequisite": "toc_regular",
+        "pyq_weight": 0.5,
+        "description": "Context-free grammars, push-down automata, pumping lemma for CFLs.",
+        "keywords": "context-free grammar pushdown automata pda cfg ambiguity cnf"
+      },
+      {
+        "id": "toc_tm_undecidability",
+        "name": "Turing Machines and Undecidability",
+        "prerequisite": "toc_cfg_pda",
+        "pyq_weight": 0.5,
+        "description": "Turing machines, decidable and recursively enumerable languages, undecidability, reductions.",
+        "keywords": "turing machine decidable undecidable recursively enumerable halting problem reduction"
+      }
+    ]
+  },
+  {
+    "subject": "General Aptitude",
+    "official_syllabus": "Verbal ability and numerical ability (15 marks in every GATE paper).",
+    "topics": [
+      {
+        "id": "ga_verbal",
+        "name": "Verbal Ability",
+        "prerequisite": null,
+        "pyq_weight": 0.5,
+        "description": "Grammar, vocabulary, reading comprehension, sentence completion.",
+        "keywords": "sentence grammar word meaning passage synonym antonym verbal paragraph author"
+      },
+      {
+        "id": "ga_numerical",
+        "name": "Numerical Ability",
+        "prerequisite": null,
+        "pyq_weight": 0.5,
+        "description": "Arithmetic, data interpretation, logical reasoning, spatial aptitude.",
+        "keywords": "ratio percentage average speed train work probability number series profit age"
       }
     ]
   }

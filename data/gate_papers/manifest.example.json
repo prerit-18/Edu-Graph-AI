@@ -1,0 +1,16 @@
+{
+  "_comment": "Copy to manifest.json. Put the PDFs you downloaded from the official GATE site in data/gate_papers/raw/. One entry per question paper (per set/session). Do not invent URLs - paste the real ones you used.",
+  "papers": [
+    {
+      "year": 2023,
+      "session": "Set1",
+      "paper_code": "CS",
+      "paper_pdf": "GATE2023_CS_Set1.pdf",
+      "key_pdf": "GATE2023_CS_Key.pdf",
+      "source_url": "<official URL of the question paper PDF>",
+      "key_url": "<official URL of the answer key PDF>",
+      "retrieved": "YYYY-MM-DD",
+      "license": "<usage terms stated by the source site>"
+    }
+  ]
+}

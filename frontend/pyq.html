@@ -1,14 +1,216 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Redirecting to Study Studio...</title>
-  <script>
-    const p = window.location.search || '';
-    window.location.replace('study.html?view=pyq' + (p ? '&' + p.replace('?', '') : ''));
-  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EduGraph AI — PYQ Practice</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .pyq-filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.6rem; margin-bottom: 1rem; }
+    .pyq-card { margin-bottom: 0.9rem; padding: 1.25rem 1.4rem; }
+    .pyq-meta { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.75rem; align-items: center; }
+    .pyq-q { font-size: 0.98rem; line-height: 1.6; margin: 0 0 0.9rem; white-space: pre-wrap; }
+    .pyq-opt { display: block; width: 100%; text-align: left; padding: 0.6rem 0.8rem; margin-bottom: 0.4rem; border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm); background: #fff; cursor: pointer; font: inherit; color: var(--text-primary); }
+    .pyq-opt:hover { border-color: var(--border-strong); }
+    .pyq-opt.selected { border-color: var(--accent-primary); background: var(--accent-subtle); }
+    .pyq-opt.multi::before { content: '\2610  '; }
+    .pyq-opt.multi.selected::before { content: '\2611  '; }
+    .pyq-result { margin-top: 0.9rem; padding: 0.9rem 1rem; border-radius: var(--radius-sm); font-size: 0.9rem; line-height: 1.55; }
+    .pyq-result.ok { background: var(--accent-subtle); border: 1px solid rgba(36, 91, 69, 0.3); }
+    .pyq-result.bad { background: var(--accent-rose-subtle); border: 1px solid rgba(168, 40, 40, 0.3); }
+    .pyq-result.neutral { background: var(--bg-surface-secondary); border: 1px solid var(--border-subtle); }
+    .pyq-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; margin-top: 0.4rem; }
+    .pager { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; margin-top: 1rem; flex-wrap: wrap; }
+    .src-official { background: var(--accent-subtle); color: var(--accent-primary); }
+    .src-practice { background: var(--accent-amber-subtle); color: var(--accent-amber); }
+  </style>
 </head>
 <body>
-  <p>Redirecting to Study Studio... <a href="study.html?view=pyq">Click here if not redirected</a>.</p>
+  <div id="main-header"></div>
+  <main class="container">
+    <div style="margin: 1.5rem 0 1rem;">
+      <h2 style="margin: 0 0 0.3rem;">PYQ Practice</h2>
+      <p style="color: var(--text-secondary); margin: 0; font-size: 0.92rem;">
+        Previous-year GATE CSE questions (MCQ, MSQ, NAT). Answers are graded against the stored key and update your topic mastery.
+        Questions tagged <strong>Practice</strong> are EduGraph's own practice set, not real GATE questions.
+      </p>
+    </div>
+
+    <div class="glass-card" style="padding: 1rem 1.25rem; margin-bottom: 1rem;">
+      <div class="pyq-filters">
+        <select id="f-year" class="input-field" aria-label="Year"><option value="">All years</option></select>
+        <select id="f-subject" class="input-field" aria-label="Subject"><option value="">All subjects</option></select>
+        <select id="f-topic" class="input-field" aria-label="Topic"><option value="">All topics</option></select>
+        <select id="f-type" class="input-field" aria-label="Type">
+          <option value="">All types</option><option value="MCQ">MCQ</option><option value="MSQ">MSQ</option><option value="NAT">NAT</option>
+        </select>
+        <select id="f-difficulty" class="input-field" aria-label="Difficulty">
+          <option value="">Any difficulty</option><option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option>
+        </select>
+        <select id="f-origin" class="input-field" aria-label="Source">
+          <option value="">All sources</option><option value="official">Official GATE</option><option value="practice">Practice set</option>
+        </select>
+      </div>
+      <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center;">
+        <input id="f-q" class="input-field" style="flex: 1; min-width: 180px;" placeholder="Search question text..." aria-label="Search">
+        <label style="font-size: 0.85rem; display: flex; gap: 0.35rem; align-items: center;"><input type="checkbox" id="f-unattempted"> Unattempted only</label>
+        <button class="btn btn-primary btn-sm" onclick="applyFilters()">Apply</button>
+        <button class="btn btn-secondary btn-sm" onclick="resetFilters()">Reset</button>
+      </div>
+      <div id="data-note" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.6rem;"></div>
+    </div>
+
+    <div id="pyq-list" aria-live="polite"></div>
+    <div class="pager">
+      <span id="pager-info" style="font-size: 0.85rem; color: var(--text-muted);"></span>
+      <div style="display: flex; gap: 0.5rem;">
+        <button class="btn btn-secondary btn-sm" id="btn-prev" onclick="changePage(-1)">← Previous</button>
+        <button class="btn btn-secondary btn-sm" id="btn-next" onclick="changePage(1)">Next →</button>
+      </div>
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+  <script>
+    renderHeader('pyq');
+    const PAGE = 10;
+    let offset = 0, total = 0, filterData = null;
+    const pending = new Set();             // question ids currently being graded (prevents double submits)
+    const selected = {};                   // questionId -> answer string
+
+    const $ = id => document.getElementById(id);
+
+    async function init() {
+      try {
+        filterData = await apiCall('/pyq/filters');
+        $('f-year').innerHTML = '<option value="">All years</option>' + filterData.years.map(y => `<option value="${y.year}">${y.year} (${y.n})</option>`).join('');
+        $('f-subject').innerHTML = '<option value="">All subjects</option>' + filterData.subjects.map(s => `<option value="${esc(s.subject)}">${esc(s.subject)} (${s.n})</option>`).join('');
+        fillTopics();
+        $('f-subject').onchange = () => { fillTopics(); };
+        const official = filterData.origins.filter(o => o.origin === 'official_gate').reduce((a, o) => a + o.n, 0);
+        const verified = filterData.origins.filter(o => o.origin === 'official_gate' && o.verification_status === 'verified').reduce((a, o) => a + o.n, 0);
+        $('data-note').textContent = official
+          ? `${official} official GATE questions stored (${verified} with a verified official key).`
+          : 'No official GATE papers have been ingested yet. Showing the EduGraph practice set; see docs/GATE_DATA.md to add real papers.';
+        const params = new URLSearchParams(location.search);
+        if (params.get('topic')) { $('f-topic').value = params.get('topic'); }
+        await load();
+      } catch (err) { $('pyq-list').innerHTML = `<div class="glass-card" style="padding:1.25rem;">Could not load questions: ${esc(err.message)}</div>`; }
+    }
+
+    function fillTopics() {
+      const subj = $('f-subject').value;
+      const topics = filterData.topics.filter(t => !subj || t.subject === subj);
+      $('f-topic').innerHTML = '<option value="">All topics</option>' + topics.map(t => `<option value="${esc(t.id)}">${esc(t.name)} (${t.n})</option>`).join('');
+    }
+
+    function query() {
+      const p = new URLSearchParams({ limit: PAGE, offset });
+      const map = { year: 'f-year', subject: 'f-subject', topic: 'f-topic', type: 'f-type', difficulty: 'f-difficulty', origin: 'f-origin', q: 'f-q' };
+      for (const [k, id] of Object.entries(map)) if ($(id).value.trim()) p.set(k, $(id).value.trim());
+      if ($('f-unattempted').checked) p.set('unattempted', 'true');
+      return p;
+    }
+
+    function applyFilters() { offset = 0; load(); }
+    function resetFilters() { ['f-year', 'f-subject', 'f-topic', 'f-type', 'f-difficulty', 'f-origin', 'f-q'].forEach(id => $(id).value = ''); $('f-unattempted').checked = false; fillTopics(); applyFilters(); }
+    function changePage(d) { offset = Math.max(0, offset + d * PAGE); load(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+
+    async function load() {
+      $('pyq-list').innerHTML = '<div class="glass-card" style="padding:1.25rem;">Loading questions...</div>';
+      try {
+        const res = await apiCall(`/pyq?${query()}`);
+        total = res.total;
+        if (!res.questions.length) {
+          $('pyq-list').innerHTML = '<div class="glass-card" style="padding:1.25rem; text-align:center; color: var(--text-secondary);">No questions match these filters.</div>';
+        } else {
+          $('pyq-list').innerHTML = res.questions.map(renderCard).join('');
+        }
+        $('pager-info').textContent = total ? `Showing ${offset + 1}-${Math.min(offset + PAGE, total)} of ${total}` : '';
+        $('btn-prev').disabled = offset === 0;
+        $('btn-next').disabled = offset + PAGE >= total;
+      } catch (err) {
+        $('pyq-list').innerHTML = `<div class="glass-card" style="padding:1.25rem; color: var(--accent-rose);">Failed to load: ${esc(err.message)} <button class="btn btn-secondary btn-sm" onclick="load()">Retry</button></div>`;
+      }
+    }
+
+    function renderCard(q) {
+      const src = q.origin === 'official_gate' ? `<span class="badge-pill src-official">GATE ${q.year}${q.session ? ' · ' + esc(q.session) : ''}</span>` : '<span class="badge-pill src-practice">Practice set</span>';
+      const status = q.attempted ? `<span class="badge-pill ${q.everCorrect ? 'mcq' : 'nat'}">${q.everCorrect ? 'Solved' : 'Attempted'}</span>` : '';
+      const noKey = q.hasOfficialKey ? '' : '<span class="badge-pill nat" title="No verified answer key is stored for this question">No key</span>';
+      let input;
+      if (q.type === 'NAT') {
+        input = `<input type="text" inputmode="decimal" class="input-field" id="in-${esc(q.id)}" placeholder="Numerical answer" style="max-width: 260px;" aria-label="Numerical answer">`;
+      } else {
+        input = (q.options || []).map(o => `<button type="button" class="pyq-opt ${q.type === 'MSQ' ? 'multi' : ''}" data-q="${esc(q.id)}" data-letter="${esc(o.charAt(0))}" data-type="${q.type}">${esc(o)}</button>`).join('');
+        if (q.type === 'MSQ') input = '<div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.4rem;">Select all that apply</div>' + input;
+      }
+      return `<div class="glass-card pyq-card" id="card-${esc(q.id)}">
+        <div class="pyq-meta">${src}<span class="badge-pill">${q.type}</span><span class="badge-pill">${q.marks} mark${q.marks === 1 ? '' : 's'}</span>
+          <span class="topic-badge">${esc(q.subject)} · ${esc(q.topic_id)}</span>${status}${noKey}</div>
+        <p class="pyq-q">${esc(q.question)}</p>
+        <div id="inputs-${esc(q.id)}">${input}</div>
+        <div class="pyq-actions">
+          <button class="btn btn-primary btn-sm" id="btn-${esc(q.id)}" onclick="submitAnswer('${esc(q.id)}')">Submit answer</button>
+          <button class="btn btn-secondary btn-sm" onclick="revealSolution('${esc(q.id)}')">Show solution</button>
+          <a class="btn btn-secondary btn-sm" href="study.html?view=solver&question=${encodeURIComponent(q.id)}">Open in Problem Solver</a>
+        </div>
+        <div id="res-${esc(q.id)}"></div></div>`;
+    }
+
+    document.addEventListener('click', e => {
+      const b = e.target.closest('.pyq-opt');
+      if (!b) return;
+      const id = b.dataset.q, letter = b.dataset.letter;
+      if (b.dataset.type === 'MSQ') {
+        const set = new Set((selected[id] || '').split(';').filter(Boolean));
+        set.has(letter) ? set.delete(letter) : set.add(letter);
+        selected[id] = [...set].sort().join(';');
+        b.classList.toggle('selected');
+      } else {
+        selected[id] = letter;
+        document.querySelectorAll(`.pyq-opt[data-q="${CSS.escape(id)}"]`).forEach(x => x.classList.toggle('selected', x === b));
+      }
+    });
+
+    async function submitAnswer(id) {
+      if (pending.has(id)) return;
+      const nat = document.getElementById(`in-${id}`);
+      const answer = (nat ? nat.value : selected[id] || '').trim();
+      if (!answer) { $(`res-${id}`).innerHTML = '<div class="pyq-result neutral">Enter or select an answer first.</div>'; return; }
+      pending.add(id);
+      const btn = $(`btn-${id}`); btn.disabled = true; btn.textContent = 'Checking...';
+      try {
+        const r = await apiCall(`/pyq/${encodeURIComponent(id)}/attempt`, 'POST', { answer });
+        renderResult(id, r);
+      } catch (err) {
+        $(`res-${id}`).innerHTML = `<div class="pyq-result bad">Could not submit: ${esc(err.message)}</div>`;
+      } finally { pending.delete(id); btn.disabled = false; btn.textContent = 'Submit again'; }
+    }
+
+    async function revealSolution(id) {
+      if (pending.has(id)) return;
+      pending.add(id);
+      try { renderResult(id, await apiCall('/agents/solve', 'POST', { questionId: id, reveal: true })); }
+      catch (err) { $(`res-${id}`).innerHTML = `<div class="pyq-result bad">Could not load solution: ${esc(err.message)}</div>`; }
+      finally { pending.delete(id); }
+    }
+
+    function renderResult(id, r) {
+      let head, cls;
+      if (!r.answered) { head = r.officialAnswer ? `Official answer: <strong>${esc(r.officialAnswer)}</strong>` : 'No verified key is stored for this question.'; cls = 'neutral'; }
+      else if (r.isCorrect === null) { head = 'Submitted. No verified key exists for this question, so it cannot be graded or counted toward mastery.'; cls = 'neutral'; }
+      else if (r.isCorrect) { head = `<strong>Correct.</strong> +${r.marksAwarded} mark${r.marksAwarded === 1 ? '' : 's'}.`; cls = 'ok'; }
+      else { head = `<strong>Incorrect.</strong> Your answer: ${esc(r.studentAnswer)}. Official answer: <strong>${esc(r.officialAnswer)}</strong> (${r.marksAwarded} marks).`; cls = 'bad'; }
+      const bkt = r.bktUpdate ? `<div style="margin-top:0.5rem;">Mastery of <strong>${esc(r.topicId)}</strong>: ${(r.bktUpdate.previousPKnow * 100).toFixed(1)}% → <strong>${(r.bktUpdate.newPKnow * 100).toFixed(1)}%</strong></div>` : '';
+      const srcLabel = { official: 'official solution', curated: 'EduGraph worked solution', ai: 'AI-generated (verify with the key)', none: '' }[r.explanationSource] || '';
+      const expl = r.explanation ? `<div style="margin-top:0.6rem;"><strong>Solution</strong> <span style="color:var(--text-muted);font-size:0.8rem;">(${esc(srcLabel)})</span><div style="margin-top:0.25rem;${r.explanationSource === 'ai' ? '' : 'white-space:pre-wrap;'}">${r.explanationSource === 'ai' ? formatMarkdown(r.explanation) : esc(r.explanation)}</div></div>` : '';
+      const warn = r.explanationWarning ? `<div style="margin-top:0.4rem; color: var(--accent-amber); font-size:0.85rem;">⚠ ${esc(r.explanationWarning)}</div>` : '';
+      $(`res-${id}`).innerHTML = `<div class="pyq-result ${cls}">${head}${bkt}${expl}${warn}</div>`;
+    }
+
+    init();
+  </script>
 </body>
 </html>

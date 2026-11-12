@@ -33,6 +33,10 @@
       color: #FFFFFF;
       border-color: var(--accent-primary);
     }
+    .exam-grid { display: grid; grid-template-columns: 1fr 260px; gap: 1.25rem; }
+    .question-option.multi::before { content: '\2610 '; }
+    .question-option.multi.selected::before { content: '\2611 '; }
+    @media (max-width: 760px) { .exam-grid { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
@@ -42,21 +46,25 @@
     <!-- Start Screen -->
     <div id="mock-start-screen" class="glass-card" style="max-width: 640px; margin: 2rem auto; text-align: center; padding: 2.5rem 2rem;">
       <h2 style="margin-bottom: 0.5rem;">Diagnostic Examination</h2>
-      <p style="color: var(--text-secondary); margin-bottom: 2rem; line-height: 1.6; font-size: 0.95rem;">
-        Curated past GATE questions across Algorithms, Compiler Design, Operating Systems, Databases, and Computer Networks. Applies standard marking (+1.0 / -0.33) and updates topic mastery records.
+      <p style="color: var(--text-secondary); margin-bottom: 1.5rem; line-height: 1.6; font-size: 0.95rem;">
+        Timed GATE-style tests built only from keyed questions in the question bank. Marking: MCQ +marks / &minus;&#8531; of marks if wrong; MSQ and NAT have no negative marking. Each answer updates your topic mastery (BKT).
       </p>
 
-      <div style="display: flex; gap: 0.75rem; justify-content: center; margin-bottom: 1.5rem; flex-wrap: wrap;">
-        <select id="mock-subject-select" class="input-field" style="width: auto; min-width: 220px;">
-          <option value="All">All 5 Subjects (Balanced)</option>
-          <option value="Algorithms">Algorithms</option>
-          <option value="Compiler Design">Compiler Design</option>
-          <option value="Operating Systems">Operating Systems</option>
-          <option value="Databases">Databases</option>
-          <option value="Computer Networks">Computer Networks</option>
+      <div style="display: flex; gap: 0.75rem; justify-content: center; margin-bottom: 1rem; flex-wrap: wrap;">
+        <select id="mock-subject-select" class="input-field" style="width: auto; min-width: 180px;" aria-label="Subject"><option value="All">All subjects</option></select>
+        <select id="mock-year-select" class="input-field" style="width: auto; min-width: 120px;" aria-label="Year"><option value="">Any year</option></select>
+        <select id="mock-origin-select" class="input-field" style="width: auto; min-width: 170px;" aria-label="Question source">
+          <option value="any">Official + practice</option>
+          <option value="official">Official GATE only</option>
+          <option value="practice">Practice set only</option>
         </select>
-        <button class="btn btn-primary" onclick="startMockExam()">Begin Examination</button>
+        <select id="mock-count-select" class="input-field" style="width: auto;" aria-label="Number of questions">
+          <option value="5">5 questions</option><option value="10" selected>10 questions</option>
+          <option value="20">20 questions</option><option value="30">30 questions</option><option value="65">65 (full paper)</option>
+        </select>
       </div>
+      <div id="mock-source-note" style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1.25rem;"></div>
+      <button class="btn btn-primary" id="btn-start-mock" onclick="startMockExam()">Begin Examination</button>
     </div>
 
     <!-- Exam Screen -->
@@ -69,7 +77,7 @@
         <div class="exam-timer" id="exam-timer">15:00</div>
       </div>
 
-      <div style="display: grid; grid-template-columns: 1fr 260px; gap: 1.25rem;">
+      <div class="exam-grid">
         <!-- Question Workspace -->
         <div class="glass-card" style="padding: 1.75rem;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
@@ -150,149 +158,146 @@
     let answers = {};
     let timerInterval = null;
     let remainingSeconds = 900;
+    let submitting = false;
+
+    async function loadMockFilters() {
+      try {
+        const f = await apiCall('/pyq/filters');
+        const subj = document.getElementById('mock-subject-select');
+        subj.innerHTML = '<option value="All">All subjects</option>' + f.subjects.map(x => `<option value="${esc(x.subject)}">${esc(x.subject)} (${x.n})</option>`).join('');
+        const yr = document.getElementById('mock-year-select');
+        yr.innerHTML = '<option value="">Any year</option>' + f.years.map(x => `<option value="${x.year}">${x.year} (${x.n})</option>`).join('');
+        const off = f.origins.filter(o => o.origin === 'official_gate' && o.verification_status === 'verified').reduce((a, o) => a + o.n, 0);
+        document.getElementById('mock-source-note').textContent = off
+          ? `${off} verified official GATE questions available.`
+          : 'No official GATE papers ingested yet - tests currently use the EduGraph practice set (not real GATE questions).';
+      } catch (err) { /* login redirect handled in apiCall */ }
+    }
 
     async function startMockExam() {
-      const subj = document.getElementById('mock-subject-select').value;
+      const btn = document.getElementById('btn-start-mock');
+      if (btn.disabled) return;
+      btn.disabled = true; btn.textContent = 'Preparing...';
+      const params = new URLSearchParams({
+        subject: document.getElementById('mock-subject-select').value,
+        origin: document.getElementById('mock-origin-select').value,
+        count: document.getElementById('mock-count-select').value
+      });
+      const yr = document.getElementById('mock-year-select').value;
+      if (yr) params.set('year', yr);
       try {
-        const data = await apiCall(`/mock/start?subject=${encodeURIComponent(subj)}&count=6`);
-        examData = data;
-        currentIndex = 0;
-        answers = {};
-        remainingSeconds = data.durationMinutes * 60;
-
+        examData = await apiCall(`/mock/start?${params}`);
+        currentIndex = 0; answers = {}; submitting = false;
+        remainingSeconds = examData.durationMinutes * 60;
+        document.getElementById('exam-title').textContent = examData.title;
         document.getElementById('mock-start-screen').style.display = 'none';
         document.getElementById('mock-exam-screen').style.display = 'block';
-
-        buildPalette();
-        showQuestion(0);
-        startTimer();
+        buildPalette(); showQuestion(0); startTimer();
+        if (examData.shortfall) alert(examData.shortfall);
       } catch (err) {
         alert('Could not start mock: ' + err.message);
+        btn.disabled = false; btn.textContent = 'Begin Examination';
       }
     }
 
     function startTimer() {
+      clearInterval(timerInterval);
       timerInterval = setInterval(() => {
         remainingSeconds--;
-        const mins = Math.floor(remainingSeconds / 60);
-        const secs = remainingSeconds % 60;
+        const mins = Math.floor(Math.max(0, remainingSeconds) / 60), secs = Math.max(0, remainingSeconds) % 60;
         document.getElementById('exam-timer').textContent = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-
-        if (remainingSeconds <= 0) {
-          clearInterval(timerInterval);
-          finishExam();
-        }
+        if (remainingSeconds <= 0) { clearInterval(timerInterval); finishExam(); }
       }, 1000);
     }
 
     function buildPalette() {
-      const pal = document.getElementById('question-palette');
-      pal.innerHTML = examData.questions.map((q, idx) => `
-        <button class="palette-btn ${idx === 0 ? 'active' : ''}" id="pal-${idx}" onclick="showQuestion(${idx})">
-          ${idx + 1}
-        </button>
-      `).join('');
+      document.getElementById('question-palette').innerHTML = examData.questions.map((q, idx) =>
+        `<button class="palette-btn ${idx === 0 ? 'active' : ''}" id="pal-${idx}" onclick="showQuestion(${idx})">${idx + 1}</button>`).join('');
     }
 
     function showQuestion(idx) {
       currentIndex = idx;
       const q = examData.questions[idx];
-
-      document.getElementById('exam-subtitle').textContent = `Question ${idx + 1} of ${examData.questions.length}`;
+      document.getElementById('exam-subtitle').textContent = `Question ${idx + 1} of ${examData.questions.length} - ${examData.maxScore} marks total`;
       document.getElementById('q-subject-badge').textContent = q.subject;
-      document.getElementById('q-type-badge').textContent = `${q.type} (${q.year})`;
+      document.getElementById('q-type-badge').textContent = `${q.type} - ${q.marks} mark${q.marks === 1 ? '' : 's'} - ${q.origin === 'official_gate' ? 'GATE ' + q.year : 'Practice'}`;
       document.getElementById('q-text').textContent = q.question;
+      document.querySelectorAll('.palette-btn').forEach((b, i) => b.classList.toggle('active', i === idx));
 
-      document.querySelectorAll('.palette-btn').forEach((b, i) => {
-        b.classList.remove('active');
-        if (i === idx) b.classList.add('active');
-      });
-
-      const optContainer = document.getElementById('q-options-container');
-      if (q.type === 'MCQ' && q.options && q.options.length > 0) {
-        optContainer.innerHTML = q.options.map(opt => {
-          const optLetter = opt.charAt(0);
-          const isSelected = answers[q.id] === optLetter;
-          return `
-            <div class="question-option ${isSelected ? 'selected' : ''}" onclick="selectMCQ('${q.id}', '${optLetter}', this)">
-              ${opt}
-            </div>
-          `;
-        }).join('');
+      const box = document.getElementById('q-options-container');
+      if ((q.type === 'MCQ' || q.type === 'MSQ') && q.options && q.options.length) {
+        const chosen = String(answers[q.id] || '').split(';').filter(Boolean);
+        box.innerHTML = (q.type === 'MSQ' ? '<div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.5rem;">Select all that apply</div>' : '') +
+          q.options.map(opt => {
+            const letter = opt.charAt(0);
+            return `<div class="question-option ${q.type === 'MSQ' ? 'multi' : ''} ${chosen.includes(letter) ? 'selected' : ''}" data-letter="${esc(letter)}" role="button" tabindex="0">${esc(opt)}</div>`;
+          }).join('');
+        box.querySelectorAll('.question-option').forEach(el => {
+          el.onclick = () => (q.type === 'MSQ' ? toggleMSQ(q.id, el.dataset.letter, el) : selectMCQ(q.id, el.dataset.letter, el));
+          el.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); el.click(); } };
+        });
       } else {
-        const currentAns = answers[q.id] || '';
-        optContainer.innerHTML = `
-          <input type="text" class="input-field" placeholder="Enter numerical answer" value="${currentAns}" oninput="recordAnswer('${q.id}', this.value)">
-        `;
+        box.innerHTML = `<input type="text" inputmode="decimal" class="input-field" placeholder="Enter numerical answer" value="${esc(answers[q.id] || '')}" aria-label="Numerical answer">`;
+        box.querySelector('input').oninput = e => recordAnswer(q.id, e.target.value);
       }
     }
 
+    function markPalette() {
+      const q = examData.questions[currentIndex];
+      const b = document.getElementById(`pal-${currentIndex}`);
+      if (b) b.classList.toggle('answered', !!String(answers[q.id] || '').trim());
+    }
     function selectMCQ(qId, letter, el) {
       answers[qId] = letter;
       document.querySelectorAll('.question-option').forEach(o => o.classList.remove('selected'));
-      el.classList.add('selected');
-
-      const palBtn = document.getElementById(`pal-${currentIndex}`);
-      if (palBtn) palBtn.classList.add('answered');
+      el.classList.add('selected'); markPalette();
     }
-
-    function recordAnswer(qId, val) {
-      answers[qId] = val.trim();
-      const palBtn = document.getElementById(`pal-${currentIndex}`);
-      if (palBtn) {
-        if (val.trim()) palBtn.classList.add('answered');
-        else palBtn.classList.remove('answered');
-      }
+    function toggleMSQ(qId, letter, el) {
+      const set = new Set(String(answers[qId] || '').split(';').filter(Boolean));
+      if (set.has(letter)) set.delete(letter); else set.add(letter);
+      answers[qId] = [...set].sort().join(';');
+      el.classList.toggle('selected'); markPalette();
     }
-
-    function prevQuestion() {
-      if (currentIndex > 0) showQuestion(currentIndex - 1);
-    }
-
-    function nextQuestion() {
-      if (currentIndex < examData.questions.length - 1) showQuestion(currentIndex + 1);
-    }
+    function recordAnswer(qId, val) { answers[qId] = val.trim(); markPalette(); }
+    function prevQuestion() { if (currentIndex > 0) showQuestion(currentIndex - 1); }
+    function nextQuestion() { if (currentIndex < examData.questions.length - 1) showQuestion(currentIndex + 1); }
 
     async function finishExam() {
-      clearInterval(timerInterval);
-
-      const submissions = examData.questions.map(q => ({
-        questionId: q.id,
-        answer: answers[q.id] || ''
-      }));
-
+      if (submitting || !examData) return;
+      const unanswered = examData.questions.filter(q => !String(answers[q.id] || '').trim()).length;
+      if (remainingSeconds > 0 && unanswered && !confirm(`${unanswered} question(s) are unanswered. Submit anyway?`)) return;
+      submitting = true; clearInterval(timerInterval);
+      const submissions = examData.questions.map(q => ({ questionId: q.id, answer: answers[q.id] || '' }));
       try {
-        const report = await apiCall('/mock/submit', 'POST', {
-          testId: examData.testId,
-          submissions
-        });
-
+        const report = await apiCall('/mock/submit', 'POST', { testId: examData.testId, submissions });
         document.getElementById('mock-exam-screen').style.display = 'none';
         document.getElementById('mock-report-screen').style.display = 'block';
-
-        document.getElementById('rep-score').textContent = `${report.estimatedMarks} Marks`;
-        document.getElementById('rep-accuracy').textContent = `${report.percentageScore}%`;
-        document.getElementById('rep-correct').textContent = `${report.correctCount} / ${report.totalQuestions}`;
-
-        const tbList = document.getElementById('topic-breakdown-list');
-        tbList.innerHTML = Object.entries(report.topicBreakdown).map(([tId, st]) => `
-          <div class="glass-card" style="margin-bottom: 0.75rem; padding: 0.85rem 1.15rem; display: flex; justify-content: space-between; align-items: center;">
-            <div>
-              <strong>${tId}</strong> (${st.subject})
-              <div style="font-size: 0.8rem; color: var(--text-muted);">
-                Correct: ${st.correct}, Wrong: ${st.wrong}, Unattempted: ${st.unattempted}
-              </div>
+        document.getElementById('rep-score').textContent = `${report.score} / ${report.maxScore}`;
+        document.getElementById('rep-accuracy').textContent = report.accuracyOfAttempted === null ? 'n/a' : `${report.accuracyOfAttempted}%`;
+        document.getElementById('rep-correct').textContent = `${report.correctCount} / ${report.correctCount + report.wrongCount}`;
+        document.getElementById('topic-breakdown-list').innerHTML = Object.entries(report.topicBreakdown).map(([tId, st]) => `
+          <div class="glass-card" style="margin-bottom: 0.75rem; padding: 0.85rem 1.15rem; display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+            <div><strong>${esc(tId)}</strong> (${esc(st.subject)})
+              <div style="font-size: 0.8rem; color: var(--text-muted);">Correct: ${st.correct}, Wrong: ${st.wrong}, Unattempted: ${st.unattempted}</div></div>
+            <span class="mastery-score-badge ${st.wrong > 0 ? 'low' : ''}">${st.correct}/${st.total} Correct</span>
+          </div>`).join('');
+        document.getElementById('topic-breakdown-list').insertAdjacentHTML('afterend', '<h3 style="margin: 1.5rem 0 0.85rem; font-size: 1.05rem;">Question Review</h3><div id="review-list"></div>');
+        document.getElementById('review-list').innerHTML = report.detailedResults.map((r, i) => `
+          <details class="glass-card" style="margin-bottom: 0.6rem; padding: 0.75rem 1rem;">
+            <summary style="cursor: pointer;">Q${i + 1}. ${r.isCorrect ? '&#10003;' : (r.studentAnswer === 'Not Attempted' ? '&ndash;' : '&#10007;')} ${esc(r.question.slice(0, 90))}${r.question.length > 90 ? '...' : ''} <span style="float:right;">${r.marksAwarded} / ${r.marks}</span></summary>
+            <div style="font-size: 0.88rem; margin-top: 0.6rem; line-height: 1.55;">
+              <div>Your answer: <strong>${esc(r.studentAnswer)}</strong> &middot; Official answer: <strong>${esc(r.officialAnswer)}</strong> ${r.origin === 'official_gate' ? '(official GATE key)' : '(practice set)'}</div>
+              ${r.explanation ? `<div style="margin-top: 0.4rem; color: var(--text-secondary);">${esc(r.explanation)} <em>(${esc(r.explanationSource)})</em></div>` : ''}
             </div>
-            <span class="mastery-score-badge ${st.wrong > 0 ? 'low' : ''}">
-              ${st.correct}/${st.total} Correct
-            </span>
-          </div>
-        `).join('');
-
+          </details>`).join('');
       } catch (err) {
+        submitting = false;
         alert('Failed to evaluate exam: ' + err.message);
+        if (remainingSeconds > 0) startTimer();
       }
     }
+
+    loadMockFilters();
   </script>
 </body>
 </html>

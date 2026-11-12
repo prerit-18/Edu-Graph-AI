@@ -1,0 +1,126 @@
+[
+  {
+    "id": "held_01",
+    "query": "why does adding more page frames sometimes increase the number of page faults",
+    "should_be_grounded": true,
+    "expected_topic": "os_virtual_mem"
+  },
+  {
+    "id": "held_02",
+    "query": "how do routers learn the best path to a destination",
+    "should_be_grounded": true,
+    "expected_topic": "cn_routing"
+  },
+  {
+    "id": "held_03",
+    "query": "difference between a process and a thread",
+    "should_be_grounded": true,
+    "expected_topic": "os_process_ipc"
+  },
+  {
+    "id": "held_04",
+    "query": "what makes a transaction schedule serializable",
+    "should_be_grounded": true,
+    "expected_topic": "dbms_transactions"
+  },
+  {
+    "id": "held_05",
+    "query": "how many bits are needed for the page offset with 4 KB pages",
+    "should_be_grounded": true,
+    "expected_topic": "os_virtual_mem"
+  },
+  {
+    "id": "held_06",
+    "query": "convert a regular expression into a finite automaton",
+    "should_be_grounded": true,
+    "expected_topic": "toc_regular"
+  },
+  {
+    "id": "held_07",
+    "query": "what is the halting problem",
+    "should_be_grounded": true,
+    "expected_topic": "toc_tm_undecidability"
+  },
+  {
+    "id": "held_08",
+    "query": "how is cache hit ratio used to compute average memory access time",
+    "should_be_grounded": true,
+    "expected_topic": "coa_memory_io"
+  },
+  {
+    "id": "held_09",
+    "query": "how does a stack differ from a queue",
+    "should_be_grounded": true,
+    "expected_topic": "pds_linear_structures"
+  },
+  {
+    "id": "held_10",
+    "query": "can dijkstra handle negative edge weights",
+    "should_be_grounded": true,
+    "expected_topic": "algo_graphs_mst_shortest_paths"
+  },
+  {
+    "id": "held_11",
+    "query": "how to decompose a relation into BCNF",
+    "should_be_grounded": true,
+    "expected_topic": "dbms_normalization"
+  },
+  {
+    "id": "held_12",
+    "query": "what is the time complexity of heap sort",
+    "should_be_grounded": true,
+    "expected_topic": "algo_searching_sorting_hashing"
+  },
+  {
+    "id": "held_13",
+    "query": "how does TCP detect lost packets",
+    "should_be_grounded": true,
+    "expected_topic": "cn_transport_tcp"
+  },
+  {
+    "id": "held_14",
+    "query": "explain shift reduce conflicts in parsers",
+    "should_be_grounded": true,
+    "expected_topic": "compiler_parsing"
+  },
+  {
+    "id": "held_15",
+    "query": "how do I fine tune a large language model",
+    "should_be_grounded": false
+  },
+  {
+    "id": "held_16",
+    "query": "what is gradient boosting and how does xgboost work",
+    "should_be_grounded": false
+  },
+  {
+    "id": "held_17",
+    "query": "how does bitcoin proof of work consensus function",
+    "should_be_grounded": false
+  },
+  {
+    "id": "held_18",
+    "query": "predict stock prices using an lstm network",
+    "should_be_grounded": false
+  },
+  {
+    "id": "held_19",
+    "query": "best exercises for building leg muscles",
+    "should_be_grounded": false
+  },
+  {
+    "id": "held_20",
+    "query": "who is the current prime minister of india",
+    "should_be_grounded": false
+  },
+  {
+    "id": "held_21",
+    "query": "explain how react hooks manage component state",
+    "should_be_grounded": false
+  },
+  {
+    "id": "held_22",
+    "query": "what is the plot of the movie inception",
+    "should_be_grounded": false
+  }
+]

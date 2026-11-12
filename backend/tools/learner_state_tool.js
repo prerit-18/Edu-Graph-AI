@@ -12,8 +12,9 @@ class LearnerStateTool {
 
   getUserMastery(userId) {
     const query = `
-      SELECT t.id AS topic_id, t.name AS topic_name, t.subject, t.pyq_weight,
-             COALESCE(m.p_know, 0.0) AS p_know,
+      SELECT t.id AS topic_id, t.name AS topic_name, t.subject, t.pyq_weight, t.prerequisite_id,
+             COALESCE(m.p_know, 0.30) AS p_know,
+             COALESCE(m.n_attempts, 0) AS n_attempts,
              m.last_seen,
              rs.due_at, rs.priority AS revision_priority
       FROM topics t
@@ -25,7 +26,8 @@ class LearnerStateTool {
   }
 
   getWeakTopics(userId, threshold = 0.60) {
-    const list = this.getUserMastery(userId);
+    // Only topics the learner has actually attempted can be called "weak".
+    const list = this.getUserMastery(userId).filter(m => m.last_seen && m.n_attempts >= 1);
     return list
       .filter(item => item.p_know < threshold)
       .sort((a, b) => (b.revision_priority || 0) - (a.revision_priority || 0));

@@ -1,65 +1,68 @@
-const { execFile } = require('child_process');
+const { spawn } = require('child_process');
 const path = require('path');
+const tokenMonitor = require('../services/token_monitor');
+const llmClient = require('./llm_client');
 
-const RUNNER_SCRIPT = path.resolve(__dirname, '../crewai/crew_runner.py');
-const PYTHON_CANDIDATES = [
-  process.env.PYTHON_BIN,
-  '/opt/anaconda3/bin/python3',
-  '/opt/anaconda3/bin/python',
-  'python3',
-  'python'
-].filter(Boolean);
+const RUNNER = path.resolve(__dirname, '../crewai/crew_runner.py');
+const TIMEOUT_MS = Number(process.env.CREWAI_TIMEOUT_MS || 60000);
+const PYTHON = [process.env.PYTHON_BIN, 'python3', 'python'].filter(Boolean);
 
-/**
- * Executes a task using the official Python CrewAI engine
- * @param {Object} options - { task, query, subject, topicId, questionId, studentAnswer, userId }
- */
-function runCrewAITask({ task, query = '', subject, topicId, questionId, studentAnswer, userId }) {
+/** CrewAI is used when enabled (default) AND an LLM key exists. Set USE_CREWAI=false to bypass. */
+function crewEnabled() {
+  return String(process.env.USE_CREWAI || 'true').toLowerCase() !== 'false' && llmClient.hasValidKey();
+}
+
+function runPython(bin, payload) {
   return new Promise((resolve, reject) => {
-    const payload = JSON.stringify({ subject, topicId, questionId, studentAnswer, userId, query });
-    const args = [
-      RUNNER_SCRIPT,
-      '--task', task,
-      '--query', query || '',
-      '--data', payload
-    ];
-
-    // Try candidate Python binaries
-    let tried = 0;
-    function tryNext() {
-      if (tried >= PYTHON_CANDIDATES.length) {
-        return reject(new Error('No working Python binary found for CrewAI execution'));
-      }
-
-      const pythonBin = PYTHON_CANDIDATES[tried++];
-      execFile(pythonBin, args, { maxBuffer: 10 * 1024 * 1024, timeout: 45000 }, (err, stdout, stderr) => {
-        if (err) {
-          // If binary not found, try next
-          if (err.code === 'ENOENT') {
-            return tryNext();
-          }
-          console.warn(`[CrewAI Bridge Warning] (${pythonBin}):`, stderr || err.message);
-          return reject(err);
-        }
-
-        try {
-          const raw = stdout.trim();
-          const jsonStart = raw.indexOf('{');
-          const jsonEnd = raw.lastIndexOf('}');
-          const jsonStr = (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd >= jsonStart) ? raw.substring(jsonStart, jsonEnd + 1) : raw;
-          const parsed = JSON.parse(jsonStr);
-          resolve(parsed);
-        } catch (parseErr) {
-          console.warn('[CrewAI Bridge Parse Warning] Raw output:', stdout);
-          reject(new Error(`Failed to parse CrewAI response: ${parseErr.message}`));
-        }
-      });
-    }
-
-    tryNext();
+    const child = spawn(bin, [RUNNER], { env: process.env, stdio: ['pipe', 'pipe', 'pipe'] });
+    let out = '', err = '', done = false;
+    const timer = setTimeout(() => { if (!done) { done = true; child.kill('SIGKILL'); reject(new Error(`CrewAI timeout after ${TIMEOUT_MS}ms`)); } }, TIMEOUT_MS);
+    child.stdout.on('data', d => { out += d; if (out.length > 5e6) child.kill('SIGKILL'); });
+    child.stderr.on('data', d => { err += d; });
+    child.on('error', e => { if (!done) { done = true; clearTimeout(timer); reject(e); } });
+    child.on('close', () => {
+      if (done) return; done = true; clearTimeout(timer);
+      const line = out.split('\n').reverse().find(l => l.startsWith('@@EDUGRAPH_RESULT@@'));
+      if (!line) return reject(new Error(`CrewAI produced no result line (${err.slice(-200)})`));
+      try { resolve(JSON.parse(line.slice('@@EDUGRAPH_RESULT@@'.length))); } catch (e) { reject(new Error(`CrewAI JSON parse failed: ${e.message}`)); }
+    });
+    child.stdin.end(JSON.stringify(payload));
   });
 }
 
-module.exports = {
-  runCrewAITask
-};
+/**
+ * Run ONE real CrewAI crew (1 agent / 1 task / sequential) for a role.
+ * @returns {Promise<{text:string, usage:object, model:string}|null>}  null => caller should use llmClient fallback
+ */
+async function runCrew({ role, description, expectedOutput, context = '', fast = false, agentLabel = role, featureLabel = 'general' }) {
+  if (!crewEnabled()) return null;
+  const started = Date.now();
+  for (const bin of PYTHON) {
+    try {
+      const r = await runPython(bin, { role, description, expected_output: expectedOutput, context, fast });
+      if (!r.ok) { console.warn(`[CrewAI] ${role}: ${r.error}`); return null; }
+      const u = r.usage || {};
+      tokenMonitor.recordCall({
+        agent: agentLabel, feature: featureLabel, inputText: description + context, outputText: r.text,
+        model: r.model || 'crewai', latencyMs: Date.now() - started, via: 'crewai',
+        usage: Number.isFinite(u.prompt_tokens) && u.total_tokens > 0 ? { input: u.prompt_tokens, output: u.completion_tokens } : null
+      });
+      return { text: r.text, usage: u, model: r.model };
+    } catch (e) {
+      if (e.code === 'ENOENT') continue; // try next python binary
+      console.warn(`[CrewAI] ${role} failed: ${e.message}`);
+      return null;
+    }
+  }
+  return null;
+}
+
+/** CrewAI first, then the direct provider call, else null (agents then use deterministic fallbacks). */
+async function generateWithCrew({ role, description, expectedOutput, context, systemPrompt, userPrompt, maxOutputTokens, agentLabel, featureLabel }) {
+  const crew = await runCrew({ role, description, expectedOutput, context, fast: false, agentLabel, featureLabel });
+  if (crew && crew.text && crew.text.trim()) return { text: crew.text.trim(), via: 'crewai' };
+  const text = await llmClient.generate({ systemPrompt, userPrompt, maxOutputTokens, agentLabel, featureLabel });
+  return text ? { text, via: 'direct' } : null;
+}
+
+module.exports = { runCrew, generateWithCrew, crewEnabled };

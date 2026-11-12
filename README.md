@@ -1,6 +1,30 @@
 # EduGraph AI — Multi-Agent Adaptive Learning Platform for GATE CSE
 
-EduGraph AI is an advanced, multi-agent educational platform tailored for GATE Computer Science & Engineering preparation. It integrates Multi-Agent CrewAI orchestration, Hybrid RAG with Vector Search, Bayesian Knowledge Tracing (BKT), Active Recall self-testing, and a realistic AI Speaking Tutor.
+Minor-project scope: **7 active agents**; 2 further agents (Doubt Debugger, Interview) are **reserved for the Major Project** and are deliberately not implemented.
+
+| Agent | Implementation | CrewAI? |
+|---|---|---|
+| Syllabus Agent | official-syllabus data + prerequisite graph + BKT readiness | no (deterministic) |
+| Concept Teacher | concept-strategy RAG -> explanation, related PYQs, refusal when ungrounded | yes (crew, fallback to direct LLM / stored notes) |
+| PYQ Analyst | statistics computed from the question bank; LLM narrates only with >= 3 questions | yes |
+| Problem Solver | deterministic grading vs. official key; AI derivation only if no stored solution | yes (calculator tool) |
+| Revision Agent | BKT + recency + `revision_schedule`, only attempted topics, with suggested PYQs | no |
+| Mock Test Agent | persisted tests from keyed questions, GATE marking, no repeats | no |
+| Active Recall Agent | dynamic grounded questions (learner level, past mistakes), numeric answers graded in code, semantic grading, 3 attempts enforced server-side | no (direct Gemini, validated JSON) |
+
+**Setup**
+```bash
+cd backend && npm install && cp .env.example .env     # set JWT_SECRET (openssl rand -hex 48) and an LLM key
+pip install -r crewai/requirements.txt               # only if USE_CREWAI=true
+npm start                                            # http://localhost:4000 (seeds syllabus + question bank, validates the Gemini key)
+npm run embed                                        # optional: Gemini embeddings for semantic retrieval (~460 API calls, resumable)
+npm test                                             # 14 suites, throw-away DBs, stubbed Gemini, no network
+```
+GATE paper data: see [docs/GATE_DATA.md](docs/GATE_DATA.md). Full change log and verification results: [docs/CHANGES.md](docs/CHANGES.md).
+
+---
+
+EduGraph AI is a multi-agent educational platform for GATE Computer Science & Engineering preparation. It combines CrewAI-backed explanation agents, hybrid retrieval (BM25 + character n-grams, optionally blended with Gemini embeddings, over the syllabus and a structured GATE question bank; retrieval only - no model is fine-tuned), Bayesian Knowledge Tracing (BKT), Active Recall self-testing, and an AI Speaking Tutor.
 
 ---
 
@@ -89,7 +113,9 @@ npm test
 - `tests/active_recall.test.js`: Validates question generation, answer evaluation, rubric parsing, and mastery updates.
 - `tests/agents.test.js`: Validates Concept Teacher, Problem Solver, Revision, and Assessment agents.
 - `tests/bkt.test.js`: Validates Bayesian Knowledge Tracing updates.
-- `tests/rag.test.js`: Validates vector search retrieval and source grounding.
+- `tests/rag.test.js`, `tests/rag_eval.test.js`: retrieval, source grounding, refusal of out-of-domain queries, held-out evaluation.
+- `tests/api_flow.test.js`: auth, PYQ practice, mock tests, revision, flashcards, concept study.
+- `tests/gate_pipeline.test.js`: PDF ingestion pipeline on synthetic fixture PDFs (temp directories).
 - `tests/e2e.test.js`: Full end-to-end integration workflows.
 
 ---

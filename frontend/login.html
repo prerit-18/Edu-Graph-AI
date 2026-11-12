@@ -75,7 +75,7 @@
 
         <div class="form-group">
           <label for="password">Password</label>
-          <input type="password" id="password" class="input-field" placeholder="••••••••" required>
+          <input type="password" id="password" class="input-field" placeholder="••••••••" required minlength="8" maxlength="128" autocomplete="current-password">
         </div>
 
         <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;" id="btn-submit">
@@ -134,8 +134,15 @@
       const password = document.getElementById('password').value;
       const name = document.getElementById('name').value.trim();
       const alertBox = document.getElementById('auth-alert');
+      const btnSubmit = document.getElementById('btn-submit');
 
       alertBox.style.display = 'none';
+      if (currentMode === 'signup' && password.length < 8) {
+        alertBox.style.display = 'block'; alertBox.style.color = 'var(--accent-rose)';
+        alertBox.textContent = 'Password must be at least 8 characters.'; return;
+      }
+      if (btnSubmit.disabled) return;
+      btnSubmit.disabled = true;
 
       try {
         let res;
@@ -153,6 +160,7 @@
         alertBox.style.border = '1px solid rgba(168, 40, 40, 0.3)';
         alertBox.style.color = 'var(--accent-rose)';
         alertBox.textContent = err.message || 'Authentication failed';
+        btnSubmit.disabled = false;
       }
     }
   </script>

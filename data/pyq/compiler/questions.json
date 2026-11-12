@@ -14,7 +14,13 @@
     ],
     "answer": "B",
     "numeric_answer": null,
-    "explanation": "LALR(1) is constructed by merging states of CLR(1) that have identical sets of core items. Merging states with identical cores never produces shift-reduce conflicts, but it CAN produce reduce-reduce conflicts if lookaheads overlap."
+    "explanation": "LALR(1) is constructed by merging states of CLR(1) that have identical sets of core items. Merging states with identical cores never produces shift-reduce conflicts, but it CAN produce reduce-reduce conflicts if lookaheads overlap.",
+    "origin": "synthetic_practice",
+    "verification_status": "synthetic",
+    "marks": 1,
+    "negative_marks": 0.33,
+    "difficulty": "easy",
+    "source_document": "EduGraph curated practice set (not an official GATE paper)"
   },
   {
     "id": "compiler_2023_001",
@@ -31,6 +37,12 @@
     ],
     "answer": "B",
     "numeric_answer": null,
-    "explanation": "In an L-attributed SDD, each inherited attribute of node X_j in production A -> X_1 X_2 ... X_n can depend only on inherited attributes of parent A and attributes of symbols X_1 ... X_{j-1} to its left."
+    "explanation": "In an L-attributed SDD, each inherited attribute of node X_j in production A -> X_1 X_2 ... X_n can depend only on inherited attributes of parent A and attributes of symbols X_1 ... X_{j-1} to its left.",
+    "origin": "synthetic_practice",
+    "verification_status": "synthetic",
+    "marks": 1,
+    "negative_marks": 0.33,
+    "difficulty": "easy",
+    "source_document": "EduGraph curated practice set (not an official GATE paper)"
   }
 ]

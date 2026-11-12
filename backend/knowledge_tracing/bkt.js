@@ -9,6 +9,28 @@ const DEFAULT_BKT_PARAMS = {
   p_g: 0.20     // Guess probability (doesn't know but answers correctly)
 };
 
+// Guess probability depends on the response format: a random MCQ guess succeeds ~25%,
+// an MSQ needs the exact subset (~7%), a NAT answer is practically unguessable, and a
+// free-text recall answer is rarely right by luck. p_l0/p_t/p_s keep the global values.
+const PARAMS_BY_TYPE = {
+  MCQ: { p_g: 0.25 },
+  MSQ: { p_g: 0.07 },
+  NAT: { p_g: 0.03 },
+  RECALL: { p_g: 0.10, p_s: 0.15 }
+};
+
+// Classification thresholds shared by dashboard, revision and smart flashcards.
+const THRESHOLDS = { weak: 0.50, strong: 0.65, mastered: 0.75, minAttempts: 2 };
+
+/** insufficient_data | weak | learning | strong | mastered */
+function statusFor(pKnow, nAttempts) {
+  if (!nAttempts || nAttempts < THRESHOLDS.minAttempts) return 'insufficient_data';
+  if (pKnow >= THRESHOLDS.mastered) return 'mastered';
+  if (pKnow >= THRESHOLDS.strong) return 'strong';
+  if (pKnow < THRESHOLDS.weak) return 'weak';
+  return 'learning';
+}
+
 /**
  * Pure deterministic Bayesian Knowledge Tracing update
  * @param {number} pKnow - Current prior probability of knowing the skill P(L_t)
@@ -50,7 +72,7 @@ function updateBKT(pKnow, isCorrect, params = DEFAULT_BKT_PARAMS) {
  */
 function getMastery(userId, topicId) {
   const row = db.prepare(`
-    SELECT user_id, topic_id, p_know, last_seen 
+    SELECT user_id, topic_id, p_know, last_seen, n_attempts 
     FROM mastery 
     WHERE user_id = ? AND topic_id = ?
   `).get(userId, topicId);
@@ -65,7 +87,8 @@ function getMastery(userId, topicId) {
     user_id: userId,
     topic_id: topicId,
     p_know: DEFAULT_BKT_PARAMS.p_l0,
-    last_seen: null
+    last_seen: null,
+    n_attempts: 0
   };
 }
 
@@ -111,35 +134,42 @@ function recalculateRevision(userId, topicId, pKnow) {
  * 5. Update last_seen
  * 6. Recalculate revision
  */
-function recordAttempt(userId, topicId, agent, question, answer, correct) {
+function recordAttempt(userId, topicId, agent, question, answer, correct, opts = {}) {
+  const topic = db.prepare('SELECT id FROM topics WHERE id = ?').get(topicId);
+  if (!topic) {
+    const err = new Error(`Unknown topic "${topicId}" - cannot record learner progress`);
+    err.status = 400;
+    throw err;
+  }
   const attemptId = crypto.randomUUID();
   const isCorrect = correct ? 1 : 0;
   const now = new Date().toISOString();
+  const params = PARAMS_BY_TYPE[String(opts.type || '').toUpperCase()] || {};
 
-  // 1. Save attempt
-  db.prepare(`
-    INSERT INTO attempts (id, user_id, topic_id, agent, question, answer, correct, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(attemptId, userId, topicId, agent, question, String(answer), isCorrect, now);
+  const run = () => {
+    const current = getMastery(userId, topicId);
+    const previousPKnow = current.p_know;
+    const newPKnow = updateBKT(previousPKnow, isCorrect, params);
 
-  // 2. Read previous P(Know)
-  const current = getMastery(userId, topicId);
-  const previousPKnow = current.p_know;
+    db.prepare(`
+      INSERT INTO attempts (id, user_id, topic_id, agent, question, answer, correct, created_at, source, question_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(attemptId, userId, topicId, agent, question, String(answer), isCorrect, now, opts.source || '', opts.questionId || '');
 
-  // 3. Apply BKT update
-  const newPKnow = updateBKT(previousPKnow, isCorrect);
+    db.prepare(`
+      INSERT INTO mastery (user_id, topic_id, p_know, last_seen, n_attempts, n_correct)
+      VALUES (?, ?, ?, ?, 1, ?)
+      ON CONFLICT(user_id, topic_id) DO UPDATE SET
+        p_know = excluded.p_know,
+        last_seen = excluded.last_seen,
+        n_attempts = COALESCE(mastery.n_attempts, 0) + 1,
+        n_correct = COALESCE(mastery.n_correct, 0) + ?
+    `).run(userId, topicId, newPKnow, now, isCorrect, isCorrect);
 
-  // 4 & 5. Save new mastery & update last_seen
-  db.prepare(`
-    INSERT INTO mastery (user_id, topic_id, p_know, last_seen)
-    VALUES (?, ?, ?, ?)
-    ON CONFLICT(user_id, topic_id) DO UPDATE SET
-      p_know = excluded.p_know,
-      last_seen = excluded.last_seen
-  `).run(userId, topicId, newPKnow, now);
-
-  // 6. Recalculate revision
-  const revision = recalculateRevision(userId, topicId, newPKnow);
+    const revision = recalculateRevision(userId, topicId, newPKnow);
+    return { previousPKnow, newPKnow, revision };
+  };
+  const { previousPKnow, newPKnow, revision } = db.transaction ? db.transaction(run)() : run();
 
   return {
     attemptId,
@@ -147,12 +177,16 @@ function recordAttempt(userId, topicId, agent, question, answer, correct) {
     previousPKnow,
     newPKnow,
     isCorrect: Boolean(isCorrect),
+    guessParam: params.p_g ?? DEFAULT_BKT_PARAMS.p_g,
     revisionDue: revision.dueDate,
     revisionPriority: revision.priority
   };
 }
 
 module.exports = {
+  PARAMS_BY_TYPE,
+  THRESHOLDS,
+  statusFor,
   DEFAULT_BKT_PARAMS,
   updateBKT,
   getMastery,

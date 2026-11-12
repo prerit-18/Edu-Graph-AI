@@ -1,4 +1,4 @@
-const { retrieve, retrieveCompact } = require('../rag/retriever');
+const { retrieve, retrieveAsync } = require('../rag/retriever');
 
 /**
  * RAG Tool for Agents
@@ -16,10 +16,11 @@ class RAGTool {
     return retrieve(query, filters);
   }
 
-  executeCompact(params) {
+  /** semantic-aware variant (falls back to lexical when embeddings are unavailable) */
+  async executeAsync(params) {
     const query = typeof params === 'string' ? params : params.query;
     const filters = typeof params === 'object' ? params.filters || {} : {};
-    return retrieveCompact(query, filters);
+    return retrieveAsync(query, filters);
   }
 }
 

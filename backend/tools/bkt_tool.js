@@ -1,4 +1,4 @@
-const { recordAttempt, getMastery, updateBKT } = require('../knowledge_tracing/bkt');
+const { recordAttempt, getMastery, updateBKT, PARAMS_BY_TYPE } = require('../knowledge_tracing/bkt');
 
 /**
  * BKT Tool
@@ -10,16 +10,16 @@ class BKTTool {
     this.description = 'Deterministic Bayesian Knowledge Tracing engine. Updates mastery probabilities upon observed practice.';
   }
 
-  recordPractice(userId, topicId, agentName, question, answer, isCorrect) {
-    return recordAttempt(userId, topicId, agentName, question, answer, isCorrect);
+  recordPractice(userId, topicId, agentName, question, answer, isCorrect, opts = {}) {
+    return recordAttempt(userId, topicId, agentName, question, answer, isCorrect, opts);
   }
 
   checkMastery(userId, topicId) {
     return getMastery(userId, topicId);
   }
 
-  simulateOutcome(currentPKnow, isCorrect) {
-    return updateBKT(currentPKnow, isCorrect ? 1 : 0);
+  simulateOutcome(currentPKnow, isCorrect, type) {
+    return updateBKT(currentPKnow, isCorrect ? 1 : 0, PARAMS_BY_TYPE[type] || {});
   }
 }
 

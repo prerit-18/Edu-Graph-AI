@@ -9,7 +9,7 @@
   {
     "id": "eval_02",
     "query": "Calculate time complexity of Breadth-First Search using adjacency list",
-    "expected_topic": "algo_graphs",
+    "expected_topic": "algo_graphs_mst_shortest_paths",
     "expected_subject": "Algorithms",
     "should_be_grounded": true
   },
@@ -32,6 +32,216 @@
     "query": "Stock market trading strategy using moving averages and bitcoin",
     "expected_topic": null,
     "expected_subject": null,
+    "should_be_grounded": false
+  },
+  {
+    "id": "eval_in_01",
+    "query": "What is Belady's anomaly in page replacement",
+    "should_be_grounded": true,
+    "expected_topic": "os_virtual_mem"
+  },
+  {
+    "id": "eval_in_02",
+    "query": "Explain deadlock prevention and Banker's algorithm",
+    "should_be_grounded": true,
+    "expected_topic": "os_deadlock"
+  },
+  {
+    "id": "eval_in_03",
+    "query": "Round robin scheduling time quantum",
+    "should_be_grounded": true,
+    "expected_topic": "os_scheduling"
+  },
+  {
+    "id": "eval_in_04",
+    "query": "Semaphore and mutex for critical section",
+    "should_be_grounded": true,
+    "expected_topic": "os_sync"
+  },
+  {
+    "id": "eval_in_05",
+    "query": "Master theorem for divide and conquer recurrences",
+    "should_be_grounded": true,
+    "expected_topic": "algo_asymptotic"
+  },
+  {
+    "id": "eval_in_06",
+    "query": "Dijkstra shortest path algorithm",
+    "should_be_grounded": true,
+    "expected_topic": "algo_graphs_mst_shortest_paths"
+  },
+  {
+    "id": "eval_in_07",
+    "query": "0/1 knapsack dynamic programming",
+    "should_be_grounded": true,
+    "expected_topic": "algo_dp"
+  },
+  {
+    "id": "eval_in_08",
+    "query": "Boyce-Codd normal form and functional dependencies",
+    "should_be_grounded": true,
+    "expected_topic": "dbms_normalization"
+  },
+  {
+    "id": "eval_in_09",
+    "query": "B+ tree indexing",
+    "should_be_grounded": true,
+    "expected_topic": "dbms_indexing"
+  },
+  {
+    "id": "eval_in_10",
+    "query": "Strict two phase locking serializability",
+    "should_be_grounded": true,
+    "expected_topic": "dbms_transactions"
+  },
+  {
+    "id": "eval_in_11",
+    "query": "TCP congestion control slow start",
+    "should_be_grounded": true,
+    "expected_topic": "cn_transport_tcp"
+  },
+  {
+    "id": "eval_in_12",
+    "query": "CSMA/CD collision detection",
+    "should_be_grounded": true,
+    "expected_topic": "cn_datalink_mac"
+  },
+  {
+    "id": "eval_in_13",
+    "query": "LR parsing LALR conflicts",
+    "should_be_grounded": true,
+    "expected_topic": "compiler_parsing"
+  },
+  {
+    "id": "eval_in_14",
+    "query": "Pumping lemma for regular languages",
+    "should_be_grounded": true,
+    "expected_topic": "toc_regular"
+  },
+  {
+    "id": "eval_in_15",
+    "query": "Pipeline hazards in processors",
+    "should_be_grounded": true,
+    "expected_topic": "coa_pipelining"
+  },
+  {
+    "id": "eval_in_16",
+    "query": "Cache memory mapping",
+    "should_be_grounded": true,
+    "expected_topic": "coa_memory_io"
+  },
+  {
+    "id": "eval_in_17",
+    "query": "Karnaugh map minimization",
+    "should_be_grounded": true,
+    "expected_topic": "dl_boolean_minimization"
+  },
+  {
+    "id": "eval_in_18",
+    "query": "Bayes theorem conditional probability",
+    "should_be_grounded": true,
+    "expected_topic": "em_probability_statistics"
+  },
+  {
+    "id": "eval_in_19",
+    "query": "Eigenvalues and eigenvectors of a matrix",
+    "should_be_grounded": true,
+    "expected_topic": "em_linear_algebra"
+  },
+  {
+    "id": "eval_in_20",
+    "query": "Binary search tree operations",
+    "should_be_grounded": true,
+    "expected_topic": "pds_trees_heaps_graphs"
+  },
+  {
+    "id": "eval_in_21",
+    "query": "Turing machine undecidability",
+    "should_be_grounded": true,
+    "expected_topic": "toc_tm_undecidability"
+  },
+  {
+    "id": "eval_in_22",
+    "query": "Floating point IEEE 754 representation",
+    "should_be_grounded": true,
+    "expected_topic": "dl_number_representation"
+  },
+  {
+    "id": "eval_in_23",
+    "query": "SQL relational algebra join",
+    "should_be_grounded": true,
+    "expected_topic": "dbms_rel_algebra_sql"
+  },
+  {
+    "id": "eval_in_24",
+    "query": "IPv4 CIDR addressing and fragmentation",
+    "should_be_grounded": true,
+    "expected_topic": "cn_network_ipv4"
+  },
+  {
+    "id": "eval_in_25",
+    "query": "Quick sort worst case partition",
+    "should_be_grounded": true,
+    "expected_topic": "algo_searching_sorting_hashing"
+  },
+  {
+    "id": "eval_out_01",
+    "query": "How to bake a chocolate cookie",
+    "should_be_grounded": false
+  },
+  {
+    "id": "eval_out_02",
+    "query": "explain neural networks backpropagation",
+    "should_be_grounded": false
+  },
+  {
+    "id": "eval_out_03",
+    "query": "best strategy for cryptocurrency trading",
+    "should_be_grounded": false
+  },
+  {
+    "id": "eval_out_04",
+    "query": "who won the football world cup",
+    "should_be_grounded": false
+  },
+  {
+    "id": "eval_out_05",
+    "query": "symptoms of the common cold",
+    "should_be_grounded": false
+  },
+  {
+    "id": "eval_out_06",
+    "query": "how to train a transformer language model",
+    "should_be_grounded": false
+  },
+  {
+    "id": "eval_out_07",
+    "query": "capital city of France",
+    "should_be_grounded": false
+  },
+  {
+    "id": "eval_out_08",
+    "query": "explain photosynthesis in plants",
+    "should_be_grounded": false
+  },
+  {
+    "id": "eval_out_09",
+    "query": "java spring boot microservices tutorial",
+    "should_be_grounded": false
+  },
+  {
+    "id": "eval_out_10",
+    "query": "convolutional neural network image classification",
+    "should_be_grounded": false
+  },
+  {
+    "id": "eval_out_11",
+    "query": "machine learning gradient descent optimizer",
+    "should_be_grounded": false
+  },
+  {
+    "id": "eval_out_12",
+    "query": "how to lose weight quickly",
     "should_be_grounded": false
   }
 ]

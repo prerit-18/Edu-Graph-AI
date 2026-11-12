@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const { normalizeEducationalTextForSpeech, splitTextIntoSpeechChunks } = require('../services/text_normalizer');
 const { optionalAuth } = require('../middleware/authRequired');
+const { rateLimit } = require('../middleware/rateLimit');
+const ttsLimiter = rateLimit({ windowMs: 60_000, max: 30, name: 'tts' });
 
 /**
  * GET /api/tts/config
@@ -59,7 +61,7 @@ router.post('/normalize', optionalAuth, (req, res) => {
  * POST /api/tts/speak
  * Speech synthesis endpoint supporting browser-native delegation and optional server-backed providers.
  */
-router.post('/speak', optionalAuth, async (req, res) => {
+router.post('/speak', optionalAuth, ttsLimiter, async (req, res) => {
   try {
     const { text, speed = 1.0, voice = null } = req.body;
     if (!text || typeof text !== 'string') {

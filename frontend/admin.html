@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EduGraph AI — Usage Report</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="main-header"></div>
+  <main class="container">
+    <h2 style="margin: 1.5rem 0 0.25rem;">LLM usage report</h2>
+    <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0 0 1rem;">Admin only (set <code>ADMIN_EMAILS</code> in backend/.env). Token counts are reported by the provider where available; otherwise they are estimated (chars/4).</p>
+    <div id="llm-status" class="glass-card" style="padding: 1rem; margin-bottom: 1rem; font-size: 0.88rem;"></div>
+    <div id="report" aria-live="polite">Loading...</div>
+  </main>
+  <script src="app.js"></script>
+  <script>
+    renderHeader('admin');
+    const f = (n, d = 0) => Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: d });
+    const row = (cells, tag = 'td') => `<tr>${cells.map(c => `<${tag} style="padding:0.4rem 0.6rem; text-align:left; border-bottom:1px solid var(--border-subtle);">${esc(c)}</${tag}>`).join('')}</tr>`;
+    const table = (title, head, rows) => `<div class="glass-card" style="padding:1rem; margin-bottom:1rem; overflow-x:auto;"><h4 style="margin:0 0 0.5rem;">${esc(title)}</h4><table style="border-collapse:collapse; width:100%; font-size:0.85rem;">${row(head, 'th')}${rows.map(r => row(r)).join('')}</table></div>`;
+    const grp = obj => Object.entries(obj || {}).map(([k, v]) => [k, f(v.calls), f(v.inputTokens), f(v.outputTokens), f(v.calls ? v.totalLatency / v.calls : 0) + ' ms', '$' + f(v.costUsd, 5)]);
+    (async () => {
+      try {
+        const health = await fetch('/api/health').then(r => r.json());
+        const l = health.llm;
+        document.getElementById('llm-status').innerHTML =
+          `Provider: <strong>${esc(l.provider || 'none')}</strong> · configured: <strong>${l.configured}</strong> · key validated at start-up: <strong>${l.validated === null ? 'unknown' : l.validated}</strong> · models: ${esc(l.models.complex)} (complex) / ${esc(l.models.fast)} (fast)` +
+          (l.lastError ? ` · last error: <strong>${esc(l.lastError.code)}</strong> at ${esc(l.lastError.at)}` : '') +
+          (l.disabledReason ? ` · <strong style="color:var(--accent-rose)">disabled: ${esc(l.disabledReason)}</strong>` : '');
+        const r = await apiCall('/agents/token-report');
+        const s = r.summary || {};
+        let html = `<div class="glass-card" style="padding:1rem; margin-bottom:1rem;">Calls: <strong>${f(s.totalCalls)}</strong> · input tokens: <strong>${f(s.totalInputTokens)}</strong> · output tokens: <strong>${f(s.totalOutputTokens)}</strong> · est. cost: <strong>$${f(s.totalCostUsd, 4)}</strong></div>`;
+        html += table('By feature', ['Feature', 'Calls', 'Input', 'Output', 'Avg latency', 'Est. cost'], grp(r.byFeature));
+        html += table('By agent', ['Agent', 'Calls', 'Input', 'Output', 'Avg latency', 'Est. cost'], grp(r.byAgent));
+        html += table('By model', ['Model', 'Calls', 'Input', 'Output', '', 'Est. cost'], Object.entries(r.byModel || {}).map(([k, v]) => [k, f(v.calls), f(v.inputTokens), f(v.outputTokens), '', '$' + f(v.costUsd, 5)]));
+        document.getElementById('report').innerHTML = html;
+      } catch (err) {
+        document.getElementById('report').innerHTML = `<div class="glass-card" style="padding:1rem;color:var(--accent-rose)">${esc(err.message)}</div>`;
+      }
+    })();
+  </script>
+</body>
+</html>

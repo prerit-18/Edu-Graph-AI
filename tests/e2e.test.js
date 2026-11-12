@@ -89,13 +89,14 @@ async function runE2EDemo() {
   console.log('Step 2: Dashboard fetches learner state and initial mastery...');
   const dashRes1 = await get('/api/learner/dashboard', authToken);
   assert.strictEqual(dashRes1.status, 200);
-  const initialMastery = dashRes1.data.mastery.find(m => m.topic_id === 'os_scheduling')?.p_know ?? 0.0;
-  assert.strictEqual(initialMastery, 0.0, 'New account should start with 0.0 mastery');
-  assert.strictEqual(dashRes1.data.summary.averageMastery, 0.0, 'New account should have 0% average mastery');
-  dashRes1.data.subjectProgress.forEach(sp => {
-    assert.strictEqual(sp.percentage, 0, `${sp.subject} progress should start at 0% for new accounts`);
-  });
-  console.log(`✓ Step 2 Passed: Initial P(Know) for os_scheduling = ${initialMastery}, all subject stats = 0%`);
+  const row0 = dashRes1.data.mastery.find(m => m.topic_id === 'os_scheduling');
+  const initialMastery = row0.p_know;
+  assert.strictEqual(initialMastery, 0.3, 'unseen topics carry the BKT prior P(L0)=0.30');
+  assert.strictEqual(row0.status, 'not_started', 'unseen topics are not_started, not weak');
+  assert.strictEqual(dashRes1.data.summary.averageMastery, null, 'no attempts -> no average (not 0%)');
+  assert.strictEqual(dashRes1.data.summary.weakCount, 0, 'unseen topics are never counted as weak');
+  dashRes1.data.subjectProgress.forEach(sp => assert.strictEqual(sp.percentage, null));
+  console.log(`✓ Step 2 Passed: new account has prior ${initialMastery}, nothing classified weak`);
 
   // Step 3 & 4 & 5 & 6: Concept Teacher with RAG grounding and citations
   console.log('Step 3-6: Student asks Concept Teacher: "Explain CPU scheduling"...');
@@ -136,8 +137,9 @@ async function runE2EDemo() {
   console.log('Step 12: Revision Agent identifies due/weak topics...');
   const revRes = await get('/api/revision/schedule', authToken);
   assert.strictEqual(revRes.status, 200);
-  assert(revRes.data.topActionTopic !== undefined, 'Revision schedule must recommend action');
-  console.log(`✓ Step 12 Passed: Recommended study focus on: ${revRes.data.topActionTopic.topic_name}`);
+  assert(revRes.data.recommendedAction, 'Revision schedule must explain its recommendation');
+  assert(revRes.data.needsMoreData.some(t => t.topic_id === 'os_scheduling'), 'single attempt is flagged as needing more data, not as weak');
+  console.log(`✓ Step 12 Passed: ${revRes.data.recommendedAction}`);
 
   // Step 13: Active Recall creates a recall prompt
   console.log('Step 13: Active Recall generates a conceptual retrieval challenge...');
@@ -153,11 +155,11 @@ async function runE2EDemo() {
   const studentAnswer = 'SJF suffers from starvation of longer processes. Aging solves this by increasing priority over time.';
   const gradeRes = await post('/api/recall/grade', {
     promptId: recallPrompt.data.promptId,
-    topicId: 'os_scheduling',
     studentAnswer
   }, authToken);
   assert.strictEqual(gradeRes.status, 200);
   assert.strictEqual(gradeRes.data.isCorrect, true);
+  assert.strictEqual(gradeRes.data.completed, true);
   assert(gradeRes.data.referenceAnswer, 'Reference answer should now be returned post-evaluation');
 
   // Step 16: BKT updates again

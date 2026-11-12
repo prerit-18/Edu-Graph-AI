@@ -262,7 +262,7 @@
       const filtered = subject === 'All' ? allTopics : allTopics.filter(t => t.subject === subject);
 
       select.innerHTML = '<option value="">Auto: Personalized</option>' +
-        filtered.map(t => `<option value="${t.topic_id}">${t.topic_name} (${t.subject})</option>`).join('');
+        filtered.map(t => `<option value="${esc(t.topic_id)}">${esc(t.topic_name)} (${esc(t.subject)})</option>`).join('');
     }
 
     function handleSubjectChange(subj) {
@@ -338,17 +338,15 @@
       submitBtn.textContent = 'Evaluating Response...';
 
       try {
+        // Attempt counting, answer reveal and BKT are decided by the server.
         const evalResult = await apiCall('/recall/grade', 'POST', {
           promptId: currentPrompt.promptId,
-          topicId: currentPrompt.topicId,
-          studentAnswer: studentAns,
-          attemptNumber: incorrectAttempts + 1,
-          idempotencyKey: `attempt_${currentPrompt.promptId}_${incorrectAttempts + 1}_${Date.now()}`
+          studentAnswer: studentAns
         });
 
-        const isCorrect = evalResult.correctness === 'correct';
+        incorrectAttempts = (evalResult.attemptNumber || 0) - (evalResult.isCorrect ? 1 : 0);
 
-        if (isCorrect) {
+        if (evalResult.completed && evalResult.isCorrect) {
           // ── Correct answer ────────────────────────────────────────────────
           questionAnswered = true;
           document.getElementById('attempt-counter').style.display = 'none';
@@ -357,9 +355,7 @@
           loadRecallHistory();
         } else {
           // ── Wrong answer ──────────────────────────────────────────────────
-          incorrectAttempts++;
-
-          if (incorrectAttempts >= MAX_ATTEMPTS) {
+          if (evalResult.completed) {
             // All 3 attempts used — reveal answer
             questionAnswered = true;
             document.getElementById('attempt-counter').style.display = 'none';
@@ -368,7 +364,7 @@
             loadRecallHistory();
           } else {
             // Still have attempts left — show inline feedback only
-            const remaining = MAX_ATTEMPTS - incorrectAttempts;
+            const remaining = evalResult.attemptsRemaining;
 
             // Update inline feedback strip
             const inlineFb = document.getElementById('inline-feedback');
@@ -390,9 +386,11 @@
           }
         }
       } catch (err) {
+        const finished = /already complete/i.test(err.message);
         alert('Evaluation failed: ' + err.message);
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Submit Response';
+        submitBtn.disabled = finished;
+        if (finished) questionAnswered = true;
+        submitBtn.textContent = finished ? 'Challenge Complete' : 'Submit Response';
       } finally {
         isEvaluating = false;
       }
@@ -450,7 +448,7 @@
           fbMsg.style.border = '1px solid rgba(168, 40, 40, 0.3)';
           fbMsg.style.color = 'var(--accent-rose)';
         }
-        fbMsg.innerHTML = `<strong>${evalResult.correctness.toUpperCase()}:</strong> ${evalResult.feedback}`;
+        fbMsg.innerHTML = `<strong>${esc(evalResult.correctness.toUpperCase())}:</strong> ${esc(evalResult.feedback)}`;
       }
 
       refSol.textContent = evalResult.referenceAnswer || 'Standard GATE solution.';
@@ -463,14 +461,14 @@
 
       if (evalResult.correctPoints && evalResult.correctPoints.length > 0) {
         pointsBox.style.display = 'block';
-        correctList.innerHTML = evalResult.correctPoints.map(p => `<span class="point-tag success">✓ ${p}</span>`).join('');
+        correctList.innerHTML = evalResult.correctPoints.map(p => `<span class="point-tag success">✓ ${esc(p)}</span>`).join('');
       } else {
         correctList.innerHTML = '<span style="font-size: 0.82rem; color: var(--text-muted);">None identified</span>';
       }
 
       if (evalResult.missingPoints && evalResult.missingPoints.length > 0) {
         missingContainer.style.display = 'block';
-        missingList.innerHTML = evalResult.missingPoints.map(p => `<span class="point-tag warning">⚠ ${p}</span>`).join('');
+        missingList.innerHTML = evalResult.missingPoints.map(p => `<span class="point-tag warning">⚠ ${esc(p)}</span>`).join('');
       } else {
         missingContainer.style.display = 'none';
       }
@@ -486,7 +484,7 @@
         const next = (evalResult.bktUpdate.newPKnow * 100).toFixed(1);
         bktBanner.innerHTML = `<strong>Bayesian Knowledge Tracing (BKT) Updated:</strong> Topic mastery shifted from <strong>${prev}%</strong> → <strong style="color: var(--accent-primary); font-size: 1rem;">${next}% P(Know)</strong>. Spaced repetition priority recalculated.`;
       } else {
-        bktBanner.innerHTML = 'Sign in to persist your BKT mastery and attempt logs to SQLite.';
+        bktBanner.innerHTML = 'Mastery is updated when a challenge is completed (a correct answer or your third attempt).';
       }
 
       // Adaptive Follow-up Buttons
@@ -494,11 +492,11 @@
         document.getElementById('adaptive-reason').textContent = evalResult.nextAction.reason;
         const btnBox = document.getElementById('adaptive-buttons');
         btnBox.innerHTML = `
-          <a href="${evalResult.nextAction.url}" class="btn btn-primary btn-sm">
-            ${evalResult.nextAction.label} →
+          <a href="${esc(evalResult.nextAction.url)}" class="btn btn-primary btn-sm">
+            ${esc(evalResult.nextAction.label)} →
           </a>
-          <button class="btn btn-secondary btn-sm" onclick="loadNextPrompt('${currentPrompt.topicId}')">
-            Another Question on ${currentPrompt.topicName}
+          <button class="btn btn-secondary btn-sm" onclick="loadNextPrompt('${esc(currentPrompt.topicId)}')">
+            Another Question on ${esc(currentPrompt.topicName)}
           </button>
           <button class="btn btn-secondary btn-sm" onclick="loadNextPrompt()">
             Next Due Topic
@@ -528,21 +526,21 @@
         historyList.innerHTML = attempts.map(a => `
           <div class="history-card">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
-              <span class="topic-badge">${a.subject} • ${a.topic_name}</span>
+              <span class="topic-badge">${esc(a.subject)} • ${esc(a.topic_name)}</span>
               <span style="font-size: 0.82rem; font-weight: 600; color: ${a.correct ? 'var(--accent-primary)' : 'var(--accent-rose)'};">
                 ${a.correct ? '✓ Correct' : '✗ Incorrect'}
               </span>
             </div>
             <p style="font-size: 0.88rem; color: var(--text-primary); margin: 0 0 0.35rem; line-height: 1.45;">
-              ${a.question}
+              ${esc(a.question)}
             </p>
             <div style="font-size: 0.78rem; color: var(--text-muted);">
-              Submitted: "${a.answer.slice(0, 45)}${a.answer.length > 45 ? '...' : ''}" • ${new Date(a.created_at).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+              Submitted: "${esc(a.answer.slice(0, 45))}${a.answer.length > 45 ? '...' : ''}" • ${new Date(a.created_at).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
             </div>
           </div>
         `).join('');
       } catch (err) {
-        historyList.innerHTML = `<div style="color: var(--accent-rose); font-size: 0.85rem;">Could not load history: ${err.message}</div>`;
+        historyList.innerHTML = `<div style="color: var(--accent-rose); font-size: 0.85rem;">Could not load history: ${esc(err.message)}</div>`;
       }
     }
 

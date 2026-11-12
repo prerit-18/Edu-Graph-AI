@@ -5,19 +5,33 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const db = require('../database/db');
 const { authRequired, JWT_SECRET } = require('../middleware/authRequired');
+const { rateLimit } = require('../middleware/rateLimit');
 const learnerStateTool = require('../tools/learner_state_tool');
 
 /**
  * POST /api/auth/signup
  */
-router.post('/signup', async (req, res) => {
+const authLimiter = rateLimit({ windowMs: 10 * 60_000, max: Number(process.env.RATE_LIMIT_AUTH || 60), name: 'auth' });
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+router.post('/signup', authLimiter, async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    let { name, email, password } = req.body || {};
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password are required' });
     }
+    email = String(email).trim().toLowerCase();
+    if (!EMAIL_RE.test(email) || email.length > 254) {
+      return res.status(400).json({ error: 'Please enter a valid email address' });
+    }
+    if (typeof password !== 'string' || password.length < 8 || password.length > 128) {
+      return res.status(400).json({ error: 'Password must be 8-128 characters' });
+    }
+    if (name !== undefined && (typeof name !== 'string' || name.length > 80)) {
+      return res.status(400).json({ error: 'Name must be at most 80 characters' });
+    }
 
-    const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
+    const existing = db.prepare('SELECT id FROM users WHERE LOWER(email) = ?').get(email);
     if (existing) {
       return res.status(400).json({ error: 'User with this email already exists' });
     }
@@ -47,14 +61,15 @@ router.post('/signup', async (req, res) => {
 /**
  * POST /api/auth/login
  */
-router.post('/login', async (req, res) => {
+router.post('/login', authLimiter, async (req, res) => {
   try {
-    const { email, password } = req.body;
-    if (!email || !password) {
+    let { email, password } = req.body || {};
+    if (!email || !password || typeof password !== 'string') {
       return res.status(400).json({ error: 'Email and password are required' });
     }
+    email = String(email).trim().toLowerCase();
 
-    const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+    const user = db.prepare('SELECT * FROM users WHERE LOWER(email) = ?').get(email);
     if (!user) {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
@@ -78,10 +93,20 @@ router.post('/login', async (req, res) => {
 });
 
 /**
+ * POST /api/auth/timezone { timezone }  - IANA zone used to decide the learner's daily session date
+ */
+router.post('/timezone', authRequired, (req, res) => {
+  const tz = req.body && req.body.timezone;
+  if (!require('../services/daily_flashcards').isValidTimezone(tz)) return res.status(400).json({ error: 'Invalid IANA timezone (e.g. Asia/Kolkata)' });
+  db.prepare('UPDATE users SET timezone = ? WHERE id = ?').run(tz, req.user.id);
+  res.json({ timezone: tz });
+});
+
+/**
  * GET /api/auth/me
  */
 router.get('/me', authRequired, (req, res) => {
-  const user = db.prepare('SELECT id, name, email, created_at FROM users WHERE id = ?').get(req.user.id);
+  const user = db.prepare('SELECT id, name, email, timezone, created_at FROM users WHERE id = ?').get(req.user.id);
   if (!user) {
     return res.status(404).json({ error: 'User not found' });
   }

@@ -1,9 +1,10 @@
 const ragTool = require('../tools/rag_tool');
+const { generateWithCrew } = require('./crewai_bridge');
 const llmClient = require('./llm_client');
+const pyqTool = require('../tools/pyq_tool');
 const db = require('../database/db');
 const crypto = require('crypto');
 const agentPrompts = require('../services/agent_prompts');
-const tokenMonitor = require('../services/token_monitor');
 const responseCache = require('../services/response_cache');
 
 /**
@@ -263,114 +264,97 @@ Two-Phase Locking (2PL) is a concurrency control protocol that guarantees confli
 - Precedence Graph: Directed graph representing conflicting operations used to test for serializability.`;
     }
 
-    // Default dynamic synthesis from RAG context
-    const cleanQuery = query.replace(/^(what is|explain|define|describe)\s+/i, '').replace(/[?#*]/g, '').trim();
-    const conceptTitle = cleanQuery ? (cleanQuery.charAt(0).toUpperCase() + cleanQuery.slice(1)) : 'Core Concept';
-
-    return `**${conceptTitle}**
-
-${ragContext || 'Grounded GATE CSE concept explanation.'}
-
-**Related Concepts:**
-- System Invariants: Mathematical and theoretical guarantees governing this topic in GATE CSE.
-- Boundary Conditions: Edge cases including empty inputs, single elements, and saturated resource states.
-- Performance Bounds: Algorithmic time and space complexities or hardware latency characteristics.`;
+    // No curated note for this query: caller falls back to the LLM or the plain syllabus text.
+    return null;
   }
 
-  async run({ query, userId, subject, topicId, maxOutputTokens, featureLabel }) {
-    // Check response cache
+  async run({ query, retrievalQuery, userId, subject, topicId, maxOutputTokens, featureLabel }) {
+    if (typeof query !== 'string' || query.trim().length < 3 || query.length > 500) {
+      throw Object.assign(new Error('Query must be 3-500 characters'), { status: 400 });
+    }
+    query = query.trim();
+
     const cacheKey = responseCache.makeKey('Concept Teacher', topicId || subject || 'general', query, userId);
     if (cacheKey) {
       const cached = responseCache.get(cacheKey);
-      if (cached) {
-        return cached;
-      }
+      if (cached) return { ...cached, cached: true };
     }
 
-    // 1. Invoke RAG Tool to retrieve verified knowledge base evidence
-    const retrieval = ragTool.execute({
-      query,
-      filters: { subject, topic_id: topicId, topK: 2 }
-    });
+    // 1. Retrieval (concept strategy: syllabus + official-syllabus chunks, topK 3)
+    // retrieval uses the concept words only; instruction words ("5-bullet quick revision of ...") would dilute the match
+    const retrieval = await ragTool.executeAsync({ query: retrievalQuery || query, filters: { strategy: 'concept', subject, topic_id: topicId } });
 
-    const isGrounded = retrieval.isGrounded;
-
-    // Log interaction to agent_logs
     if (userId) {
-      db.prepare(`
-        INSERT INTO agent_logs (id, user_id, agent, grounded, detail)
-        VALUES (?, ?, ?, ?, ?)
-      `).run(
-        crypto.randomUUID(),
-        userId,
-        this.role,
-        isGrounded ? 1 : 0,
-        JSON.stringify({ query, confidence: retrieval.confidence })
-      );
+      db.prepare('INSERT INTO agent_logs (id, user_id, agent, grounded, detail) VALUES (?, ?, ?, ?, ?)')
+        .run(crypto.randomUUID(), userId, this.role, retrieval.isGrounded ? 1 : 0,
+          JSON.stringify({ query: query.slice(0, 200), confidence: retrieval.confidence }));
     }
 
-    // 2. Strict grounding check: if evidence is insufficient, refuse fabrication!
-    if (!isGrounded) {
+    // 2. Refuse rather than fabricate when the query is outside the knowledge base
+    if (!retrieval.isGrounded) {
       return {
-        agent: this.role,
-        grounded: false,
-        confidence: retrieval.confidence,
-        explanation: `⚠️ **Concept Grounding Notice**: I cannot provide a verified answer for this query. ${retrieval.refusalReason}`,
-        citations: [],
-        suggestedActions: [
-          'Verify that the query pertains directly to GATE CSE (Operating Systems, Algorithms, or DBMS).',
-          'Explore official syllabus topics from the Dashboard or Syllabus view.'
-        ]
+        agent: this.role, grounded: false, confidence: retrieval.confidence, generatedBy: 'none',
+        explanation: `**Not covered.** ${retrieval.refusalReason}`,
+        citations: [], relatedQuestions: [],
+        suggestedActions: ['Ask about a GATE CSE topic (OS, Algorithms, Databases, Networks, TOC, COA, ...).', 'Browse the syllabus on the dashboard.']
       };
     }
 
-    // 3. Evidence is sufficient - generate grounded explanation
-    const contextSnippets = retrieval.results.map(r => r.text).join('\n---\n');
-
-    const systemPrompt = agentPrompts.CONCEPT_TEACHER;
+    const topChunk = retrieval.results[0];
+    const resolvedTopic = topicId || (retrieval.results.find(r => r.metadata.topic_id) || {}).metadata?.topic_id || null;
+    const contextSnippets = retrieval.results.map((r, i) => `[${i + 1}] ${r.text}`).join('\n');
     const cleanTitle = query.replace(/^(what is|explain|define|describe)\s+/i, '').replace(/[?#*]/g, '').trim();
-    const userPrompt = `Student Question: ${query}
 
-Verified Context Chunks:
-${contextSnippets}
-
-Instructions:
-- Start directly with the answer: format the concept name in bold (e.g. **${cleanTitle || 'Concept Name'}**).
-- Explain the concept clearly, accurately, and concisely for GATE CSE.
-- Include key formulas, invariants, or time/space complexities when relevant.
-- End with a "**Related Concepts:**" section listing 2-4 closely related concepts with a 1-line connection each.
-- Do NOT include greetings, introductions, conclusions, or quizzes.`;
-
-    let explanation = await llmClient.generate({
-      systemPrompt,
-      userPrompt,
+    // 3. Generate: CrewAI crew -> direct LLM -> curated note -> syllabus text (always labelled)
+    const wordBudget = Math.round((maxOutputTokens || agentPrompts.LIMITS.concept_explain) * 0.6);
+    const description = `Student question: ${query}\nTitle the answer **${cleanTitle || 'Concept'}**. Keep it under ${wordBudget} words. ` +
+      `Start directly with the answer, then formulas/invariants, then "**Related Concepts:**" (2-4 bullets).`;
+    const gen = await generateWithCrew({
+      role: 'concept_teacher', description,
+      expectedOutput: 'Direct GATE-oriented explanation ending with a Related Concepts section.',
+      context: contextSnippets,
+      systemPrompt: agentPrompts.CONCEPT_TEACHER,
+      userPrompt: `${description}\n\nVerified context:\n${contextSnippets}`,
       maxOutputTokens: maxOutputTokens || agentPrompts.LIMITS.concept_explain,
-      agentLabel: 'Concept Teacher',
-      featureLabel: featureLabel || 'concept_explain'
+      agentLabel: 'Concept Teacher', featureLabel: featureLabel || 'concept_explain'
     });
 
+    let explanation = gen && gen.text; let generatedBy = gen ? (gen.via === 'crewai' ? 'crewai' : 'llm') : null;
     if (!explanation) {
-      // Dynamic masterclass query-grounded synthesis
-      const topMatch = retrieval.results[0];
-      const meta = topMatch.metadata;
-      const assignedTopic = topicId || meta.topic_id;
-      const assignedSubject = subject || meta.subject;
-
-      explanation = this.generateCuratedExplanation(query, assignedTopic, assignedSubject, topMatch.text);
+      const curated = this.generateCuratedExplanation(query, resolvedTopic, subject, topChunk.text);
+      if (curated) { explanation = curated; generatedBy = 'curated'; }
+    }
+    if (!explanation) {
+      explanation = `**${cleanTitle || 'Syllabus match'}**\n\n_AI explanation is unavailable right now, so here is what the GATE CSE syllabus says about the closest topic:_\n\n` +
+        retrieval.results.filter(r => r.metadata.source_type !== 'pyq').slice(0, 2).map(r => `- ${r.text}`).join('\n');
+      generatedBy = 'syllabus_only';
     }
 
-    const result = {
-      agent: this.role,
-      grounded: true,
-      confidence: retrieval.confidence,
-      explanation,
-      citations: retrieval.citations
-    };
+    // 4. Related PYQs for this topic (official first), shown separately from the explanation
+    let relatedQuestions = [];
+    if (resolvedTopic) {
+      const { questions } = pyqTool.search({ topic_id: resolvedTopic }, { limit: 12 });
+      relatedQuestions = questions
+        .sort((a, b) => (a.origin === 'official_gate' ? 0 : 1) - (b.origin === 'official_gate' ? 0 : 1) || b.year - a.year)
+        .slice(0, 3)
+        .map(q => ({ id: q.id, year: q.year, type: q.type, marks: q.marks, origin: q.origin,
+          label: q.origin === 'official_gate' ? `GATE ${q.year}` : 'Practice question',
+          preview: q.question.slice(0, 140) + (q.question.length > 140 ? '...' : '') }));
+    }
 
-    if (cacheKey && result.grounded) {
+    // never hide an AI failure: say why the answer is not AI-generated
+    let aiNotice = null;
+    if (generatedBy === 'curated' || generatedBy === 'syllabus_only') {
+      const st = llmClient.status();
+      aiNotice = !st.configured ? 'No LLM API key is configured.' : `AI explanation unavailable (${(st.disabledReason ? 'INVALID_KEY' : st.lastError && st.lastError.code) || 'unknown'}).`;
+    }
+    const result = {
+      agent: this.role, grounded: true, confidence: retrieval.confidence, generatedBy, aiNotice, semantic: !!retrieval.semantic,
+      explanation, citations: retrieval.citations, relatedQuestions, topicId: resolvedTopic
+    };
+    if (cacheKey && (generatedBy === 'crewai' || generatedBy === 'llm')) {
       responseCache.set(cacheKey, 'Concept Teacher', topicId || 'general', result);
     }
-
     return result;
   }
 }

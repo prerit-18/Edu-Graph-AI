@@ -168,6 +168,18 @@
           </div>
 
           <div class="glass-card" style="padding: 1.25rem;">
+            <h4 style="margin: 0 0 0.25rem; font-size: 0.9rem;">Learning Actions</h4>
+            <p style="font-size: 0.75rem; color: var(--text-muted); margin: 0 0 0.6rem;">Uses the topic shown above (or what you typed in the box).</p>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; margin-bottom: 1rem;">
+              <button class="btn btn-secondary btn-sm" onclick="triggerQuickAction('explain_concept')">📘 Explain</button>
+              <button class="btn btn-secondary btn-sm" onclick="triggerQuickAction('quick_revision')">⚡ Quick Revision</button>
+              <button class="btn btn-secondary btn-sm" onclick="triggerQuickAction('give_example')">📌 Example</button>
+              <button class="btn btn-secondary btn-sm" onclick="triggerQuickAction('exam_traps')">⚠ Exam Traps</button>
+              <button class="btn btn-secondary btn-sm" onclick="triggerQuickAction('solve_pyq')">🧮 Solve a PYQ</button>
+              <button class="btn btn-secondary btn-sm" onclick="triggerQuickAction('test_me')">🎯 Test Me</button>
+              <button class="btn btn-secondary btn-sm" onclick="triggerQuickAction('generate_flashcards')">🃏 Flashcards</button>
+              <button class="btn btn-secondary btn-sm" onclick="triggerQuickAction('ask_doubt')">❓ Ask a Doubt</button>
+            </div>
             <h4 style="margin: 0 0 0.75rem; font-size: 0.9rem;">Related Actions</h4>
             <div style="display: flex; flex-direction: column; gap: 0.5rem;">
               <button class="btn btn-secondary btn-sm" onclick="switchAgentView('pyq')" style="justify-content: space-between;">
@@ -319,10 +331,6 @@
               </p>
             </div>
             <select id="solver-preset-select" class="input-field" style="width: auto; padding: 0.45rem 0.85rem; font-size: 0.85rem;" onchange="loadSolverPreset(this.value)">
-              <option value="os_2024_001" selected>GATE 2024 OS: SRTF Turnaround Time (NAT)</option>
-              <option value="os_2025_001">GATE 2025 OS: Non-Preemptive SJF Average Wait (MCQ)</option>
-              <option value="algo_2021_001">GATE 2021 Algo: Quick Sort Pivot Comparisons (NAT)</option>
-              <option value="dbms_2021_001">GATE 2021 DBMS: Relational Operator Commutativity (MCQ)</option>
               <option value="custom">Enter Custom Problem Statement</option>
             </select>
           </div>
@@ -348,10 +356,10 @@
           <div style="background: var(--bg-surface-secondary); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 1rem 1.15rem; margin-bottom: 1.5rem; display: flex; gap: 0.85rem; align-items: center; flex-wrap: wrap;">
             <div style="flex: 1; min-width: 200px;">
               <label style="font-size: 0.8rem; color: var(--text-secondary); display: block; margin-bottom: 0.25rem; font-weight: 500;">Your Calculated Answer:</label>
-              <input type="text" id="solver-student-answer" class="input-field" placeholder="e.g. 20 or B">
+              <input type="text" id="solver-student-answer" class="input-field" placeholder="e.g. 20, B, or A;C for multi-select">
             </div>
             <button class="btn btn-primary" onclick="solveAndVerifyProblem()" style="height: 40px; margin-top: auto;">
-              Verify Derivation
+              Verify / Show Solution
             </button>
           </div>
 
@@ -422,43 +430,10 @@
       });
     }
 
-    const PRESETS = {
-      os_2024_001: {
-        id: 'os_2024_001',
-        topic_id: 'os_scheduling',
-        subject: 'Operating Systems',
-        type: 'NAT',
-        question: 'Consider 4 processes arriving at time t=0 with burst times P1: 8 ms, P2: 6 ms, P3: 4 ms, P4: 2 ms. If Preemptive SRTF (Shortest Remaining Time First) is used, since all arrive at t=0 it is equivalent to SJF. What is the turnaround time of process P1 in milliseconds?',
-        answer: '20'
-      },
-      os_2025_001: {
-        id: 'os_2025_001',
-        topic_id: 'os_scheduling',
-        subject: 'Operating Systems',
-        type: 'MCQ',
-        question: 'Consider three processes P1, P2, and P3 arriving at time 0 with CPU burst times 10 ms, 4 ms, and 2 ms respectively. Using Shortest Job First (SJF non-preemptive), what is the average waiting time? Options: A. 3 ms | B. 2.67 ms | C. 4 ms | D. 5.33 ms.',
-        answer: 'B'
-      },
-      algo_2021_001: {
-        id: 'algo_2021_001',
-        topic_id: 'algo_divide_conquer',
-        subject: 'Algorithms',
-        type: 'NAT',
-        question: 'What is the worst-case number of comparisons needed by Quick Sort to sort an already sorted array of 5 elements when the first element is always chosen as the pivot?',
-        answer: '10'
-      },
-      dbms_2021_001: {
-        id: 'dbms_2021_001',
-        topic_id: 'dbms_rel_algebra',
-        subject: 'Databases',
-        type: 'MCQ',
-        question: 'Which of the following relational algebra operators is NOT commutative? Options: A. Natural Join | B. Cartesian Product | C. Set Difference | D. Union.',
-        answer: 'C'
-      }
-    };
-
+    // Problems come from the question bank (/api/pyq), not from hardcoded presets.
+    const PRESETS = {};
     let activeAgent = 'concept';
-    let currentProblem = PRESETS.os_2024_001;
+    let currentProblem = { id: null, topic_id: null, type: 'NAT', question: '', options: [] };
     let currentConceptTopicId = 'os_scheduling';
     let currentConceptTopic = 'CPU Scheduling & Algorithms';
     let currentConceptSubject = 'Operating Systems';
@@ -472,9 +447,7 @@
       switchAgentView('pyq', false);
     } else if (initialView === 'solver' || initialQuestion) {
       switchAgentView('solver', false);
-      if (initialQuestion) {
-        loadProblemToSolve(initialQuestion);
-      }
+
     } else {
       switchAgentView('concept', false);
       if (initialTopic) {
@@ -483,6 +456,22 @@
         }, 300);
       }
     }
+
+    // Topic list for the PYQ analyst comes from the syllabus API (all official subjects), not a static list.
+    async function loadPYQTopics() {
+      try {
+        const res = await apiCall('/syllabus/topics');
+        const bySubject = {};
+        res.topics.forEach(t => (bySubject[t.subject] = bySubject[t.subject] || []).push(t));
+        const sel = document.getElementById('pyq-topic-select');
+        const keep = initialTopic || sel.value || 'os_scheduling';
+        sel.innerHTML = Object.entries(bySubject).map(([subj, ts]) =>
+          `<optgroup label="${esc(subj)}">` + ts.map(t => `<option value="${esc(t.id)}">${esc(t.name)}</option>`).join('') + '</optgroup>').join('');
+        sel.value = keep;
+      } catch (e) { /* keep static fallback list */ }
+    }
+    loadPYQTopics();
+    loadSolverOptions();
 
     function switchAgentView(view, updateUrl = true) {
       // Clean up any currently playing speech when switching view
@@ -560,12 +549,26 @@
         quick_revision: '⚡ Quick Revision',
         give_example: '📌 Give Example',
         exam_traps: '⚠ Exam Traps',
-        solve_pyq: '🧮 Solve PYQ',
-        explain_concept: '📘 Full Explain'
+        solve_pyq: '🧮 Solve a PYQ',
+        explain_concept: '📘 Explain',
+        test_me: '🎯 Test Me',
+        generate_flashcards: '🃏 Flashcards',
+        ask_doubt: '❓ Ask a Doubt'
       };
       const label = actionLabels[action] || action.replace(/_/g, ' ').toUpperCase();
 
-      addConceptMessage('user', `[${label}] ${topic}`);
+      const typed = (topicInput && topicInput.value.trim()) || '';
+      let doubt;
+      if (action === 'ask_doubt') {
+        doubt = typed;
+        if (doubt.length < 5) { addConceptMessage('agent', 'Type your doubt in the box below first (at least 5 characters), then press Ask a Doubt.'); return; }
+      }
+      if (action === 'test_me' || action === 'generate_flashcards') {
+        const r = await apiCall(`/quick-actions/${action}`, 'POST', { topic, topicId, subject }).catch(e => ({ error: e.message }));
+        if (r.url) { window.location.href = r.url; return; }
+        addConceptMessage('agent', `Could not open: ${r.error || 'unknown error'}`); return;
+      }
+      addConceptMessage('user', `[${label}] ${action === 'ask_doubt' ? doubt : topic}`);
 
       const chat = document.getElementById('concept-chat-messages');
       const loadingDiv = document.createElement('div');
@@ -573,17 +576,24 @@
       loadingDiv.className = 'chat-message agent';
       loadingDiv.innerHTML = `
         <div class="message-avatar">CT</div>
-        <div class="message-body"><em>Synthesizing ${label.toLowerCase()} for <strong>${topic}</strong>...</em></div>
+        <div class="message-body"><em>Working on ${esc(label.toLowerCase())} for <strong>${esc(topic)}</strong>...</em></div>
       `;
       chat.appendChild(loadingDiv);
       chat.scrollTop = chat.scrollHeight;
 
       try {
-        const result = await apiCall(`/quick-actions/${action}`, 'POST', { topic, topicId, subject });
+        const result = await apiCall(`/quick-actions/${action}`, 'POST', { topic, topicId, subject, doubt });
+        if (result.type === 'pyq') {
+          const loadEl0 = document.getElementById('concept-quick-loading'); if (loadEl0) loadEl0.remove();
+          const q = result.question;
+          addConceptMessage('agent', result.found ? `**${q.label}** (${q.type}, ${q.marks} mark)\n\n${q.question}\n\nOpen it in the Problem Solver to answer it and see the official key.` : result.message);
+          if (result.found) setTimeout(() => { if (confirm('Open this question in the Problem Solver now?')) window.location.href = result.url; }, 200);
+          return;
+        }
         const loadEl = document.getElementById('concept-quick-loading');
         if (loadEl) loadEl.remove();
 
-        addConceptMessage('agent', result.explanation || result.analysis || 'No response generated.', result.citations || []);
+        addConceptMessage('agent', result.explanation || result.analysis || 'No response generated.', result.citations || [], { generatedBy: result.generatedBy, relatedQuestions: result.relatedQuestions, topicId: topicId });
 
         const tutorContainer = document.getElementById('concept-tutor-container');
         if (tutorContainer && result.explanation) {
@@ -610,7 +620,7 @@
 
       try {
         const res = await apiCall('/agents/concept', 'POST', { query });
-        addConceptMessage('agent', res.explanation, res.citations);
+        addConceptMessage('agent', res.explanation, res.citations, { generatedBy: res.generatedBy, relatedQuestions: res.relatedQuestions, topicId: res.topicId });
 
         // Update Tutor widget with speech text
         const tutorContainer = document.getElementById('concept-tutor-container');
@@ -636,7 +646,7 @@
       }
     }
 
-    function addConceptMessage(role, content, citations = []) {
+    function addConceptMessage(role, content, citations = [], meta = {}) {
       const chat = document.getElementById('concept-chat-messages');
       const msgDiv = document.createElement('div');
       msgDiv.className = `chat-message ${role}`;
@@ -645,10 +655,18 @@
       let citationsHtml = '';
       if (citations && citations.length > 0) {
         citationsHtml = '<div style="margin-top: 0.6rem; border-top: 1px solid var(--border-subtle); padding-top: 0.5rem; font-size: 0.82rem;"><strong>Reference Sources:</strong><br/>' +
-          citations.map(c => `<span class="citation-pill">${c.source || 'GATE Syllabus'} — ${c.topic || c.topic_id}</span>`).join('') +
+          citations.map(c => `<span class="citation-pill">${esc(c.source || 'GATE Syllabus')} — ${esc(c.topic || c.topic_id || c.question_id || '')}</span>`).join('') +
           '</div>';
       }
 
+      let metaHtml = '';
+      if (meta.generatedBy === 'curated' || meta.generatedBy === 'syllabus_only') {
+        metaHtml += '<div style="margin-top:0.5rem;font-size:0.78rem;color:var(--accent-amber);">Offline note: the AI service was unavailable, so this comes from stored notes.</div>';
+      }
+      if (meta.relatedQuestions && meta.relatedQuestions.length) {
+        metaHtml += '<div style="margin-top:0.6rem;font-size:0.82rem;"><strong>Related previous-year questions:</strong><ul style="margin:0.3rem 0 0;padding-left:1.1rem;">' +
+          meta.relatedQuestions.map(q => `<li><a href="pyq.html?topic=${encodeURIComponent(meta.topicId || '')}" style="color:var(--accent-primary);">${esc(q.label)}</a> (${esc(q.type)}, ${q.marks} mark): ${esc(q.preview)}</li>`).join('') + '</ul></div>';
+      }
       const audioBtnHtml = role === 'agent' ? `
         <div style="margin-top: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
           <button class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.78rem; padding: 0.25rem 0.65rem;" onclick="handleInlineTutorSpeak(this)" data-content="${encodeURIComponent(content)}">
@@ -662,6 +680,7 @@
         <div class="message-body">
           ${formatMarkdown(content)}
           ${citationsHtml}
+          ${metaHtml}
           ${audioBtnHtml}
         </div>
       `;
@@ -736,7 +755,22 @@
         }
       };
 
-      const detail = topicDetails[topicId];
+      let detail = topicDetails[topicId];
+      if (!detail) {
+        // Topics without a hand-written sidebar entry: use the syllabus data from the API
+        apiCall(`/syllabus/path/${encodeURIComponent(topicId)}`).then(r => {
+          const chain = r.targetPath || [];
+          const t = chain[chain.length - 1];
+          if (!t) return;
+          currentConceptTopicId = topicId; currentConceptTopic = t.name; currentConceptSubject = t.subject;
+          document.getElementById('curriculum-unit-title').textContent = t.name;
+          document.getElementById('concept-subject-badge').textContent = t.subject;
+          document.getElementById('curriculum-unit-desc').textContent = t.description || '';
+          const prereqBox = document.getElementById('curriculum-prereqs');
+          if (prereqBox) prereqBox.innerHTML = chain.slice(0, -1).map(p => `<span class="topic-badge">${esc(p.name)}</span>`).join('') || '<span class="topic-badge">None</span>';
+        }).catch(() => {});
+        return;
+      }
       if (detail) {
         currentConceptTopicId = topicId;
         currentConceptTopic = detail.title;
@@ -762,15 +796,14 @@
         const res = await apiCall('/agents/pyq-analyst', 'POST', { topicId });
 
         const stats = res.stats || {};
-        document.getElementById('pyq-stat-total').textContent = `${stats.total_questions || 2}x`;
-        const years = stats.years_appeared || [2024, 2025];
-        document.getElementById('pyq-stat-years').textContent = years.join(', ');
-        document.getElementById('pyq-stat-rate').textContent = stats.frequency_rate || '60%';
+        document.getElementById('pyq-stat-total').textContent = `${stats.total_questions ?? 0}`;
+        const years = stats.years_appeared || [];
+        document.getElementById('pyq-stat-years').textContent = years.length ? years.join(', ') : 'No official years stored';
+        document.getElementById('pyq-stat-rate').textContent = `${stats.official_questions ?? 0} official`;
 
-        const typesObj = stats.question_types || stats.types;
-        if (typesObj) {
-          document.getElementById('pyq-stat-formats').textContent = Object.keys(typesObj).join(' + ') || 'NAT + MCQ';
-        }
+        const typesObj = stats.types || {};
+        document.getElementById('pyq-stat-formats').textContent = Object.entries(typesObj).map(([t, c]) => `${c} ${t}`).join(' + ') || 'n/a';
+        document.getElementById('pyq-stat-marks').textContent = `${stats.total_marks ?? 0} marks`;
 
         analysisBox.innerHTML = formatMarkdown(res.analysis || res.explanation || 'Analysis complete.');
 
@@ -782,20 +815,20 @@
         } else {
           container.innerHTML = questions.map(q => {
             const qType = q.type || (q.options ? 'MCQ' : 'NAT');
-            const qMarks = q.marks || (qType === 'NAT' ? 2 : 1);
+            const qMarks = q.marks || 1;
             return `
               <div class="pyq-sample-card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
-                  <span class="topic-badge">GATE ${q.year || 'CSE'}</span>
+                  <span class="topic-badge">${q.origin === 'official_gate' ? 'GATE ' + esc(q.year) : 'Practice set'}</span>
                   <span class="badge-pill ${qType === 'NAT' ? 'nat' : 'mcq'}">${qType} (${qMarks} Mark${qMarks === 1 ? '' : 's'})</span>
                 </div>
                 <p style="font-size: 0.9rem; line-height: 1.5; color: var(--text-primary); margin-bottom: 0.6rem;">
-                  ${q.question}
+                  ${esc(q.question)}
                 </p>
-                ${q.options ? `<div style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 0.5rem; background: var(--bg-surface-secondary); padding: 0.4rem 0.65rem; border-radius: 4px;">${q.options.join(' &nbsp;|&nbsp; ')}</div>` : ''}
+                ${q.options && q.options.length ? `<div style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 0.5rem; background: var(--bg-surface-secondary); padding: 0.4rem 0.65rem; border-radius: 4px;">${q.options.map(esc).join(' &nbsp;|&nbsp; ')}</div>` : ''}
                 <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; border-top: 1px solid var(--border-subtle); padding-top: 0.4rem; margin-top: 0.4rem;">
-                  <span style="color: var(--accent-primary);"><strong>Answer:</strong> ${q.answer}</span>
-                  <button class="btn btn-secondary btn-sm" style="padding: 0.25rem 0.65rem; font-size: 0.78rem;" onclick="loadProblemToSolve('${q.id}')">
+                  <span style="color: var(--accent-primary);"><strong>Answer:</strong> ${q.answer ? esc(q.answer) : 'no verified key'}</span>
+                  <button class="btn btn-secondary btn-sm" style="padding: 0.25rem 0.65rem; font-size: 0.78rem;" onclick="loadProblemToSolve('${esc(q.id)}')">
                     Solve
                   </button>
                 </div>
@@ -805,7 +838,7 @@
         }
       } catch (err) {
         analysisBox.textContent = `Analysis error: ${err.message}`;
-        container.innerHTML = `<div style="color: var(--accent-rose);">Failed to load questions: ${err.message}</div>`;
+        container.innerHTML = `<div style="color: var(--accent-rose);">Failed to load questions: ${esc(err.message)}</div>`;
       }
     }
 
@@ -821,7 +854,7 @@
       if (!query) return;
 
       const analysisBox = document.getElementById('pyq-analysis-text');
-      analysisBox.innerHTML = `<em>Analyzing pattern query: "${query}"...</em>`;
+      analysisBox.innerHTML = `<em>Analyzing pattern query: "${esc(query)}"...</em>`;
 
       try {
         const res = await apiCall('/agents/pyq-analyst', 'POST', { topicId, query });
@@ -831,112 +864,129 @@
       }
     }
 
-    // 3. Problem Solver Logic
-    function loadSolverPreset(presetId) {
+    // 3. Problem Solver Logic (questions come from the question bank)
+    async function loadSolverOptions() {
+      try {
+        const res = await apiCall('/pyq?limit=100');
+        const sel = document.getElementById('solver-preset-select');
+        const custom = sel.querySelector('option[value="custom"]');
+        res.questions.forEach(q => {
+          PRESETS[q.id] = q;
+          const o = document.createElement('option');
+          o.value = q.id;
+          o.textContent = `${q.origin === 'official_gate' ? 'GATE ' + q.year : 'Practice'} · ${q.subject} · ${q.type} · ${q.question.slice(0, 48)}...`;
+          sel.insertBefore(o, custom);
+        });
+        const want = initialQuestion && (PRESETS[initialQuestion] || await fetchQuestion(initialQuestion));
+        const first = want ? want.id : (res.questions[0] && res.questions[0].id);
+        if (first) {
+          if (!sel.querySelector(`option[value="${CSS.escape(first)}"]`)) {
+            const o = document.createElement('option'); o.value = first; o.textContent = `${PRESETS[first].subject} · ${PRESETS[first].type}`; sel.insertBefore(o, custom);
+          }
+          sel.value = first; loadSolverPreset(first);
+        } else { sel.value = 'custom'; loadSolverPreset('custom'); }
+      } catch (err) { document.getElementById('solver-problem-statement').textContent = 'Could not load questions: ' + err.message; }
+    }
+
+    async function fetchQuestion(id) {
+      try { const q = await apiCall(`/pyq/${encodeURIComponent(id)}`); PRESETS[q.id] = q; return q; } catch (e) { return null; }
+    }
+
+    async function loadSolverPreset(presetId) {
       const customArea = document.getElementById('solver-custom-input-area');
       const statement = document.getElementById('solver-problem-statement');
       const topicBadge = document.getElementById('solver-topic-badge');
       const typeBadge = document.getElementById('solver-type-badge');
       const answerInput = document.getElementById('solver-student-answer');
-      const resContainer = document.getElementById('solver-result-container');
-
-      resContainer.style.display = 'none';
+      document.getElementById('solver-result-container').style.display = 'none';
       answerInput.value = '';
 
       if (presetId === 'custom') {
         customArea.style.display = 'block';
-        statement.textContent = 'Enter your problem statement above.';
+        statement.textContent = 'Enter your problem statement above (AI-generated solutions for custom problems are not verified).';
         topicBadge.textContent = 'Custom Problem';
         typeBadge.textContent = 'Problem Solver';
-        currentProblem = { id: null, topic_id: 'custom', type: 'NAT', question: '' };
+        currentProblem = { id: null, topic_id: null, type: 'NAT', question: '', options: [] };
         return;
       }
-
       customArea.style.display = 'none';
-      const p = PRESETS[presetId];
-      if (p) {
-        currentProblem = p;
-        statement.textContent = p.question;
-        topicBadge.textContent = p.subject;
-        typeBadge.textContent = `${p.type} Problem`;
-        typeBadge.className = `badge-pill ${p.type === 'NAT' ? 'nat' : 'mcq'}`;
-        document.getElementById('bkt-topic-label').textContent = p.subject;
-
-        if (p.topic_id && Auth.isAuthenticated()) {
-          apiCall('/learner/mastery').then(res => {
-            const t = (res.mastery || []).find(m => m.topic_id === p.topic_id);
-            const pct = t ? Math.round(t.p_know * 100) : 0;
-            document.getElementById('bkt-score-pct').textContent = `${pct}%`;
-            document.getElementById('bkt-meter-fill').style.width = `${pct}%`;
-          }).catch(() => {});
-        }
+      const p = PRESETS[presetId] || await fetchQuestion(presetId);
+      if (!p) { statement.textContent = 'Question not found.'; return; }
+      currentProblem = p;
+      statement.innerHTML = esc(p.question) + ((p.options || []).length
+        ? '<ul style="margin: 0.6rem 0 0; padding-left: 1.1rem;">' + p.options.map(o => `<li>${esc(o)}</li>`).join('') + '</ul>' : '');
+      topicBadge.textContent = `${p.subject} · ${p.origin === 'official_gate' ? 'GATE ' + p.year : 'Practice set'}`;
+      typeBadge.textContent = `${p.type} · ${p.marks} mark${p.marks === 1 ? '' : 's'}`;
+      typeBadge.className = `badge-pill ${p.type === 'NAT' ? 'nat' : 'mcq'}`;
+      document.getElementById('bkt-topic-label').textContent = p.subject;
+      if (p.topic_id) {
+        apiCall('/learner/mastery').then(res => {
+          const t = (res.mastery || []).find(m => m.topic_id === p.topic_id);
+          const pct = t && t.last_seen ? Math.round(t.p_know * 100) : null;
+          document.getElementById('bkt-score-pct').textContent = pct === null ? 'No data yet' : `${pct}%`;
+          document.getElementById('bkt-meter-fill').style.width = `${pct || 0}%`;
+        }).catch(() => {});
       }
     }
 
     function loadProblemToSolve(questionId) {
       switchAgentView('solver');
-      if (PRESETS[questionId]) {
-        document.getElementById('solver-preset-select').value = questionId;
-        loadSolverPreset(questionId);
-      } else {
-        document.getElementById('solver-preset-select').value = 'custom';
-        loadSolverPreset('custom');
+      const sel = document.getElementById('solver-preset-select');
+      if (!sel.querySelector(`option[value="${CSS.escape(questionId)}"]`)) {
+        const o = document.createElement('option'); o.value = questionId; o.textContent = questionId;
+        sel.insertBefore(o, sel.querySelector('option[value="custom"]'));
       }
+      sel.value = questionId;
+      loadSolverPreset(questionId);
     }
 
+    let solving = false;
     async function solveAndVerifyProblem() {
+      if (solving) return;
       const studentAns = document.getElementById('solver-student-answer').value.trim();
       const customText = document.getElementById('solver-custom-text').value.trim();
       const resContainer = document.getElementById('solver-result-container');
       const gradeBanner = document.getElementById('solver-grade-banner');
       const stepsBox = document.getElementById('solver-derivation-steps');
+      const isBank = !!currentProblem.id;
+      if (!isBank && customText.length < 10) { alert('Please enter a problem statement (at least 10 characters).'); return; }
 
-      const questionText = currentProblem.id ? currentProblem.question : (customText || 'GATE Problem');
-
+      solving = true;
       resContainer.style.display = 'block';
       gradeBanner.style.background = 'var(--bg-surface-secondary)';
       gradeBanner.style.border = '1px solid var(--border-subtle)';
       gradeBanner.style.color = 'var(--text-primary)';
-      gradeBanner.innerHTML = '<em>Running derivation and updating knowledge state...</em>';
+      gradeBanner.innerHTML = '<em>Working on it...</em>';
       stepsBox.innerHTML = '';
 
       try {
-        const payload = {
-          questionId: currentProblem.id,
-          questionText,
-          studentAnswer: studentAns,
-          topicId: currentProblem.topic_id
-        };
-
+        const payload = isBank
+          ? { questionId: currentProblem.id, studentAnswer: studentAns || undefined, reveal: !studentAns }
+          : { questionText: customText, studentAnswer: studentAns || undefined, reveal: true };
         const res = await apiCall('/agents/solve', 'POST', payload);
-
+        const set = (bg, bd, col, html) => { gradeBanner.style.background = bg; gradeBanner.style.border = bd; gradeBanner.style.color = col; gradeBanner.innerHTML = html; };
         if (res.isCorrect === true) {
-          gradeBanner.style.background = 'var(--accent-subtle)';
-          gradeBanner.style.border = '1px solid rgba(36, 91, 69, 0.3)';
-          gradeBanner.style.color = 'var(--accent-primary)';
-          gradeBanner.innerHTML = `<strong>Correct. Verified answer: ${res.officialAnswer || studentAns}</strong><br/>Mathematical derivation verified.`;
+          set('var(--accent-subtle)', '1px solid rgba(36, 91, 69, 0.3)', 'var(--accent-primary)', `<strong>Correct.</strong> Official answer: ${esc(res.officialAnswer)} (+${res.marksAwarded} marks).`);
         } else if (res.isCorrect === false) {
-          gradeBanner.style.background = 'var(--accent-rose-subtle)';
-          gradeBanner.style.border = '1px solid rgba(168, 40, 40, 0.3)';
-          gradeBanner.style.color = 'var(--accent-rose)';
-          gradeBanner.innerHTML = `<strong>Incorrect. Reference answer: ${res.officialAnswer || 'See derivation below'}</strong><br/>Review the derivation steps below.`;
+          set('var(--accent-rose-subtle)', '1px solid rgba(168, 40, 40, 0.3)', 'var(--accent-rose)', `<strong>Incorrect.</strong> Official answer: ${esc(res.officialAnswer)} (${res.marksAwarded} marks). Review the solution below.`);
+        } else if (res.answered && res.hasOfficialKey === false) {
+          set('var(--accent-amber-subtle)', '1px solid rgba(154, 91, 0, 0.3)', 'var(--accent-amber)', 'No verified key is stored for this question, so your answer cannot be graded.');
         } else {
-          gradeBanner.style.background = 'var(--accent-amber-subtle)';
-          gradeBanner.style.border = '1px solid rgba(154, 91, 0, 0.3)';
-          gradeBanner.style.color = 'var(--accent-amber)';
-          gradeBanner.innerHTML = `<strong>Derivation Generated:</strong> Result: ${res.officialAnswer || 'Derived below'}`;
+          set('var(--accent-amber-subtle)', '1px solid rgba(154, 91, 0, 0.3)', 'var(--accent-amber)',
+            res.officialAnswer ? `Official answer: <strong>${esc(res.officialAnswer)}</strong>` : 'Solution (not verified against an official key).');
         }
-
-        stepsBox.innerHTML = formatMarkdown(res.explanation || 'Derivation complete.');
-
+        const src = { official: 'official solution', curated: 'EduGraph worked solution', ai: 'AI-generated', none: '' }[res.explanationSource] || '';
+        stepsBox.innerHTML = (src ? `<div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:0.4rem;">Source: ${esc(src)}</div>` : '') +
+          (res.explanationSource === 'ai' ? formatMarkdown(res.explanation || 'No solution available.') : `<div style="white-space:pre-wrap;">${esc(res.explanation || 'No solution available.')}</div>`) +
+          (res.explanationWarning ? `<div style="margin-top:0.5rem;color:var(--accent-amber);font-size:0.85rem;">⚠ ${esc(res.explanationWarning)}</div>` : '');
         if (res.bktUpdate && res.bktUpdate.newPKnow) {
           const pct = Math.round(res.bktUpdate.newPKnow * 100);
           document.getElementById('bkt-score-pct').textContent = `${pct}%`;
           document.getElementById('bkt-meter-fill').style.width = `${pct}%`;
         }
       } catch (err) {
-        gradeBanner.innerHTML = `Error: ${err.message}`;
-      }
+        gradeBanner.textContent = `Error: ${err.message}`;
+      } finally { solving = false; }
     }
 
     function evaluateQuickMath() {

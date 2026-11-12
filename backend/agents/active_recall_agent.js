@@ -1,12 +1,15 @@
 const ragTool = require('../tools/rag_tool');
 const pyqTool = require('../tools/pyq_tool');
 const bktTool = require('../tools/bkt_tool');
+const syllabusTool = require('../tools/syllabus_tool');
+const math = require('mathjs');
+const { tokenize } = require('../rag/embeddings');
 const learnerStateTool = require('../tools/learner_state_tool');
 const llmClient = require('./llm_client');
 const db = require('../database/db');
 const crypto = require('crypto');
 const agentPrompts = require('../services/agent_prompts');
-const { runCrewAITask } = require('./crewai_bridge');
+const MAX_RECALL_ATTEMPTS = 3;
 
 /**
  * Active Recall Agent
@@ -384,99 +387,90 @@ class ActiveRecallAgent {
   }
 
   /**
-   * Dynamically synthesize a live Active Recall question using Gemini LLM
+   * Learner context for generation: level from BKT, concepts missed in the last wrong challenges, recent questions.
    */
-  async generatePromptWithGemini({ topicId, topicName, subject, type }) {
-    if (!llmClient.hasValidKey()) return null;
-
-    let ragContext = '';
-    try {
-      const ragRes = ragTool.execute({
-        query: `${topicName} ${subject} core theorems formulas algorithms invariants and boundary conditions`,
-        filters: { topic_id: topicId, topK: 2 }
-      });
-      if (ragRes && ragRes.results && ragRes.results.length > 0) {
-        ragContext = ragRes.results.map(r => r.text).join('\n---\n');
-      }
-    } catch (e) {
-      ragContext = '';
+  learnerContext(userId, topicId) {
+    let p = null, n = 0;
+    if (userId) {
+      const m = db.prepare('SELECT p_know, n_attempts FROM mastery WHERE user_id = ? AND topic_id = ?').get(userId, topicId);
+      if (m) { p = m.p_know; n = m.n_attempts || 0; }
     }
+    const level = p === null || n < 2 ? 'beginner' : p < 0.5 ? 'weak' : p < 0.75 ? 'intermediate' : 'advanced';
+    const difficulty = { beginner: 'easy', weak: 'easy', intermediate: 'medium', advanced: 'hard' }[level];
+    let missed = []; let previous = [];
+    if (userId) {
+      const rows = db.prepare(`SELECT ra.feedback_json FROM recall_attempts ra JOIN recall_prompts rp ON rp.id = ra.prompt_id
+        WHERE ra.user_id = ? AND rp.topic_id = ? AND ra.correct = 0 AND ra.feedback_json IS NOT NULL ORDER BY ra.created_at DESC LIMIT 3`).all(userId, topicId);
+      for (const r of rows) { try { missed.push(...(JSON.parse(r.feedback_json).missing || [])); } catch (e) { /* ignore */ } }
+      missed = [...new Set(missed)].slice(0, 5);
+      previous = db.prepare('SELECT question FROM recall_prompts WHERE user_id = ? AND topic_id = ? ORDER BY rowid DESC LIMIT 8').all(userId, topicId).map(r => r.question);
+    }
+    return { p, n, level, difficulty, missed, previous };
+  }
 
-    const systemPrompt = agentPrompts.ACTIVE_RECALL_GENERATOR;
+  /**
+   * Dynamic, grounded question generation (Gemini, one structured call) + deterministic validation.
+   * Returns a prompt object or throws (caller falls back openly and labels the result).
+   */
+  async generatePromptDynamic({ topicId, topicName, subject, type, userId }) {
+    const ctx = this.learnerContext(userId, topicId);
+    const desc = syllabusTool.getTopicDescription(topicId) || '';
+    const kw = syllabusTool.getTopicKeywords(topicId) || '';
+    const rag = ragTool.execute({ query: `${topicName} definitions formulas conditions`, filters: { strategy: 'concept', topic_id: topicId, topK: 2 } });
+    const material = rag.results.map(r => r.text).join('\n').slice(0, 900);
+    const { questions } = pyqTool.search({ topic_id: topicId, hasKey: true, verifiedOnly: true }, { limit: 10 });
+    const ref = questions.find(q => q.origin === 'official_gate') || questions[0];
+    const wanted = ['concept_recall', 'formula', 'application', 'gate_style', 'numeric'].includes(type) ? type : (ctx.level === 'advanced' ? 'application' : 'concept_recall');
 
-    const userPrompt = `Generate 1 novel, rigorous GATE CSE Active Recall question.
-Context Material:
-${ragContext || `Topic: ${topicName} in ${subject}`}
-
-Required Output Format in strict JSON:
-{
-  "question": "The recall question text",
-  "referenceAnswer": "Complete reference solution",
-  "keyConcepts": ["key concept 1", "key concept 2", "key concept 3"],
-  "rubric": "Grading criteria for full/partial credit",
-  "difficulty": "medium",
-  "citations": [{"source": "GATE Reference / Standard Textbook", "topic": "${topicName}"}]
-}`;
-
-    const promptSchema = {
-      type: "OBJECT",
-      properties: {
-        question: { type: "STRING" },
-        referenceAnswer: { type: "STRING" },
-        keyConcepts: { type: "ARRAY", items: { type: "STRING" } },
-        rubric: { type: "STRING" },
-        difficulty: { type: "STRING", enum: ["easy", "medium", "hard"] },
-        citations: {
-          type: "ARRAY",
-          items: {
-            type: "OBJECT",
-            properties: {
-              source: { type: "STRING" },
-              topic: { type: "STRING" }
-            },
-            required: ["source", "topic"]
-          }
+    const system = agentPrompts.ACTIVE_RECALL_GENERATOR;
+    const user = JSON.stringify({
+      topic: topicName, subject, learner_level: ctx.level, difficulty: ctx.difficulty, question_type: wanted,
+      syllabus: desc.slice(0, 320), material, style_reference: ref ? ref.question.slice(0, 200) : undefined,
+      target_weaknesses: ctx.missed.length ? ctx.missed : undefined, avoid: ctx.previous.slice(0, 4).map(q => q.slice(0, 90))
+    });
+    const vocab = new Set(tokenize(`${topicName} ${desc} ${kw} ${material}`));
+    let built = null;
+    await llmClient.generateJSON({
+      systemPrompt: system, userPrompt: user, temperature: 0.8, maxOutputTokens: agentPrompts.LIMITS.active_recall_generate,
+      agentLabel: 'Active Recall Agent', featureLabel: 'active_recall',
+      validate: o => {
+        const need = f => { if (typeof o[f] !== 'string' || !o[f].trim()) throw new Error(`"${f}" missing`); return o[f].trim(); };
+        const question = need('question'), referenceAnswer = need('referenceAnswer'); const rubric = typeof o.rubric === 'string' ? o.rubric : '';
+        if (question.length < 20 || question.length > 500) throw new Error('question length out of range');
+        if (referenceAnswer.length < 5 || referenceAnswer.length > 1200) throw new Error('referenceAnswer length out of range');
+        if (!Array.isArray(o.keyConcepts) || o.keyConcepts.length < 2 || o.keyConcepts.length > 8 || o.keyConcepts.some(k => typeof k !== 'string' || !k.trim())) throw new Error('keyConcepts must be 2-8 short strings');
+        if (/\bGATE[\s-]*(19|20)\d\d\b|previous[- ]year|\bPYQ\b/i.test(`${question} ${referenceAnswer}`)) throw new Error('generated question must not claim to be a GATE/PYQ question');
+        if (!tokenize(`${question} ${referenceAnswer}`).some(t => vocab.has(t))) throw new Error('question is unrelated to the topic');
+        const h = crypto.createHash('sha1').update(question.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()).digest('hex');
+        if (db.prepare('SELECT 1 FROM recall_prompts WHERE user_id = ? AND content_hash = ?').get(userId || '', h)) throw new Error('duplicate of an earlier question');
+        let answerNumeric = null;
+        if (o.numeric) {
+          const v = Number(math.evaluate(String(o.numeric.expression)));
+          if (!Number.isFinite(v) || Math.abs(v - Number(o.numeric.result)) > 1e-6 * Math.max(1, Math.abs(v))) throw new Error('numeric.expression does not match numeric.result');
+          answerNumeric = v;
         }
-      },
-      required: ["question", "referenceAnswer", "keyConcepts", "rubric", "difficulty"]
-    };
-
-    try {
-      const responseText = await llmClient.generate({
-        systemPrompt,
-        userPrompt,
-        temperature: 0.7,
-        jsonMode: true,
-        responseSchema: promptSchema,
-        maxOutputTokens: agentPrompts.LIMITS.active_recall,
-        agentLabel: 'Active Recall Agent',
-        featureLabel: 'active_recall'
-      });
-
-      if (!responseText) return null;
-
-      const cleaned = responseText.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '').trim();
-      const parsed = JSON.parse(cleaned);
-
-      if (parsed && parsed.question && parsed.referenceAnswer) {
-        return {
-          type: type || 'concept_recall',
-          difficulty: parsed.difficulty || 'medium',
-          question: parsed.question,
-          referenceAnswer: parsed.referenceAnswer,
-          keyConcepts: Array.isArray(parsed.keyConcepts) ? parsed.keyConcepts : [topicName.toLowerCase()],
-          rubric: parsed.rubric || 'Verify conceptual accuracy against reference answer.',
-          citations: Array.isArray(parsed.citations) && parsed.citations.length > 0 
-            ? parsed.citations 
-            : [{ source: 'GATE CSE Live Gemini AI Synthesis', topic: topicName }]
-        };
+        built = { question, referenceAnswer, rubric, keyConcepts: o.keyConcepts.map(k => k.trim()), hash: h, answerNumeric,
+          difficulty: ['easy', 'medium', 'hard'].includes(o.difficulty) ? o.difficulty : ctx.difficulty };
+        return null;
       }
-    } catch (err) {
-      console.warn('Gemini dynamic prompt generation error:', err.message);
-      return null;
-    }
+    });
+    return {
+      type: wanted, difficulty: built.difficulty, question: built.question, referenceAnswer: built.referenceAnswer,
+      keyConcepts: built.keyConcepts, rubric: built.rubric || 'Credit for correct, complete and precise use of the key concepts; accept equivalent wording.',
+      citations: [{ source: 'GATE CSE syllabus (data/syllabus/syllabus.json)', topic: topicName }].concat(ref ? [{ source: 'style/grounding reference', question_id: ref.id, official: ref.origin === 'official_gate' }] : []),
+      origin: 'ai_generated_practice', hash: built.hash, answerNumeric: built.answerNumeric, generatedBy: llmClient.modelFor('active_recall'), learnerLevel: ctx.level
+    };
+  }
 
-    return null;
+  /** Previously validated AI questions for this topic (other learners', or this learner's older ones) not seen by this learner */
+  reuseValidatedPrompt(userId, topicId) {
+    const row = db.prepare(`SELECT * FROM recall_prompts WHERE topic_id = ? AND origin = 'ai_generated_practice' AND content_hash IS NOT NULL
+      AND (user_id IS NULL OR user_id != ?) AND content_hash NOT IN (SELECT content_hash FROM recall_prompts WHERE user_id = ? AND content_hash IS NOT NULL)
+      ORDER BY RANDOM() LIMIT 1`).get(topicId, userId || '', userId || '');
+    if (!row) return null;
+    let key = []; try { key = JSON.parse(row.key_concepts || '[]'); } catch (e) { key = []; }
+    return { type: row.prompt_type, difficulty: row.difficulty, question: row.question, referenceAnswer: row.reference_answer, keyConcepts: key, rubric: row.rubric,
+      citations: JSON.parse(row.source_references || '[]'), origin: 'ai_generated_practice', hash: row.content_hash, answerNumeric: row.answer_numeric, generatedBy: 'reused_validated' };
   }
 
   /**
@@ -503,24 +497,17 @@ Required Output Format in strict JSON:
       return availablePrompts[Math.floor(Math.random() * availablePrompts.length)];
     }
 
-    // Dynamic synthesis based on syllabus and RAG
-    const ragRes = ragTool.execute({
-      query: `${topicName} definition principle rules invariants`,
-      filters: { topic_id: topicId, topK: 1 }
-    });
-
-    const snippet = (ragRes && ragRes.results && ragRes.results[0]?.text) 
-      ? ragRes.results[0].text.slice(0, 150) + '...'
-      : `Core theoretical rules and system invariants for ${topicName}.`;
-
+    // No curated prompt for this topic: build a syllabus-grounded recall question (no invented content)
+    const desc = syllabusTool.getTopicDescription(topicId) || '';
+    const concepts = desc.split(/[,;]|\band\b/).map(x => x.replace(/[.()]/g, '').trim()).filter(x => x.length > 3).slice(0, 6);
     return {
       type: type || 'concept_recall',
       difficulty: 'medium',
-      question: `State the fundamental theoretical principle, key invariants, and primary performance trade-offs of ${topicName} in GATE Computer Science.`,
-      referenceAnswer: `In GATE CSE, ${topicName} governs algorithmic bounds and state transitions: ${snippet}`,
-      keyConcepts: [topicName.toLowerCase(), 'invariants', 'trade-offs'],
-      rubric: 'Must state core definition and identify primary trade-offs or constraints.',
-      citations: [{ source: 'GATE CSE Verified Syllabus', topic: topicName }]
+      question: `According to the GATE CSE syllabus, which main concepts fall under "${topicName}"? List them and state one key fact about each.`,
+      referenceAnswer: desc || `Review the official syllabus entry for ${topicName}.`,
+      keyConcepts: concepts.length ? concepts : [topicName.toLowerCase()],
+      rubric: 'Credit for naming the main syllabus concepts and giving a correct key fact for each.',
+      citations: [{ source: 'GATE CSE syllabus (data/syllabus/syllabus.json)', topic: topicName }]
     };
   }
 
@@ -616,8 +603,9 @@ Required Output Format in strict JSON:
   }
 
   /**
-   * Generate an active recall challenge
-   * Stored securely server-side; answer key is NEVER sent to the student.
+   * Generate an active recall challenge. Order: dynamic Gemini question -> previously validated AI question ->
+   * curated/syllabus fallback. The result always says which path produced it; nothing is silent.
+   * The answer key is stored server-side and never sent to the student.
    */
   async generatePrompt({ topicId, subject, type, userId }) {
     const selection = this.selectTargetTopic({ topicId, subject, userId });
@@ -625,313 +613,243 @@ Required Output Format in strict JSON:
     const topicName = selection.topicName;
     const topicSubject = selection.subject;
 
-    // Check user's recent recall prompts to avoid immediate repetition
-    let recentPromptIds = [];
-    if (userId) {
-      const recentAttempts = db.prepare(`
-        SELECT question FROM attempts
-        WHERE user_id = ? AND agent = ?
-        ORDER BY created_at DESC LIMIT 5
-      `).all(userId, this.role);
-      recentPromptIds = recentAttempts.map(a => a.question);
+    let selectedPrompt = null; let generation = 'gemini'; let aiNotice = null;
+    try {
+      if (!llmClient.isAvailable()) { const st = llmClient.status(); throw new llmClient.LLMError(st.disabledReason ? 'INVALID_KEY' : (!st.configured ? 'NO_KEY' : (st.lastError && st.lastError.code) || 'RATE_LIMIT'), 'AI not available'); }
+      selectedPrompt = await this.generatePromptDynamic({ topicId: targetTopicId, topicName, subject: topicSubject, type, userId });
+    } catch (err) {
+      aiNotice = `AI question generation unavailable (${err.code || 'error'}).`;
     }
-
-    let selectedPrompt = null;
-
-    // 1. Try dynamic Gemini generation first
-    if (llmClient.hasValidKey()) {
-      selectedPrompt = await this.generatePromptWithGemini({
-        topicId: targetTopicId,
-        topicName,
-        subject: topicSubject,
-        type
-      });
-    }
-
-    // 2. Fallback to procedural syllabus bank
     if (!selectedPrompt) {
-      selectedPrompt = this.generatePromptProcedural({
-        topicId: targetTopicId,
-        topicName,
-        subject: topicSubject,
-        type,
-        recentPromptQuestions: recentPromptIds
-      });
+      selectedPrompt = this.reuseValidatedPrompt(userId, targetTopicId);
+      if (selectedPrompt) { generation = 'reused_validated'; aiNotice += ' Showing a previously validated AI-generated question.'; }
+    }
+    if (!selectedPrompt) {
+      let recent = [];
+      if (userId) recent = db.prepare('SELECT question FROM recall_prompts WHERE user_id = ? ORDER BY rowid DESC LIMIT 12').all(userId).map(a => a.question);
+      selectedPrompt = this.generatePromptProcedural({ topicId: targetTopicId, topicName, subject: topicSubject, type, recentPromptQuestions: recent });
+      generation = 'fallback';
+      selectedPrompt.origin = (this.getPromptsRepository()[targetTopicId] || []).some(p => p.question === selectedPrompt.question) ? 'curated_fallback' : 'syllabus_fallback';
+      selectedPrompt.hash = crypto.createHash('sha1').update(selectedPrompt.question.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()).digest('hex');
     }
 
     const promptId = `prompt_${crypto.randomUUID()}`;
     const promptType = selectedPrompt.type || type || 'concept_recall';
     const difficulty = selectedPrompt.difficulty || 'medium';
-    const citations = selectedPrompt.citations || [{ source: 'Standard GATE CSE Reference', topic: topicName }];
+    const citations = selectedPrompt.citations || [{ source: 'GATE CSE syllabus', topic: topicName }];
 
-    // Securely persist prompt in SQLite database
     db.prepare(`
-      INSERT INTO recall_prompts (id, topic_id, prompt_type, question, reference_answer, key_concepts, rubric, difficulty, source_references)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
-      promptId,
-      targetTopicId,
-      promptType,
-      selectedPrompt.question,
-      selectedPrompt.referenceAnswer,
-      JSON.stringify(selectedPrompt.keyConcepts || []),
-      selectedPrompt.rubric || '',
-      difficulty,
-      JSON.stringify(citations)
-    );
+      INSERT INTO recall_prompts (id, topic_id, prompt_type, question, reference_answer, key_concepts, rubric, difficulty, source_references, user_id,
+        origin, content_hash, answer_numeric, generated_by)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(promptId, targetTopicId, promptType, selectedPrompt.question, selectedPrompt.referenceAnswer, JSON.stringify(selectedPrompt.keyConcepts || []),
+      selectedPrompt.rubric || '', difficulty, JSON.stringify(citations), userId || null,
+      selectedPrompt.origin || 'curated_fallback', selectedPrompt.hash || null, selectedPrompt.answerNumeric ?? null, selectedPrompt.generatedBy || null);
 
-    // Return ONLY student-facing metadata. No referenceAnswer or keyConcepts!
     return {
-      agent: this.role,
-      promptId,
-      topicId: targetTopicId,
-      topicName,
-      subject: topicSubject,
-      promptType,
-      difficulty,
-      question: selectedPrompt.question,
-      recommendationReason: selection.reason,
-      sourceReferences: citations
+      agent: this.role, promptId, topicId: targetTopicId, topicName, subject: topicSubject, promptType, difficulty,
+      question: selectedPrompt.question, recommendationReason: selection.reason, sourceReferences: citations,
+      origin: selectedPrompt.origin, generation, aiNotice,
+      label: selectedPrompt.origin === 'ai_generated_practice' ? 'AI-generated practice question (not an authentic GATE question)'
+        : selectedPrompt.origin === 'curated_fallback' ? 'Curated practice question (AI generation was unavailable)' : 'Syllabus-based practice question (AI generation was unavailable)'
     };
   }
 
   /**
-   * Grade student active recall response, update BKT, and recommend next actions.
-   * @param {object} opts
-   * @param {string}  opts.promptId
-   * @param {string}  opts.topicId
-   * @param {string}  opts.studentAnswer
-   * @param {string}  [opts.userId]
-   * @param {string}  [opts.idempotencyKey]
-   * @param {number}  [opts.attemptNumber=1]  - which attempt this is (1-based)
+   * Server-side attempt state for one (user, prompt). The client can never influence it.
    */
-  async gradeResponse({ promptId, topicId, studentAnswer, userId, idempotencyKey, attemptNumber = 1 }) {
-    if (!studentAnswer || studentAnswer.trim() === '') {
+  getAttemptState(userId, promptId) {
+    const rows = db.prepare(`
+      SELECT attempt_no, score, correct, created_at FROM recall_attempts
+      WHERE user_id = ? AND prompt_id = ? ORDER BY attempt_no
+    `).all(userId, promptId);
+    const used = rows.length;
+    const solved = rows.some(r => r.correct === 1);
+    const completed = solved || used >= MAX_RECALL_ATTEMPTS;
+    return { used, solved, completed, remaining: completed ? 0 : MAX_RECALL_ATTEMPTS - used, attempts: rows };
+  }
+
+  /** Public state, revealing the reference only once the challenge is finished. */
+  getPromptState(userId, promptId) {
+    const prompt = db.prepare('SELECT * FROM recall_prompts WHERE id = ?').get(promptId);
+    if (!prompt || (prompt.user_id && prompt.user_id !== userId)) return null;
+    const st = this.getAttemptState(userId, promptId);
+    const out = {
+      promptId, topicId: prompt.topic_id, question: prompt.question,
+      maxAttempts: MAX_RECALL_ATTEMPTS, attemptsUsed: st.used, attemptsRemaining: st.remaining,
+      completed: st.completed, solved: st.solved, attempts: st.attempts
+    };
+    if (st.completed) {
+      out.referenceAnswer = prompt.reference_answer;
+      try { out.keyConcepts = JSON.parse(prompt.key_concepts || '[]'); } catch (e) { out.keyConcepts = []; }
+      out.rubric = prompt.rubric;
+    }
+    return out;
+  }
+
+  /**
+   * Grade one attempt. Rules (enforced here, not in the browser):
+   *  - authenticated users only, prompt must belong to the caller
+   *  - max 3 attempts; the correct answer + explanation are revealed only when the challenge is
+   *    completed (correct answer, or the 3rd incorrect attempt)
+   *  - after completion further submissions are rejected (409)
+   *  - BKT is updated exactly once per challenge, at completion
+   */
+  async gradeResponse({ promptId, studentAnswer, userId }) {
+    const fail = (status, message, extra = {}) => Object.assign(new Error(message), { status, ...extra });
+    if (!userId) throw fail(401, 'Authentication required');
+    if (!promptId) throw fail(400, 'promptId is required');
+    if (typeof studentAnswer !== 'string' || studentAnswer.trim() === '') {
+      throw fail(400, 'Please type your answer from memory before submitting.');
+    }
+    if (studentAnswer.length > 4000) throw fail(400, 'Answer is too long (max 4000 characters).');
+
+    const promptRecord = db.prepare('SELECT * FROM recall_prompts WHERE id = ?').get(promptId);
+    if (!promptRecord || (promptRecord.user_id && promptRecord.user_id !== userId)) {
+      throw fail(404, 'Recall prompt not found');
+    }
+    const state = this.getAttemptState(userId, promptId);
+    if (state.completed) {
+      throw fail(409, 'This recall challenge is already complete. Request a new question to continue.',
+        { state: this.getPromptState(userId, promptId) });
+    }
+
+    const targetTopicId = promptRecord.topic_id;
+    const question = promptRecord.question;
+    const referenceAnswer = promptRecord.reference_answer;
+    let keyConcepts = []; let citations = [];
+    try { keyConcepts = JSON.parse(promptRecord.key_concepts || '[]'); } catch (e) { keyConcepts = []; }
+    try { citations = JSON.parse(promptRecord.source_references || '[]'); } catch (e) { citations = []; }
+    const topicRow = db.prepare('SELECT name, subject FROM topics WHERE id = ?').get(targetTopicId);
+    const topicName = topicRow ? topicRow.name : targetTopicId;
+    const topicSubject = topicRow ? topicRow.subject : '';
+
+    const evaluation = await this.evaluateSemantically({
+      question, studentAnswer, referenceAnswer, keyConcepts,
+      rubric: promptRecord.rubric, answerNumeric: promptRecord.answer_numeric
+    });
+    const score = evaluation.score;
+    const isCorrect = score >= 60; // binary BKT observation: score >= 60 counts as correct
+    const attemptNumber = state.used + 1;
+    const completed = isCorrect || attemptNumber >= MAX_RECALL_ATTEMPTS;
+
+    // Atomically claim the attempt number (UNIQUE(user,prompt,attempt_no) blocks double-submits)
+    try {
+      db.prepare(`INSERT INTO recall_attempts (id, user_id, prompt_id, attempt_no, answer, score, correct, feedback_json)
+                  VALUES (?, ?, ?, ?, ?, ?, ?, ?)`)
+        .run(crypto.randomUUID(), userId, promptId, attemptNumber, studentAnswer, score, isCorrect ? 1 : 0,
+          JSON.stringify({ missing: evaluation.missingPoints || [], misconceptions: evaluation.misconceptions || [], evaluatedBy: evaluation.evaluatedBy }));
+    } catch (e) {
+      throw fail(409, 'Duplicate submission detected. Please refresh the challenge state.');
+    }
+
+    let bktResult = null;
+    if (completed) {
+      bktResult = bktTool.recordPractice(userId, targetTopicId, this.role, question, studentAnswer, isCorrect,
+        { type: 'RECALL', source: 'active_recall', questionId: promptId });
+    }
+
+    const base = {
+      agent: this.role, promptId, topicId: targetTopicId, topicName, subject: topicSubject,
+      score, correctness: evaluation.correctness, isCorrect, evaluatedBy: evaluation.evaluatedBy,
+      origin: promptRecord.origin,
+      attemptNumber, maxAttempts: MAX_RECALL_ATTEMPTS,
+      attemptsRemaining: completed ? 0 : MAX_RECALL_ATTEMPTS - attemptNumber,
+      completed, solved: isCorrect, bktUpdate: bktResult
+    };
+
+    if (!completed) {
+      // Between attempts: coach without leaking the answer key.
+      const total = Math.max(1, keyConcepts.length);
+      const got = (evaluation.correctPoints || []).length;
       return {
-        agent: this.role,
-        score: 0,
-        correctness: 'incorrect',
-        isCorrect: false,
-        feedback: 'No response submitted. Please type your explanation to test active recall from memory.',
-        correctPoints: [],
-        missingPoints: ['No answer provided'],
-        misconceptions: [],
-        referenceAnswer: null,
-        bktUpdate: null,
-        nextAction: null
+        ...base,
+        feedback: `Not quite yet (${score}/100). You covered about ${Math.min(got, total)} of ${total} key ideas. ` +
+          `Re-read the question, try recalling the definition, formula or condition more precisely, and try again.`,
+        correctPoints: evaluation.correctPoints || [],
+        missingPoints: [], misconceptions: [],
+        referenceAnswer: null, explanation: null, nextAction: null
       };
     }
 
-    // 1. Look up prompt from database server-side
-    let promptRecord = null;
-    if (promptId) {
-      promptRecord = db.prepare('SELECT * FROM recall_prompts WHERE id = ?').get(promptId);
-    }
-
-    let question = promptRecord ? promptRecord.question : 'Active Recall Challenge';
-    let targetTopicId = promptRecord ? promptRecord.topic_id : (topicId || 'os_scheduling');
-    let referenceAnswer = promptRecord ? promptRecord.reference_answer : 'Standard syllabus explanation.';
-    let keyConcepts = [];
-    let rubric = promptRecord ? promptRecord.rubric : '';
-    let citations = [];
-
-    if (promptRecord) {
-      try { keyConcepts = JSON.parse(promptRecord.key_concepts || '[]'); } catch (e) { keyConcepts = []; }
-      try { citations = JSON.parse(promptRecord.source_references || '[]'); } catch (e) { citations = []; }
-    } else {
-      // Fallback search by topic
-      const topicRow = db.prepare('SELECT name, subject FROM topics WHERE id = ?').get(targetTopicId);
-      keyConcepts = [topicRow ? topicRow.name.toLowerCase() : 'concept'];
-    }
-
-    const topicRow = db.prepare('SELECT name, subject FROM topics WHERE id = ?').get(targetTopicId);
-    const topicName = topicRow ? topicRow.name : targetTopicId;
-    const topicSubject = topicRow ? topicRow.subject : 'Operating Systems';
-
-    // 2. Perform semantic evaluation (with LLM / CrewAI or resilient domain engine)
-    let evaluation = await this.evaluateSemantically({
-      question,
-      studentAnswer,
-      referenceAnswer,
-      keyConcepts,
-      rubric,
-      topicId: targetTopicId,
-      topicName
-    });
-
-    const score = evaluation.score;
-    const correctness = evaluation.correctness;
-    // BKT binary mapping rule: score >= 60 maps to correct attempt
-    const isCorrect = score >= 60;
-
-    // 3. Deterministic BKT Update
-    // Only update BKT on:
-    //   (a) a correct answer (any attempt), OR
-    //   (b) the final (3rd) incorrect attempt — i.e., attemptNumber >= 3 AND not correct
-    // Intermediate wrong attempts (attempt 1 or 2) skip BKT to avoid penalising the
-    // student multiple times for the same question.
-    const MAX_ATTEMPTS = 3;
-    const isFinalAttempt = isCorrect || (attemptNumber >= MAX_ATTEMPTS);
-    let bktResult = null;
-    if (userId && isFinalAttempt) {
-      // Verify idempotency
-      const existingAttempt = db.prepare(`
-        SELECT id FROM attempts
-        WHERE user_id = ? AND topic_id = ? AND question = ? AND created_at > datetime('now', '-30 seconds')
-      `).get(userId, targetTopicId, question);
-
-      if (!existingAttempt) {
-        bktResult = bktTool.recordPractice(
-          userId,
-          targetTopicId,
-          this.role,
-          question,
-          studentAnswer,
-          isCorrect
-        );
-      } else {
-        // Return current state without double counting
-        const currentMastery = db.prepare('SELECT p_know FROM mastery WHERE user_id = ? AND topic_id = ?').get(userId, targetTopicId);
-        bktResult = {
-          attemptId: existingAttempt.id,
-          topicId: targetTopicId,
-          previousPKnow: currentMastery ? currentMastery.p_know : 0.0,
-          newPKnow: currentMastery ? currentMastery.p_know : 0.0,
-          isCorrect
-        };
-      }
-    }
-
-    // 4. Formulate adaptive next action
-    const newMastery = bktResult ? bktResult.newPKnow : (isCorrect ? 0.70 : 0.20);
-    const nextAction = this.generateAdaptiveNextAction({
-      topicId: targetTopicId,
-      topicName,
-      subject: topicSubject,
-      isCorrect,
-      score,
-      newMastery
-    });
-
+    const newMastery = bktResult ? bktResult.newPKnow : null;
     return {
-      agent: this.role,
-      promptId,
-      topicId: targetTopicId,
-      topicName,
-      subject: topicSubject,
-      score,
-      correctness,
-      isCorrect,
+      ...base,
       feedback: evaluation.feedback,
       correctPoints: evaluation.correctPoints,
       missingPoints: evaluation.missingPoints,
       misconceptions: evaluation.misconceptions,
       referenceAnswer,
+      explanation: referenceAnswer,
+      keyConcepts,
       sourceReferences: citations,
-      bktUpdate: bktResult,
-      nextAction
+      nextAction: this.generateAdaptiveNextAction({
+        topicId: targetTopicId, topicName, subject: topicSubject, isCorrect, score, newMastery
+      })
     };
   }
 
   /**
-   * Semantic Evaluation Engine
+   * Evaluation: numeric questions are compared deterministically; descriptive answers are judged by Gemini
+   * AGAINST the stored reference answer and key concepts (it may not invent a new correct answer, and equivalent wording
+   * is accepted). If Gemini is unavailable a transparent keyword matcher is used and the result says so.
+   * Returns { score, correctness, feedback, correctPoints, missingPoints, misconceptions, evaluatedBy }.
    */
-  async evaluateSemantically({ question, studentAnswer, referenceAnswer, keyConcepts, rubric, topicId, topicName }) {
-    const studentLower = studentAnswer.toLowerCase().trim();
+  async evaluateSemantically({ question, studentAnswer, referenceAnswer, keyConcepts, rubric, answerNumeric = null }) {
+    const concepts = (keyConcepts || []).map(String);
+    const band = score => (score >= 70 ? 'correct' : score >= 40 ? 'partial' : 'incorrect');
 
-    // Check key concepts presence
-    const matchedConcepts = [];
-    const missingConcepts = [];
-
-    for (const concept of keyConcepts) {
-      const cLower = String(concept).toLowerCase();
-      if (studentLower.includes(cLower)) {
-        matchedConcepts.push(concept);
-      } else {
-        // Check fuzzy / word token overlap
-        const words = cLower.split(/\s+/).filter(w => w.length > 3);
-        const hasWordMatch = words.some(w => studentLower.includes(w));
-        if (hasWordMatch) {
-          matchedConcepts.push(concept);
-        } else {
-          missingConcepts.push(concept);
-        }
-      }
+    // 1. deterministic numeric comparison
+    if (answerNumeric !== null && answerNumeric !== undefined) {
+      const nums = (studentAnswer.replace(/,/g, '').match(/-?\d+(?:\.\d+)?(?:e-?\d+)?/gi) || []).map(Number);
+      const ok = nums.some(n => Math.abs(n - answerNumeric) <= Math.max(0.01, Math.abs(answerNumeric) * 0.005));
+      const score = ok ? 100 : (nums.length ? 20 : 0);
+      return { score, correctness: band(score), evaluatedBy: 'numeric_check',
+        feedback: ok ? 'Correct numerical result.' : (nums.length ? 'The numerical result does not match.' : 'No numerical answer found in your response.'),
+        correctPoints: ok ? ['final numerical result'] : [], missingPoints: ok ? [] : ['correct numerical result'], misconceptions: [] };
     }
 
-    // Try CrewAI / LLM semantic evaluation first if configured
-    if (llmClient.hasValidKey()) {
+    // 2. semantic evaluation grounded in the validated reference
+    if (llmClient.isAvailable()) {
       try {
-        const systemPrompt = agentPrompts.ACTIVE_RECALL_EVALUATOR;
-
-        const userPrompt = `Question: ${question}
-Reference Answer: ${referenceAnswer}
-Key Concepts Expected: ${JSON.stringify(keyConcepts)}
-Rubric: ${rubric || 'Standard GATE conceptual accuracy'}
-Student Answer: ${studentAnswer}`;
-
-        const llmResult = await llmClient.generate({
-          systemPrompt,
-          userPrompt,
-          temperature: 0.2,
-          jsonMode: true,
-          maxOutputTokens: agentPrompts.LIMITS.active_recall,
-          agentLabel: 'Active Recall Agent',
-          featureLabel: 'active_recall'
-        });
-
-        if (llmResult) {
-          let clean = llmResult.trim();
-          if (clean.includes('```json')) clean = clean.split('```json')[1].split('```')[0].trim();
-          else if (clean.includes('```')) clean = clean.split('```')[1].split('```')[0].trim();
-          const parsed = JSON.parse(clean);
-
-          if (parsed && typeof parsed.score === 'number') {
-            return {
-              score: Math.max(0, Math.min(100, Math.round(parsed.score))),
-              correctness: parsed.correctness || (parsed.score >= 70 ? 'correct' : (parsed.score >= 40 ? 'partial' : 'incorrect')),
-              feedback: parsed.feedback || 'Answer evaluated.',
-              correctPoints: Array.isArray(parsed.correctPoints) && parsed.correctPoints.length > 0 ? parsed.correctPoints : matchedConcepts,
-              missingPoints: Array.isArray(parsed.missingPoints) ? parsed.missingPoints : missingConcepts,
-              misconceptions: Array.isArray(parsed.misconceptions) ? parsed.misconceptions : []
-            };
+        const r = await llmClient.generateJSON({
+          systemPrompt: agentPrompts.ACTIVE_RECALL_EVALUATOR,
+          userPrompt: JSON.stringify({ question, reference_answer: referenceAnswer, key_concepts: concepts, rubric: rubric || undefined, student_answer: studentAnswer.slice(0, 2500) }),
+          temperature: 0.1, maxOutputTokens: agentPrompts.LIMITS.active_recall, agentLabel: 'Active Recall Agent', featureLabel: 'active_recall_eval',
+          validate: o => {
+            if (typeof o.score !== 'number' || o.score < 0 || o.score > 100) throw new Error('score must be a number 0-100');
+            if (!Array.isArray(o.matched_concepts) || !Array.isArray(o.missing_concepts)) throw new Error('matched_concepts and missing_concepts must be arrays');
+            return null;
           }
-        }
+        });
+        const keep = arr => (arr || []).filter(x => concepts.some(c => c.toLowerCase() === String(x).toLowerCase()));
+        const matched = keep(r.matched_concepts), missing = concepts.filter(c => !matched.map(m => m.toLowerCase()).includes(c.toLowerCase()));
+        let score = Math.round(r.score);
+        const ratio = concepts.length ? matched.length / concepts.length : 0;
+        const mis = Array.isArray(r.misconceptions) ? r.misconceptions.map(String).slice(0, 4) : [];
+        if (ratio >= 0.8 && mis.length === 0) score = Math.max(score, 70);   // consistency guards against an over-harsh judge
+        if (ratio === 0 && concepts.length) score = Math.min(score, 35);
+        return { score, correctness: band(score), feedback: String(r.feedback || 'Answer evaluated.').slice(0, 400), correctPoints: matched, missingPoints: missing, misconceptions: mis, evaluatedBy: 'gemini' };
       } catch (err) {
-        console.warn('[ActiveRecall LLM Evaluation Warning]:', err.message);
+        console.warn('[ActiveRecall] semantic evaluation unavailable:', err.code || err.message);
       }
     }
 
-    // Resilient deterministic grading
-    const totalConcepts = Math.max(1, keyConcepts.length);
-    const conceptRatio = matchedConcepts.length / totalConcepts;
-    const wordCount = studentAnswer.trim().split(/\s+/).length;
-
-    let score = Math.round(conceptRatio * 85);
-    if (wordCount >= 8 && conceptRatio > 0) score += 15;
-    score = Math.max(0, Math.min(100, score));
-
-    let correctness = 'incorrect';
-    if (score >= 70) correctness = 'correct';
-    else if (score >= 40) correctness = 'partial';
-
-    let feedback = '';
-    if (correctness === 'correct') {
-      feedback = `Accurate recall. You successfully identified key principles (${matchedConcepts.join(', ') || 'essential rules'}).`;
-    } else if (correctness === 'partial') {
-      feedback = `Partially correct. You recalled ${matchedConcepts.join(', ') || 'some points'}, but missed: ${missingConcepts.join(', ') || 'key terms'}.`;
-    } else {
-      feedback = `Needs reinforcement. Key elements missing: ${missingConcepts.join(', ') || 'essential definitions'}. Review the reference solution.`;
+    // 3. transparent keyword fallback (cannot understand paraphrases - labelled as such)
+    const lower = studentAnswer.toLowerCase();
+    const matched = [], missing = [];
+    for (const c of concepts) {
+      const cl = c.toLowerCase();
+      const words = cl.split(/\s+/).filter(w => w.length > 3);
+      (lower.includes(cl) || (words.length && words.every(w => lower.includes(w))) ? matched : missing).push(c);
     }
-
-    return {
-      score,
-      correctness,
-      feedback,
-      correctPoints: matchedConcepts,
-      missingPoints: missingConcepts,
-      misconceptions: []
-    };
+    const ratio = concepts.length ? matched.length / concepts.length : 0;
+    const wordCount = studentAnswer.trim().split(/\s+/).length;
+    let score = Math.round(ratio * 85) + (wordCount >= 8 && ratio > 0 ? 15 : 0);
+    score = Math.max(0, Math.min(100, score));
+    return { score, correctness: band(score), evaluatedBy: 'keyword_fallback',
+      feedback: `Keyword-based check (AI evaluation unavailable): ${matched.length} of ${concepts.length} key ideas found. Paraphrased answers may be under-scored.`,
+      correctPoints: matched, missingPoints: missing, misconceptions: [] };
   }
 
   /**

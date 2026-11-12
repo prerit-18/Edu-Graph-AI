@@ -1,81 +1,57 @@
 const syllabusTool = require('../tools/syllabus_tool');
 const learnerStateTool = require('../tools/learner_state_tool');
-const db = require('../database/db');
-const crypto = require('crypto');
+const { statusFor, THRESHOLDS } = require('../knowledge_tracing/bkt');
 
 /**
  * Syllabus Agent
- * Role: GATE CSE Curriculum Guide & Dependency Navigator
- * Goal: Map prerequisites, sequence topic learning paths, and identify syllabus coverage gaps.
+ * Role: GATE CSE curriculum navigator. Topics, descriptions and the official syllabus text come ONLY from
+ * data/syllabus/syllabus.json (nothing is invented). Learner readiness comes from BKT: an unattempted prerequisite
+ * is reported as "not yet attempted", not as "low mastery".
  * Tools: syllabus_tool, learner_state_tool
  */
 class SyllabusAgent {
   constructor() {
     this.role = 'Syllabus Agent';
-    this.goal = 'Navigate syllabus prerequisite trees and recommend optimal learning sequences.';
-    this.backstory = 'Curriculum architect who understands topic prerequisite graphs and ensures students build foundational mastery before tackling advanced topics.';
+    this.goal = 'Navigate the official syllabus and prerequisite graph and report learner readiness per topic.';
+    this.backstory = 'Curriculum architect who sequences topics by prerequisites and never invents syllabus content.';
     this.tools = [syllabusTool, learnerStateTool];
   }
 
   async run({ topicId, subject, userId }) {
     const allTopics = syllabusTool.getAllTopics();
-    let masteryMap = {};
-    if (userId) {
-      const userMastery = learnerStateTool.getUserMastery(userId);
-      userMastery.forEach(m => {
-        masteryMap[m.topic_id] = m.p_know;
-      });
-    }
+    const byId = new Map();
+    if (userId) learnerStateTool.getUserMastery(userId).forEach(m => byId.set(m.topic_id, m));
 
-    // Build directed acyclic graph (DAG) of syllabus
-    const topicsWithPrereqStatus = allTopics.map(t => {
-      const pKnow = masteryMap[t.id] !== undefined ? masteryMap[t.id] : 0.0;
+    const view = allTopics.map(t => {
+      const m = byId.get(t.id);
+      const attempted = !!(m && m.last_seen);
+      const status = attempted ? statusFor(m.p_know, m.n_attempts) : 'not_started';
       let prereqStatus = 'Ready';
       if (t.prerequisite_id) {
-        const prereqPKnow = masteryMap[t.prerequisite_id] !== undefined ? masteryMap[t.prerequisite_id] : 0.0;
-        if (prereqPKnow < 0.60) {
-          prereqStatus = `Prerequisite "${t.prerequisite_id}" below 60% mastery`;
-        }
+        const pm = byId.get(t.prerequisite_id);
+        if (!pm || !pm.last_seen) prereqStatus = `Prerequisite "${t.prerequisite_id}" not attempted yet`;
+        else if (pm.p_know < 0.60) prereqStatus = `Prerequisite "${t.prerequisite_id}" below 60% mastery`;
       }
-
       return {
-        id: t.id,
-        name: t.name,
-        subject: t.subject,
-        prerequisite_id: t.prerequisite_id,
-        pyq_weight: t.pyq_weight,
-        p_know: pKnow,
-        prereqStatus
+        id: t.id, name: t.name, subject: t.subject, prerequisite_id: t.prerequisite_id, pyq_weight: t.pyq_weight,
+        description: syllabusTool.getTopicDescription(t.id),
+        attempted, n_attempts: m ? m.n_attempts : 0,
+        p_know: attempted ? m.p_know : null, status, prereqStatus
       };
     });
 
-    // Targeted path if topicId provided
-    let path = null;
+    const wanted = subject ? view.filter(t => t.subject.toLowerCase() === String(subject).toLowerCase()) : view;
+    let targetPath = null;
     if (topicId) {
-      path = syllabusTool.getPrerequisiteChain(topicId).map(t => ({
-        ...t,
-        p_know: masteryMap[t.id] !== undefined ? masteryMap[t.id] : 0.0
-      }));
+      const chain = syllabusTool.getPrerequisiteChain(topicId);
+      if (!chain.length) throw Object.assign(new Error(`Unknown topic "${topicId}"`), { status: 404 });
+      targetPath = chain.map(t => view.find(v => v.id === t.id));
     }
-
-    if (userId) {
-      db.prepare(`
-        INSERT INTO agent_logs (id, user_id, agent, grounded, detail)
-        VALUES (?, ?, ?, ?, ?)
-      `).run(
-        crypto.randomUUID(),
-        userId,
-        this.role,
-        1,
-        JSON.stringify({ topicId, subject })
-      );
-    }
-
     return {
-      agent: this.role,
-      subjectFilter: subject || 'All',
-      topics: subject ? topicsWithPrereqStatus.filter(t => t.subject.toLowerCase() === subject.toLowerCase()) : topicsWithPrereqStatus,
-      targetPath: path
+      agent: this.role, subjectFilter: subject || 'All',
+      officialSyllabus: subject ? syllabusTool.getOfficialSyllabus(subject) : null,
+      minAttemptsForClassification: THRESHOLDS.minAttempts,
+      topics: wanted, targetPath
     };
   }
 }

@@ -16,7 +16,7 @@ router.get('/mastery', authRequired, (req, res) => {
  * GET /api/learner/attempts
  */
 router.get('/attempts', authRequired, (req, res) => {
-  const limit = parseInt(req.query.limit, 10) || 20;
+  const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 20, 1), 100);
   const attempts = learnerStateTool.getRecentAttempts(req.user.id, limit);
   res.json({ attempts });
 });
@@ -25,7 +25,7 @@ router.get('/attempts', authRequired, (req, res) => {
  * GET /api/learner/weak-topics
  */
 router.get('/weak-topics', authRequired, (req, res) => {
-  const threshold = parseFloat(req.query.threshold) || 0.65;
+  const threshold = Math.min(Math.max(parseFloat(req.query.threshold) || 0.65, 0.05), 0.99);
   const weakTopics = learnerStateTool.getWeakTopics(req.user.id, threshold);
   res.json({ weakTopics });
 });
@@ -48,37 +48,43 @@ router.get('/dashboard', authRequired, (req, res) => {
   const recentAttempts = learnerStateTool.getRecentAttempts(userId, 5);
   const streak = learnerStateTool.getLearnerStreak(userId);
 
+  const { statusFor } = require('../knowledge_tracing/bkt');
+  // Only attempted topics carry evidence; unattempted topics are reported as "not started", never as 0%.
+  const attempted = mastery.filter(m => m.last_seen);
+  const withStatus = mastery.map(m => ({ ...m, status: m.last_seen ? statusFor(m.p_know, m.n_attempts) : 'not_started' }));
+  const count = s => withStatus.filter(m => m.status === s).length;
   const totalTopics = mastery.length;
-  const masteredCount = mastery.filter(m => m.p_know >= 0.75).length;
-  const learningCount = mastery.filter(m => m.p_know >= 0.45 && m.p_know < 0.75).length;
-  const weakCount = mastery.filter(m => m.last_seen && m.p_know < 0.45).length;
-
-  const avgMastery = totalTopics > 0 
-    ? (mastery.reduce((acc, curr) => acc + curr.p_know, 0) / totalTopics) * 100 
-    : 0;
-
-  // Count due revisions
-  const revisionDueCount = mastery.filter(m => m.due_at && new Date(m.due_at) <= new Date()).length;
+  const masteredCount = count('mastered') + count('strong');
+  const learningCount = count('learning');
+  const weakCount = count('weak');
+  const insufficientCount = count('insufficient_data');
+  const notStartedCount = count('not_started');
+  const avgMastery = attempted.length > 0
+    ? (attempted.reduce((acc, curr) => acc + curr.p_know, 0) / attempted.length) * 100
+    : null;
+  const revisionDueCount = withStatus.filter(m => m.due_at && new Date(m.due_at) <= new Date() && m.status !== 'insufficient_data' && m.status !== 'mastered').length;
 
   // Subject breakdown
   const subjectMap = {};
-  for (const item of mastery) {
-    if (!subjectMap[item.subject]) {
-      subjectMap[item.subject] = { subject: item.subject, total: 0, sumPKnow: 0 };
-    }
-    subjectMap[item.subject].total++;
-    subjectMap[item.subject].sumPKnow += item.p_know;
+  for (const item of withStatus) {
+    const s = subjectMap[item.subject] || (subjectMap[item.subject] = { subject: item.subject, total: 0, attempted: 0, sumPKnow: 0 });
+    s.total++;
+    if (item.last_seen) { s.attempted++; s.sumPKnow += item.p_know; }
   }
 
   const subjectProgress = Object.values(subjectMap).map(s => ({
     subject: s.subject,
-    percentage: Math.round((s.sumPKnow / s.total) * 100),
-    topicCount: s.total
+    percentage: s.attempted ? Math.round((s.sumPKnow / s.attempted) * 100) : null,
+    topicCount: s.total,
+    attemptedTopics: s.attempted
   }));
 
   res.json({
     summary: {
-      averageMastery: Number(avgMastery.toFixed(1)),
+      averageMastery: avgMastery === null ? null : Number(avgMastery.toFixed(1)),
+      attemptedTopics: attempted.length,
+      insufficientCount,
+      notStartedCount,
       masteredCount,
       learningCount,
       weakCount,
@@ -88,7 +94,7 @@ router.get('/dashboard', authRequired, (req, res) => {
     },
     subjectProgress,
     recentAttempts,
-    mastery
+    mastery: withStatus
   });
 });
 

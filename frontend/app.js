@@ -5,6 +5,13 @@
 
 const API_BASE = '/api';
 
+// HTML-escape any text (user input, LLM output, DB values) before it goes into innerHTML.
+function esc(v) {
+  return String(v === undefined || v === null ? '' : v)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 // Auth State Management
 const Auth = {
   getToken() {
@@ -43,9 +50,15 @@ async function apiCall(endpoint, method = 'GET', body = null) {
 
   try {
     const res = await fetch(`${API_BASE}${endpoint}`, options);
-    const data = await res.json();
+    let data = {};
+    try { data = await res.json(); } catch (e) { /* non-JSON error body */ }
+    if (res.status === 401 && !endpoint.startsWith('/auth/')) {
+      // session expired or never logged in: send the learner to the login page
+      Auth.logout();
+      throw new Error('Please log in again.');
+    }
     if (!res.ok) {
-      throw new Error(data.error || `HTTP ${res.status}`);
+      throw new Error(data.error || `Request failed (HTTP ${res.status})`);
     }
     return data;
   } catch (err) {
@@ -71,6 +84,7 @@ function renderHeader(activePage = '') {
     <ul class="nav-links">
       <li><a href="dashboard.html" class="${activePage === 'dashboard' ? 'active' : ''}">Dashboard</a></li>
       <li><a href="study.html" class="${activePage === 'study' ? 'active' : ''}">Study Studio</a></li>
+      <li><a href="pyq.html" class="${activePage === 'pyq' ? 'active' : ''}">PYQ Practice</a></li>
       <li><a href="recall.html" class="${activePage === 'recall' ? 'active' : ''}">Active Recall</a></li>
       <li><a href="mock.html" class="${activePage === 'mock' ? 'active' : ''}">Mock Tests</a></li>
       <li><a href="flashcards.html" class="${activePage === 'flashcards' ? 'active' : ''}">Flashcards</a></li>
@@ -80,7 +94,7 @@ function renderHeader(activePage = '') {
   const authSectionHtml = isLoggedIn ? `
     <div class="user-pill">
       <span class="streak-badge" id="nav-streak">${user.name ? 'Active' : ''}</span>
-      <span>${user.name || 'Student'}</span>
+      <span>${esc(user.name || 'Student')}</span>
     </div>
     ${isHomePage ? `<a href="dashboard.html" class="btn btn-primary btn-sm">Dashboard</a>` : ''}
     <button class="btn btn-secondary btn-sm" onclick="Auth.logout()">Log Out</button>
@@ -141,11 +155,12 @@ async function quickDemoLogin() {
 // Format markdown headings, lists, tables, callouts, bold, and code blocks
 function formatInlineMarkdown(text) {
   if (!text) return '';
-  return text
+  // Escape FIRST so model/user text can never inject markup, then re-introduce a small safe subset.
+  return esc(text)
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.*?)\*/g, '<em>$1</em>')
     .replace(/`([^`]+)`/g, '<code class="inline-code">$1</code>')
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="md-link">$1</a>');
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="md-link">$1</a>');
 }
 
 function formatMarkdown(text) {

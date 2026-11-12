@@ -6,3 +6,9 @@ __pycache__/
 data/chroma/
 data/edugraph.db
 .DS_Store
+data/edugraph.db-shm
+data/edugraph.db-wal
+data/daily_flashcards_cache.json
+data/gate_papers/raw/
+data/gate_papers/processed/
+.env.local

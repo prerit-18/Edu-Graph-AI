@@ -49,7 +49,7 @@ class OrchestrationInterface {
   /**
    * Problem Solving & Answer Verification Workflow
    */
-  async solveProblem({ questionId, questionText, studentAnswer, userId, topicId }) {
+  async solveProblem({ questionId, questionText, studentAnswer, userId, topicId, reveal }) {
     if (this.mode === 'crewai') {
       const task = new Task({
         description: 'Derive verified step-by-step solution, run calculator checks, and update BKT',
@@ -57,7 +57,7 @@ class OrchestrationInterface {
         agent: agents.problemSolver
       });
       const crew = new Crew({ agents: [agents.problemSolver], tasks: [task] });
-      const result = await crew.kickoff({ questionId, questionText, studentAnswer, userId, topicId });
+      const result = await crew.kickoff({ questionId, questionText, studentAnswer, userId, topicId, reveal });
       return result['Problem Solver'];
     }
     throw new Error(`Orchestrator mode "${this.mode}" not implemented`);
@@ -104,25 +104,15 @@ class OrchestrationInterface {
     return await agents.activeRecallAgent.runner.generatePrompt({ topicId, subject, type, userId });
   }
 
-  async gradeActiveRecall({ promptId, topicId, question, studentAnswer, referenceAnswer, keyConcepts, idempotencyKey, attemptNumber, userId }) {
-    return await agents.activeRecallAgent.runner.gradeResponse({
-      promptId,
-      topicId,
-      question,
-      studentAnswer,
-      referenceAnswer,
-      keyConcepts,
-      idempotencyKey,
-      attemptNumber,
-      userId
-    });
+  async gradeActiveRecall({ promptId, studentAnswer, userId }) {
+    return await agents.activeRecallAgent.runner.gradeResponse({ promptId, studentAnswer, userId });
   }
 
   /**
-   * Mock Test Simulator
+   * Mock Test workflow (persisted, verified-question-bank backed)
    */
-  generateMockTest({ subject, count }) {
-    return agents.mockTestAgent.runner.generateTest({ subject, count });
+  generateMockTest(opts) {
+    return agents.mockTestAgent.runner.generateTest(opts);
   }
 
   evaluateMockTest({ testId, submissions, userId }) {
