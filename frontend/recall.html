@@ -74,12 +74,7 @@
       <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
         <label for="select-subject" style="font-size: 0.82rem; color: var(--text-secondary); font-weight: 600;">Subject:</label>
         <select id="select-subject" class="input-field" style="width: auto; max-width: 180px;" onchange="handleSubjectChange(this.value)">
-          <option value="All">All 5 Subjects</option>
-          <option value="Algorithms">Algorithms</option>
-          <option value="Compiler Design">Compiler Design</option>
-          <option value="Operating Systems">Operating Systems</option>
-          <option value="Databases">Databases</option>
-          <option value="Computer Networks">Computer Networks</option>
+          <option value="All">All subjects</option>
         </select>
 
         <label for="select-topic" style="font-size: 0.82rem; color: var(--text-secondary); font-weight: 600;">Topic:</label>
@@ -89,12 +84,12 @@
 
         <label for="select-type" style="font-size: 0.82rem; color: var(--text-secondary); font-weight: 600;">Mode:</label>
         <select id="select-type" class="input-field" style="width: auto; max-width: 170px;" onchange="loadNextPrompt()">
-          <option value="all">All Recall Modes</option>
-          <option value="concept_recall">Concept Recall</option>
-          <option value="formula_recall">Formula Recall</option>
-          <option value="short_answer">Short Answer</option>
-          <option value="compare_contrast">Compare & Contrast</option>
-          <option value="trace_predict">Trace & Predict</option>
+          <option value="all">Auto (by my level)</option>
+          <option value="concept_recall">Concept understanding</option>
+          <option value="formula">Formula-based</option>
+          <option value="application">Application</option>
+          <option value="gate_style">GATE-style (generated)</option>
+          <option value="numeric">Numeric answer</option>
         </select>
       </div>
 
@@ -247,6 +242,8 @@
       try {
         const data = await apiCall('/learner/mastery');
         allTopics = data.mastery || [];
+        const subjSel = document.getElementById('select-subject');
+        subjSel.innerHTML = '<option value="All">All subjects</option>' + [...new Set(allTopics.map(t => t.subject))].map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
         populateTopicSelect('All');
         if (initialTopic) {
           const select = document.getElementById('select-topic');

@@ -20,7 +20,7 @@
     const f = (n, d = 0) => Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: d });
     const row = (cells, tag = 'td') => `<tr>${cells.map(c => `<${tag} style="padding:0.4rem 0.6rem; text-align:left; border-bottom:1px solid var(--border-subtle);">${esc(c)}</${tag}>`).join('')}</tr>`;
     const table = (title, head, rows) => `<div class="glass-card" style="padding:1rem; margin-bottom:1rem; overflow-x:auto;"><h4 style="margin:0 0 0.5rem;">${esc(title)}</h4><table style="border-collapse:collapse; width:100%; font-size:0.85rem;">${row(head, 'th')}${rows.map(r => row(r)).join('')}</table></div>`;
-    const grp = obj => Object.entries(obj || {}).map(([k, v]) => [k, f(v.calls), f(v.inputTokens), f(v.outputTokens), f(v.calls ? v.totalLatency / v.calls : 0) + ' ms', '$' + f(v.costUsd, 5)]);
+    const grp = obj => Object.entries(obj || {}).map(([k, v]) => [k, f(v.calls), f(v.inputTokens), f(v.outputTokens), f(v.avgLatencyMs) + ' ms', '$' + f(v.costUsd, 5)]);
     (async () => {
       try {
         const health = await fetch('/api/health').then(r => r.json());
